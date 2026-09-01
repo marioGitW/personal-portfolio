@@ -87,36 +87,42 @@ export function Experience() {
               </span>
             </span>
 
-            <div className="group rounded-2xl border border-slate-200 bg-background p-6 shadow-lg shadow-indigo-500/10 transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/20 sm:p-8 dark:border-slate-800 dark:hover:border-indigo-500">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <h3 className="text-xl font-semibold text-accent-gradient">{item.company}</h3>
-                  <p className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                    <MapPin className="size-3.5 text-indigo-400" />
-                    {item.mode}
-                  </p>
+            <div className="group relative">
+              <span
+                aria-hidden="true"
+                className="absolute -inset-2 -z-10 rounded-2xl bg-accent-gradient opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-25"
+              />
+              <div className="rounded-2xl border border-slate-200 bg-background p-6 shadow-lg shadow-indigo-500/10 transition-transform duration-300 hover:-translate-y-1 sm:p-8 dark:border-slate-800">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <h3 className="text-xl font-semibold text-accent-gradient">{item.company}</h3>
+                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                      <MapPin className="size-3.5 text-indigo-400" />
+                      {item.mode}
+                    </p>
+                  </div>
+
+                  <div className="w-fit shrink-0 rounded-xl border border-indigo-400/25 bg-indigo-500/[0.06] px-3 py-2 sm:text-right">
+                    <span className="flex items-center gap-1.5 text-sm text-slate-600 sm:justify-end dark:text-slate-300">
+                      <Calendar className="size-3.5 text-cyan-400" />
+                      {item.dateRange}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="w-fit shrink-0 rounded-xl border border-indigo-400/25 bg-indigo-500/[0.06] px-3 py-2 sm:text-right">
-                  <span className="flex items-center gap-1.5 text-sm text-slate-600 sm:justify-end dark:text-slate-300">
-                    <Calendar className="size-3.5 text-cyan-400" />
-                    {item.dateRange}
+                <div className="mt-5 flex flex-wrap items-center gap-2.5">
+                  <h4>{item.role}</h4>
+                  <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-0.5 text-[0.7rem] font-medium tracking-wide text-cyan-600 uppercase dark:text-cyan-300">
+                    {item.employmentType}
                   </span>
                 </div>
-              </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-2.5">
-                <h4>{item.role}</h4>
-                <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-0.5 text-[0.7rem] font-medium tracking-wide text-cyan-600 uppercase dark:text-cyan-300">
-                  {item.employmentType}
-                </span>
+                <ul className="mt-4 list-disc space-y-1.5 border-t border-slate-200 pt-4 pl-5 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
+                  {item.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
               </div>
-
-              <ul className="mt-4 list-disc space-y-1.5 border-t border-slate-200 pt-4 pl-5 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
-                {item.bullets.map((bullet) => (
-                  <li key={bullet}>{bullet}</li>
-                ))}
-              </ul>
             </div>
           </li>
         ))}

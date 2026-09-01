@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getSiteSettings, getSocialLinks } from "@/lib/content";
 import { navItems } from "@/lib/nav";
 
@@ -10,8 +11,8 @@ export function Footer() {
     <footer className="border-t border-slate-200 px-4 py-12 dark:border-slate-800">
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="font-semibold">{site.name}</p>
-          <p className="mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+          <Image src="/ms-logo.svg" alt={site.name} width={220} height={152} className="h-10 w-auto" />
+          <p className="mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
             {site.tagline}
           </p>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import gsap from "gsap";
 import { navItems } from "@/lib/nav";
@@ -16,28 +17,45 @@ export function Header({ name }: { name: string }) {
 
   useEffect(() => {
     const elements = navItems
-      .map((item) => document.getElementById(item.sectionId))
-      .filter((el): el is HTMLElement => Boolean(el));
+      .map((item) => ({ id: item.sectionId as string, el: document.getElementById(item.sectionId) }))
+      .filter((entry): entry is { id: string; el: HTMLElement } => entry.el !== null);
 
     if (elements.length === 0) {
       return;
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    let frame = 0;
 
-        if (visible?.target.id) {
-          setActiveId(visible.target.id);
+    const updateActive = () => {
+      frame = 0;
+      const referenceY = window.innerHeight * 0.4;
+      let current = elements[0].id;
+
+      for (const { id, el } of elements) {
+        if (el.getBoundingClientRect().top <= referenceY) {
+          current = id;
         }
-      },
-      { rootMargin: "-40% 0px -50% 0px", threshold: [0.1, 0.35, 0.6] },
-    );
+      }
 
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+      setActiveId(current);
+    };
+
+    const scheduleUpdate = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(updateActive);
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -94,8 +112,8 @@ export function Header({ name }: { name: string }) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-background/80 backdrop-blur-md dark:border-slate-800/80">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
-        <a href="#home" className="font-heading text-sm font-semibold tracking-tight">
-          {name}
+        <a href="#home" aria-label={name} className="shrink-0">
+          <Image src="/ms-logo.svg" alt={name} width={220} height={152} className="h-8 w-auto" priority />
         </a>
 
         <nav className="hidden md:block" aria-label="Primary">
@@ -111,9 +129,9 @@ export function Header({ name }: { name: string }) {
                     linkRefs.current[item.sectionId] = node;
                   }}
                   href={item.href}
-                  className={`relative z-10 rounded-full px-4 py-2 text-base transition ${
+                  className={`relative z-10 rounded-full px-4 py-2 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                     activeId === item.sectionId
-                      ? "font-semibold text-white shadow-sm shadow-indigo-500/40"
+                      ? "font-semibold text-white"
                       : "text-slate-500 hover:text-foreground dark:text-slate-400"
                   }`}
                 >

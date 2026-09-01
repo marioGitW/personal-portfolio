@@ -20,6 +20,7 @@ export type ExperienceItem = {
 export type Skill = {
   name: string;
   category: string;
+  icon: string;
 };
 
 export type SocialLink = {
