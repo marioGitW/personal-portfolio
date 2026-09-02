@@ -301,11 +301,54 @@ h6,
   }
 }
 
+/* About panel: the whole About Me content sits in a bordered card. A GSAP
+   tween continuously rotates --border-angle (see About.tsx), sweeping a
+   short accent-gradient arc around the card while the rest of the ring
+   stays fully transparent — the character (rendered just to its left on
+   desktop) reads as leaning against this border. */
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.about-panel {
+  isolation: isolate;
+}
+
+.about-panel-beam {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  --border-angle: 0deg;
+  background: conic-gradient(
+    from var(--border-angle),
+    transparent 0%,
+    transparent 82%,
+    var(--color-accent-from) 92%,
+    var(--color-accent-to) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-reveal,
   .hero-image,
   .hero-orbit-trail {
     animation: none !important;
     transform: none !important;
+  }
+
+  .about-panel-beam {
+    display: none;
   }
 }

@@ -1,15 +1,186 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import Image from "next/image";
+import gsap from "gsap";
+import { GB, MK, RS } from "country-flag-icons/react/3x2";
+import { registerGsapPlugins } from "@/lib/animations";
 import { getSiteSettings } from "@/lib/content";
+
+const stats = [
+  { value: "22", label: "Years old" },
+  { value: "4th", label: "Year student" },
+  { value: "24/7", label: "Available" },
+  { value: "3", label: "Languages" },
+];
+
+const languages = [
+  { flag: MK, label: "Macedonian" },
+  { flag: GB, label: "English" },
+  { flag: RS, label: "Serbian" },
+];
 
 export function About() {
   const site = getSiteSettings();
+  const bioParagraphs = site.bio
+    .split("\n\n")
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  const sectionRef = useRef<HTMLElement>(null);
+  const imageWrapRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const beamRef = useRef<HTMLSpanElement>(null);
+  const eyebrowRef = useRef<HTMLParagraphElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const linesRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const imageWrap = imageWrapRef.current;
+    const panel = panelRef.current;
+    const beam = beamRef.current;
+    const eyebrow = eyebrowRef.current;
+    const heading = headingRef.current;
+    const lines = linesRef.current?.querySelectorAll<HTMLElement>("[data-line]");
+    const statsRow = statsRef.current;
+    const langRow = langRef.current;
+
+    if (
+      !section ||
+      !imageWrap ||
+      !panel ||
+      !beam ||
+      !eyebrow ||
+      !heading ||
+      !lines ||
+      !statsRow ||
+      !langRow
+    ) {
+      return;
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const revealTargets = [imageWrap, panel, eyebrow, heading, ...Array.from(lines), statsRow, langRow];
+
+    if (reducedMotion) {
+      gsap.set(revealTargets, { opacity: 1, y: 0, filter: "blur(0px)" });
+      return;
+    }
+
+    registerGsapPlugins();
+
+    gsap.set(revealTargets, { opacity: 0, y: 26, filter: "blur(10px)" });
+
+    const timeline = gsap.timeline({
+      defaults: { ease: "power3.out" },
+      scrollTrigger: {
+        trigger: section,
+        start: "top 75%",
+        toggleActions: "play none none none",
+      },
+    });
+
+    timeline
+      .to(imageWrap, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8 })
+      .to(panel, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8 }, "<")
+      .to(eyebrow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.5")
+      .to(heading, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7 }, "-=0.3")
+      .to(
+        Array.from(lines),
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, stagger: 0.16 },
+        "-=0.35",
+      )
+      .to(statsRow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.2")
+      .to(langRow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.3");
+
+    const beamTween = gsap.to(beam, {
+      "--border-angle": "360deg",
+      duration: 7,
+      ease: "none",
+      repeat: -1,
+    });
+
+    return () => {
+      timeline.scrollTrigger?.kill();
+      timeline.kill();
+      beamTween.kill();
+    };
+  }, []);
 
   return (
-    <section id="about" className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
-      <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">About</p>
-      <h2 className="mt-3 text-3xl font-bold tracking-tight">
-        A bit about <span className="text-accent-gradient">me</span>
-      </h2>
-      <p className="mt-4 max-w-2xl text-slate-600 dark:text-slate-400">{site.bio}</p>
+    <section id="about" ref={sectionRef} className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-center lg:gap-3">
+        <div ref={imageWrapRef} className="hidden shrink-0 lg:flex lg:-mr-4">
+          <Image
+            src="/about-me-character.png"
+            alt={`3D illustration of ${site.name} holding a laptop, with an arm extended toward the About Me content`}
+            width={768}
+            height={1365}
+            priority
+            sizes="32vw"
+            className="h-auto w-full max-w-[360px] object-contain select-none"
+          />
+        </div>
+
+        <div
+          ref={panelRef}
+          className="about-panel relative w-full rounded-2xl border border-slate-200 bg-background px-6 py-8 text-center sm:px-10 sm:py-10 lg:max-w-2xl lg:px-10 lg:py-12 lg:text-left dark:border-slate-800"
+        >
+          <span ref={beamRef} aria-hidden="true" className="about-panel-beam" />
+
+          <p
+            ref={eyebrowRef}
+            className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase"
+          >
+            About
+          </p>
+          <h2 ref={headingRef} className="mt-3">
+            About <span className="text-accent-gradient">Me</span>
+          </h2>
+
+          <div
+            ref={linesRef}
+            className="mx-auto mt-6 max-w-md space-y-4 text-base text-slate-600 sm:text-lg lg:mx-0 lg:max-w-none dark:text-slate-400"
+          >
+            {bioParagraphs.map((paragraph, index) => (
+              <p key={index} data-line>
+                {paragraph}
+              </p>
+            ))}
+          </div>
+
+          <div
+            ref={statsRef}
+            className="mx-auto mt-10 grid max-w-sm grid-cols-2 gap-x-6 gap-y-8 border-t border-slate-200 pt-8 sm:max-w-lg sm:grid-cols-4 lg:mx-0 lg:max-w-none lg:gap-x-4 lg:gap-y-6 dark:border-slate-800"
+          >
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <p className="font-heading text-2xl font-bold text-accent-gradient sm:text-3xl">
+                  {stat.value}
+                </p>
+                <p className="mt-1 text-xs tracking-[0.12em] text-slate-500 uppercase">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div ref={langRef} className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
+            {languages.map((language) => (
+              <span
+                key={language.label}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-background px-3 py-1.5 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400"
+              >
+                <language.flag title={language.label} className="h-3 w-4.5 rounded-[2px]" />
+                {language.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
