@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 
 const MIN_VISIBLE_MS = 1900;
+const LOADING_TAGS = ["Design", "Build", "Test", "Ship"];
 
 export function Preloader() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -152,37 +153,77 @@ export function Preloader() {
     return null;
   }
 
+  const activeTagIndex = Math.min(
+    LOADING_TAGS.length - 1,
+    Math.floor(progress * LOADING_TAGS.length),
+  );
+
   return (
     <div
       ref={rootRef}
-      className="fixed inset-0 z-[50] isolate overflow-hidden bg-background/85 text-foreground backdrop-blur-sm"
+      className="fixed inset-0 z-[50] isolate overflow-hidden bg-background/90 text-foreground backdrop-blur-2xl"
       role="status"
       aria-live="polite"
       aria-atomic="true"
       aria-busy={!ready}
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-32 -left-24 size-96 rounded-full bg-accent-from/25 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 -bottom-32 size-96 rounded-full bg-accent-to/25 blur-3xl"
+      />
+
       <div className="relative flex h-full items-center justify-center px-6">
         <div className="flex w-full max-w-3xl flex-col items-center text-center">
-          <p className="font-heading text-[clamp(0.7rem,1vw,0.85rem)] tracking-[0.55em] text-foreground/60 uppercase">
-            MARIO SPASOVSKI
+          <p className="font-heading text-4xl font-extrabold tracking-tight uppercase sm:text-6xl">
+            <span className="text-foreground">Mario</span>{" "}
+            <span className="text-accent-gradient">Spasovski</span>
           </p>
-          <p className="font-body mt-4 text-xs font-medium tracking-[0.45em] text-foreground/45 uppercase sm:text-sm">
-            Personal Portfolio
-          </p>
+
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <span aria-hidden="true" className="h-px w-8 bg-foreground/25 sm:w-10" />
+            <p className="font-body text-xs font-semibold tracking-[0.4em] text-foreground/50 uppercase sm:text-sm">
+              Personal Portfolio
+            </p>
+            <span aria-hidden="true" className="h-px w-8 bg-foreground/25 sm:w-10" />
+          </div>
 
           <div className="mt-10 flex w-full max-w-md flex-col items-center gap-3" aria-hidden="true">
             <div
-              className="h-px w-full overflow-hidden rounded-full ring-1 ring-foreground/10"
+              className="h-1.5 w-full overflow-hidden rounded-full ring-1 ring-foreground/10"
               style={{ backgroundColor: trackColor }}
             >
               <div
-                className="h-full rounded-full bg-accent-gradient transition-[width] duration-300 ease-out"
+                className="h-full rounded-full bg-accent-gradient shadow-[0_0_10px_1px_color-mix(in_srgb,var(--color-accent-from)_45%,transparent)] transition-[width] duration-300 ease-out"
                 style={{ width: `${Math.round(progress * 100)}%` }}
               />
             </div>
             <div className="font-body text-[10px] tracking-[0.35em] text-foreground/40 uppercase">
               Loading {Math.round(progress * 100)}%
             </div>
+          </div>
+
+          <div
+            className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
+            aria-hidden="true"
+          >
+            {LOADING_TAGS.map((tag, index) => (
+              <span
+                key={tag}
+                className={`font-heading text-xs font-bold tracking-[0.25em] uppercase transition-colors duration-300 sm:text-sm ${
+                  index === activeTagIndex
+                    ? "text-accent-gradient"
+                    : index < activeTagIndex
+                      ? "text-foreground/50"
+                      : "text-foreground/25"
+                }`}
+              >
+                {tag}.
+              </span>
+            ))}
           </div>
         </div>
       </div>
