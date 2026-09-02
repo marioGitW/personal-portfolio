@@ -4,6 +4,7 @@ import { Cursor } from "@/components/ui/Cursor";
 import { Preloader } from "@/components/ui/Preloader";
 import { Providers } from "@/components/ui/Providers";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
+import { SocialSidebar } from "@/components/ui/SocialSidebar";
 import { getSiteSettings } from "@/lib/content";
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           <Preloader />
           <Cursor />
+          <SocialSidebar />
           <SmoothScroll>{children}</SmoothScroll>
         </Providers>
       </body>
