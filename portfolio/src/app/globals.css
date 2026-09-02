@@ -343,7 +343,8 @@ h6,
 @media (prefers-reduced-motion: reduce) {
   .hero-reveal,
   .hero-image,
-  .hero-orbit-trail {
+  .hero-orbit-trail,
+  .count-pop {
     animation: none !important;
     transform: none !important;
   }
@@ -351,6 +352,25 @@ h6,
   .about-panel-beam {
     display: none;
   }
+}
+
+@keyframes count-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.18);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.count-pop {
+  display: inline-block;
+  animation: count-pop 0.4s ease-out;
 }
 
 /* Project placeholder visual: a fine technical grid, theme-aware via

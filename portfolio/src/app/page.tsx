@@ -1,8 +1,8 @@
 import { About } from "@/components/sections/About";
+import { ActivityCounter } from "@/components/sections/ActivityCounter";
 import { Contact } from "@/components/sections/Contact";
 import { Experience } from "@/components/sections/Experience";
 import { Hero } from "@/components/sections/Hero";
-import { NameRevealSection } from "@/components/sections/NameRevealSection";
 import { Profiles } from "@/components/sections/Profiles";
 import { Projects } from "@/components/sections/Projects";
 import { Skills } from "@/components/sections/Skills";
@@ -24,7 +24,7 @@ export default function Home() {
         <Skills />
         <Profiles />
         <Contact />
-        <NameRevealSection />
+        <ActivityCounter />
       </main>
       <Footer />
     </>
