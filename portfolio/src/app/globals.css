@@ -352,3 +352,23 @@ h6,
     display: none;
   }
 }
+
+/* Project placeholder visual: a fine technical grid, theme-aware via
+   --foreground, used until a real screenshot/coverImage is supplied. */
+.project-visual-grid {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--foreground) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--foreground) 6%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Projects slider: native scroll-snap, scrollbar hidden (arrow buttons /
+   dots drive it, but keyboard + touch scrolling still work natively). */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

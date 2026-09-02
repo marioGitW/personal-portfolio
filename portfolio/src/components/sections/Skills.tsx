@@ -110,7 +110,7 @@ export function Skills() {
 
           {pages.length > 1 && (
             <div
-              className="mt-6 flex items-center justify-center gap-2 lg:justify-start"
+              className="mt-6 flex items-center justify-center gap-1 lg:justify-start"
               role="tablist"
               aria-label="Tools and technologies pages"
             >
@@ -122,12 +122,17 @@ export function Skills() {
                   aria-selected={i === page}
                   aria-label={`Show tools page ${i + 1} of ${pages.length}`}
                   onClick={() => setPage(i)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === page
-                      ? "w-6 bg-accent-gradient"
-                      : "w-1.5 bg-slate-300 hover:bg-slate-400 dark:bg-slate-700 dark:hover:bg-slate-600"
-                  }`}
-                />
+                  className="group grid cursor-pointer place-items-center p-2.5"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`block h-1.5 rounded-full transition-all duration-300 ${
+                      i === page
+                        ? "w-6 bg-accent-gradient"
+                        : "w-1.5 bg-slate-300 group-hover:bg-slate-400 dark:bg-slate-700"
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           )}
