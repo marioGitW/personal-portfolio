@@ -2,10 +2,13 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import gsap from "gsap";
 import { navItems } from "@/lib/nav";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+
+const pillNavItems = navItems.filter((item) => item.sectionId !== "contact");
+const contactNavItem = navItems.find((item) => item.sectionId === "contact")!;
 
 export function Header({ name }: { name: string }) {
   const [activeId, setActiveId] = useState<string>(navItems[0].sectionId);
@@ -122,7 +125,7 @@ export function Header({ name }: { name: string }) {
               ref={indicatorRef}
               className="bg-accent-gradient absolute top-1 bottom-1 left-0 rounded-full opacity-90"
             />
-            {navItems.map((item) => (
+            {pillNavItems.map((item) => (
               <li key={item.sectionId}>
                 <a
                   ref={(node) => {
@@ -139,6 +142,32 @@ export function Header({ name }: { name: string }) {
                 </a>
               </li>
             ))}
+            <li>
+              <a
+                ref={(node) => {
+                  linkRefs.current[contactNavItem.sectionId] = node;
+                }}
+                href={contactNavItem.href}
+                className="group relative z-10 inline-flex items-center gap-1 rounded-full px-4 py-2 text-base font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <span
+                  className={
+                    activeId === contactNavItem.sectionId
+                      ? "text-white"
+                      : "bg-[linear-gradient(to_right,var(--color-accent-from),var(--color-accent-to))] bg-clip-text text-transparent"
+                  }
+                >
+                  {contactNavItem.label}
+                </span>
+                <ArrowUpRight
+                  className={`size-4 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
+                    activeId === contactNavItem.sectionId
+                      ? "text-white"
+                      : "text-indigo-500 dark:text-cyan-400"
+                  }`}
+                />
+              </a>
+            </li>
           </ul>
         </nav>
 
@@ -163,7 +192,7 @@ export function Header({ name }: { name: string }) {
       >
         <nav aria-label="Mobile">
           <ul className="flex flex-col gap-4">
-            {navItems.map((item) => (
+            {pillNavItems.map((item) => (
               <li key={item.sectionId}>
                 <a
                   data-mobile-link
@@ -175,6 +204,17 @@ export function Header({ name }: { name: string }) {
                 </a>
               </li>
             ))}
+            <li>
+              <a
+                data-mobile-link
+                href={contactNavItem.href}
+                className="group inline-flex items-center gap-1.5 text-2xl font-semibold tracking-tight text-accent-gradient"
+                onClick={() => setOpen(false)}
+              >
+                {contactNavItem.label}
+                <ArrowUpRight className="size-5 shrink-0 text-indigo-500 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 dark:text-cyan-400" />
+              </a>
+            </li>
           </ul>
         </nav>
       </div>

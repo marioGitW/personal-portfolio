@@ -4,7 +4,6 @@ export const navItems = [
   { href: "#experience", label: "Experience", sectionId: "experience" },
   { href: "#projects", label: "Projects", sectionId: "projects" },
   { href: "#skills", label: "Skills", sectionId: "skills" },
-  { href: "#profiles", label: "Profiles", sectionId: "profiles" },
   { href: "#contact", label: "Contact", sectionId: "contact" },
 ] as const;
 

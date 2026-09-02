@@ -1,20 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AlertCircle, CheckCircle2, Loader2, Mail, MessageSquare, Send, User } from "lucide-react";
+import gsap from "gsap";
 import { contactFormResolver, type ContactFormValues } from "@/lib/contact";
+import { registerGsapPlugins } from "@/lib/animations";
 
 type SubmitStatus = "idle" | "success" | "error";
+type FieldName = keyof ContactFormValues;
 
 export function Contact() {
   const [status, setStatus] = useState<SubmitStatus>("idle");
+  const [focusedField, setFocusedField] = useState<FieldName | null>(null);
+  const beamRef = useRef<HTMLSpanElement>(null);
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormValues>({ resolver: contactFormResolver });
+
+  useEffect(() => {
+    const beam = beamRef.current;
+    if (!beam) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    registerGsapPlugins();
+
+    const beamTween = gsap.to(beam, {
+      "--border-angle": "360deg",
+      duration: 4,
+      ease: "none",
+      repeat: -1,
+    });
+
+    return () => {
+      beamTween.kill();
+    };
+  }, []);
 
   const onSubmit = async (values: ContactFormValues) => {
     setStatus("idle");
@@ -36,6 +63,11 @@ export function Contact() {
     }
   };
 
+  const fieldIconClass = (field: FieldName) =>
+    `pointer-events-none absolute right-0 top-8 size-4 transition-colors ${
+      focusedField === field ? "field-icon-active" : "text-slate-400"
+    }`;
+
   return (
     <section id="contact" className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
       <div className="mx-auto max-w-2xl text-center">
@@ -55,47 +87,56 @@ export function Contact() {
         className="mx-auto mt-10 max-w-2xl rounded-2xl border border-slate-200 bg-background p-6 shadow-lg shadow-indigo-500/10 sm:p-8 dark:border-slate-800"
       >
         <div className="flex flex-col gap-6">
-          <label className="group relative block">
+          <label className="relative block">
             <span className="text-sm text-slate-500 dark:text-slate-400">Name</span>
             <input
               type="text"
               autoComplete="name"
               aria-invalid={Boolean(errors.name)}
               className="mt-1 w-full border-b border-slate-300 bg-transparent py-2 pr-8 text-foreground outline-none transition focus:border-indigo-500 dark:border-slate-700"
-              {...register("name")}
+              {...register("name", {
+                onBlur: () => setFocusedField((current) => (current === "name" ? null : current)),
+              })}
+              onFocus={() => setFocusedField("name")}
             />
-            <User className="pointer-events-none absolute right-0 bottom-2.5 size-4 text-slate-400" />
+            <User className={fieldIconClass("name")} />
             {errors.name && (
-              <span className="mt-1 block text-xs text-red-500">{errors.name.message}</span>
+              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">{errors.name.message}</span>
             )}
           </label>
 
-          <label className="group relative block">
+          <label className="relative block">
             <span className="text-sm text-slate-500 dark:text-slate-400">Email</span>
             <input
               type="email"
               autoComplete="email"
               aria-invalid={Boolean(errors.email)}
               className="mt-1 w-full border-b border-slate-300 bg-transparent py-2 pr-8 text-foreground outline-none transition focus:border-indigo-500 dark:border-slate-700"
-              {...register("email")}
+              {...register("email", {
+                onBlur: () => setFocusedField((current) => (current === "email" ? null : current)),
+              })}
+              onFocus={() => setFocusedField("email")}
             />
-            <Mail className="pointer-events-none absolute right-0 bottom-2.5 size-4 text-slate-400" />
+            <Mail className={fieldIconClass("email")} />
             {errors.email && (
-              <span className="mt-1 block text-xs text-red-500">{errors.email.message}</span>
+              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">{errors.email.message}</span>
             )}
           </label>
 
-          <label className="group relative block">
+          <label className="relative block">
             <span className="text-sm text-slate-500 dark:text-slate-400">Message</span>
             <textarea
               rows={4}
               aria-invalid={Boolean(errors.message)}
               className="mt-1 w-full resize-none border-b border-slate-300 bg-transparent py-2 pr-8 text-foreground outline-none transition focus:border-indigo-500 dark:border-slate-700"
-              {...register("message")}
+              {...register("message", {
+                onBlur: () => setFocusedField((current) => (current === "message" ? null : current)),
+              })}
+              onFocus={() => setFocusedField("message")}
             />
-            <MessageSquare className="pointer-events-none absolute right-0 bottom-2.5 size-4 text-slate-400" />
+            <MessageSquare className={fieldIconClass("message")} />
             {errors.message && (
-              <span className="mt-1 block text-xs text-red-500">{errors.message.message}</span>
+              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">{errors.message.message}</span>
             )}
           </label>
         </div>
@@ -103,19 +144,22 @@ export function Contact() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full border border-indigo-500 px-5 py-3 text-sm font-semibold tracking-wide text-foreground uppercase transition hover:bg-indigo-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="contact-submit border-beam-panel relative mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full border border-foreground/20 px-5 py-3 text-sm font-semibold tracking-wide text-foreground uppercase transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              Sending
-            </>
-          ) : (
-            <>
-              Send Message
-              <Send className="size-4" />
-            </>
-          )}
+          <span ref={beamRef} aria-hidden="true" className="border-beam" />
+          <span className="relative z-10 inline-flex items-center gap-2">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Sending
+              </>
+            ) : (
+              <>
+                Send Message
+                <Send className="size-4" />
+              </>
+            )}
+          </span>
         </button>
 
         {status === "success" && (

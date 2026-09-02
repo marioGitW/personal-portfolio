@@ -312,11 +312,13 @@ h6,
   initial-value: 0deg;
 }
 
-.about-panel {
+.about-panel,
+.border-beam-panel {
   isolation: isolate;
 }
 
-.about-panel-beam {
+.about-panel-beam,
+.border-beam {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
@@ -349,9 +351,63 @@ h6,
     transform: none !important;
   }
 
-  .about-panel-beam {
+  .about-panel-beam,
+  .border-beam {
     display: none;
   }
+
+  .field-icon-active {
+    animation: none;
+  }
+}
+
+/* Contact form field icon: jumps and switches to the accent color while
+   its input is focused (see Contact.tsx's focused-field state). */
+@keyframes field-icon-jump {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  40% {
+    transform: translateY(-3px) scale(1.15);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.field-icon-active {
+  color: var(--color-accent-from);
+  animation: field-icon-jump 0.4s ease-out;
+}
+
+.contact-submit {
+  transition:
+    border-color 0.2s ease,
+    color 0.3s ease,
+    opacity 0.2s ease;
+}
+
+.contact-submit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background-image: linear-gradient(to right, var(--color-accent-from), var(--color-accent-to));
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+.contact-submit:hover:not(:disabled) {
+  border-color: transparent;
+  transition-delay: 0.15s;
+}
+
+.contact-submit:hover:not(:disabled)::before {
+  opacity: 1;
+  transition-delay: 0.15s;
 }
 
 @keyframes count-pop {
