@@ -96,7 +96,11 @@ export function Preloader() {
 
     const timeline = gsap.timeline({
       defaults: { ease: "power3.inOut" },
-      onComplete: () => setHidden(true),
+      onComplete: () => {
+        setHidden(true);
+        // Lets the hero hold its entrance timeline until the curtain is up.
+        window.dispatchEvent(new Event("preloader:done"));
+      },
     });
 
     timeline.to(root, {

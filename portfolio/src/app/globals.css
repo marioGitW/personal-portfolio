@@ -346,9 +346,15 @@ h6,
   .hero-reveal,
   .hero-image,
   .hero-orbit-trail,
-  .count-pop {
+  .count-pop,
+  .hero-portrait-img {
     animation: none !important;
     transform: none !important;
+  }
+
+  .hero-name-outline,
+  .hero-name-glow {
+    transition: none !important;
   }
 
   .about-panel-beam,
@@ -359,6 +365,80 @@ h6,
   .field-icon-active {
     animation: none;
   }
+}
+
+/* Hero name lockup: MARIO solid, SPASOVSKI outline-only that fills with the
+   accent gradient (left to right) on hover, plus a cursor-tracked radial
+   highlight clipped to the glyphs (--mx/--my set from Hero.tsx pointermove). */
+.hero-name-outline {
+  color: transparent;
+  -webkit-text-stroke-width: 1.5px;
+  -webkit-text-stroke-color: color-mix(in srgb, var(--foreground) 34%, transparent);
+  background-image: linear-gradient(to right, var(--color-accent-from), var(--color-accent-to));
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  transition:
+    background-size 0.6s ease-out,
+    -webkit-text-stroke-color 0.6s ease-out;
+}
+
+.hero-name:hover .hero-name-outline,
+.hero-name:focus-within .hero-name-outline {
+  background-size: 100% 100%;
+  -webkit-text-stroke-color: transparent;
+}
+
+.hero-name-glow {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  background: radial-gradient(
+    180px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--color-accent-from) 60%, transparent),
+    transparent 70%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  pointer-events: none;
+}
+
+@media (pointer: fine) {
+  .hero-name:hover .hero-name-glow {
+    opacity: 1;
+  }
+}
+
+/* Hero name lines: each line sits in its own overflow window so GSAP can
+   slide it up into place. The padding/negative-margin pair widens the window
+   just enough that the tight 0.86 leading never clips the caps or the stroke. */
+.hero-line-mask {
+  overflow: hidden;
+  padding-top: 0.14em;
+  padding-bottom: 0.06em;
+  margin-top: -0.14em;
+  margin-bottom: -0.06em;
+}
+
+/* Hero portrait: radial accent glow behind the cutout, kept clear of the
+   bottom edge so it never bleeds into the fade-to-background strip below. */
+.hero-portrait-glow {
+  background: radial-gradient(
+    circle at 40% 55%,
+    color-mix(in srgb, var(--color-accent-from) 38%, transparent),
+    transparent 68%
+  );
+  filter: blur(60px);
+}
+
+/* Solid fade to the page background at the foot of the portrait - an opaque
+   overlay (not an alpha mask) so it reads as "the photo ends here" rather
+   than a soft glow/cloud. */
+.hero-portrait-fade {
+  background: linear-gradient(to top, var(--background) 0%, var(--background) 18%, transparent 100%);
 }
 
 /* Contact form field icon: jumps and switches to the accent color while
