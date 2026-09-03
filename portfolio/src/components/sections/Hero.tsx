@@ -191,43 +191,15 @@ export function Hero() {
     <section
       id="home"
       ref={sectionRef}
-      className="relative h-[calc(100svh-65px)] min-h-[600px] w-full overflow-hidden"
+      className="relative w-full overflow-hidden pb-10 sm:pb-14 lg:h-[calc(100svh-65px)] lg:min-h-[600px] lg:pb-0"
     >
-      {/* Portrait: bleeds to the right edge of the viewport, anchored to the
-          bottom of the hero. Large and overlapping the name on every
-          breakpoint - the head is meant to sit into the heading, not float
-          beside it. */}
-      <div
-        ref={portraitRef}
-        className="pointer-events-none absolute right-0 bottom-0 z-20 flex justify-end select-none"
-      >
-        <div ref={portraitInnerRef} className="relative flex">
-          <div
-            className="hero-portrait-glow absolute right-[8%] bottom-[18%] h-[50%] w-[85%]"
-            aria-hidden="true"
-          />
-          <Image
-            src="/hero-img-white.png"
-            alt={`${site.name} portrait`}
-            width={882}
-            height={1087}
-            priority
-            sizes="(min-width: 1024px) 46vw, (min-width: 640px) 62vw, 84vw"
-            className="hero-portrait-img relative h-[82vh] w-auto max-w-none object-contain object-bottom opacity-90 sm:h-[84vh] sm:opacity-95 lg:h-[86%] lg:max-w-[48vw] lg:opacity-100"
-          />
-          <div
-            className="hero-portrait-fade pointer-events-none absolute inset-x-0 bottom-0 h-[16%]"
-            aria-hidden="true"
-          />
-        </div>
-      </div>
-
-      {/* Copy: constrained to the page container, top-aligned on small screens
-          (portrait sits below it), vertically centred from lg up. The left
-          padding from md up clears the fixed SocialSidebar. */}
+      {/* Copy: constrained to the page container. On mobile/tablet it sits in
+          normal flow above the portrait; from lg up it's vertically centred
+          and the portrait bleeds over it. The left padding from md up clears
+          the fixed SocialSidebar. */}
       <div
         ref={copyRef}
-        className="relative z-10 mx-auto flex h-full w-full max-w-[1400px] flex-col justify-start px-4 pt-10 sm:px-6 sm:pt-14 md:pl-24 lg:justify-center lg:pt-0 lg:pl-28"
+        className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-col justify-start px-4 pt-10 sm:px-6 sm:pt-14 md:pl-24 lg:h-full lg:justify-center lg:pt-0 lg:pl-28"
       >
         <p
           ref={eyebrowRef}
@@ -279,6 +251,36 @@ export function Hero() {
           >
             View Resume
           </Button>
+        </div>
+      </div>
+
+      {/* Portrait: sits in normal flow just under the copy on mobile/tablet,
+          scaled by viewport width. From lg up it bleeds to the right edge of
+          the viewport, anchored to the bottom of the hero and overlapping the
+          name - the head is meant to sit into the heading, not float beside
+          it. */}
+      <div
+        ref={portraitRef}
+        className="relative z-10 mt-4 flex justify-center pointer-events-none select-none sm:mt-6 lg:absolute lg:inset-y-0 lg:right-[3vw] lg:z-20 lg:mt-0 lg:items-end lg:justify-end min-[1700px]:right-[6vw] min-[1700px]:pb-[3%]"
+      >
+        <div ref={portraitInnerRef} className="relative flex lg:h-full lg:items-end">
+          <div
+            className="hero-portrait-glow absolute right-[8%] bottom-[18%] h-[50%] w-[85%]"
+            aria-hidden="true"
+          />
+          <Image
+            src="/hero-img-white.png"
+            alt={`${site.name} portrait`}
+            width={882}
+            height={1087}
+            priority
+            sizes="(min-width: 1024px) 46vw, (min-width: 640px) 52vw, 68vw"
+            className="hero-portrait-img relative h-auto w-[68vw] max-w-[300px] object-contain object-bottom opacity-90 sm:w-[52vw] sm:max-w-[380px] sm:opacity-95 lg:h-[94%] lg:max-h-[720px] lg:w-auto lg:max-w-[40vw] lg:opacity-100 min-[1700px]:h-[100%] min-[1700px]:max-h-[860px]"
+          />
+          <div
+            className="hero-portrait-fade pointer-events-none absolute inset-x-0 bottom-0 h-[16%]"
+            aria-hidden="true"
+          />
         </div>
       </div>
 
