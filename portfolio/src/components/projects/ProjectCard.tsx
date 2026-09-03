@@ -13,7 +13,6 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
   return (
     <button
       type="button"
-      data-cursor="View"
       onClick={() => onOpen(project)}
       className="group relative flex h-full w-full flex-col justify-end overflow-hidden rounded-3xl border border-slate-200 text-left shadow-xl shadow-slate-900/10 transition-transform duration-500 ease-out hover:-translate-y-1.5 focus-visible:outline-none dark:border-slate-800"
     >

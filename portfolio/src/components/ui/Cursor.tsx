@@ -3,7 +3,10 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import gsap from "gsap";
 
-const INTERACTIVE = "a, button, [data-cursor], [role='button']";
+// Anything a pointer would actually click/activate - native controls plus
+// [data-cursor] as an escape hatch for one-off custom widgets.
+const INTERACTIVE =
+  "a, button, [role='button'], input[type='checkbox'], input[type='radio'], input[type='range'], input[type='submit'], input[type='button'], input[type='file'], select, summary, label, [data-cursor], [tabindex]:not([tabindex='-1'])";
 
 function subscribeFinePointer(onStoreChange: () => void) {
   const media = window.matchMedia("(pointer: fine)");
@@ -14,7 +17,6 @@ function subscribeFinePointer(onStoreChange: () => void) {
 export function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
-  const labelRef = useRef<HTMLSpanElement>(null);
   const enabled = useSyncExternalStore(
     subscribeFinePointer,
     () => window.matchMedia("(pointer: fine)").matches,
@@ -29,8 +31,7 @@ export function Cursor() {
 
     const dot = dotRef.current;
     const ring = ringRef.current;
-    const label = labelRef.current;
-    if (!dot || !ring || !label) {
+    if (!dot || !ring) {
       return;
     }
 
@@ -53,17 +54,16 @@ export function Cursor() {
       yRing(event.clientY);
     };
 
-    const hoverIn = (target: HTMLElement) => {
-      const text = target.dataset.cursor ?? "";
-      label.textContent = text;
+    // Same reaction for every clickable element: the ring expands while the
+    // dot shrinks down inside it.
+    const hoverIn = () => {
       gsap.to(ring, {
-        scale: text ? 2.4 : 1.8,
+        scale: 1.3,
         backgroundColor: "rgba(99,102,241,0.18)",
         borderColor: "#22D3EE",
         duration: 0.2,
       });
       gsap.to(dot, { scale: 0.4, duration: 0.2 });
-      gsap.to(label, { opacity: text ? 1 : 0, duration: 0.15 });
     };
 
     const hoverOut = () => {
@@ -74,13 +74,12 @@ export function Cursor() {
         duration: 0.2,
       });
       gsap.to(dot, { scale: 1, duration: 0.2 });
-      gsap.to(label, { opacity: 0, duration: 0.15 });
     };
 
     const onOver = (event: MouseEvent) => {
       const target = (event.target as HTMLElement | null)?.closest<HTMLElement>(INTERACTIVE);
       if (target) {
-        hoverIn(target);
+        hoverIn();
       }
     };
 
@@ -116,13 +115,8 @@ export function Cursor() {
       />
       <div
         ref={ringRef}
-        className="custom-cursor pointer-events-none fixed top-0 left-0 z-[90] flex size-8 items-center justify-center rounded-full border border-indigo-500"
-      >
-        <span
-          ref={labelRef}
-          className="font-body text-[9px] font-medium tracking-wide text-cyan-300 uppercase opacity-0"
-        />
-      </div>
+        className="custom-cursor pointer-events-none fixed top-0 left-0 z-[90] size-8 rounded-full border border-indigo-500"
+      />
     </>
   );
 }

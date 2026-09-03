@@ -423,15 +423,45 @@ h6,
   margin-bottom: -0.06em;
 }
 
-/* Hero portrait: radial accent glow behind the cutout, kept clear of the
-   bottom edge so it never bleeds into the fade-to-background strip below. */
+/* Eyebrow role label: a small gradient dot with a slow breathing glow gives
+   the line a quiet focal point without competing with the name below it. */
+.hero-eyebrow-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 999px;
+  background-image: linear-gradient(135deg, var(--color-accent-from), var(--color-accent-to));
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent-from) 45%, transparent);
+  animation: hero-eyebrow-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes hero-eyebrow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent-from) 45%, transparent);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 7px 2px color-mix(in srgb, var(--color-accent-to) 45%, transparent);
+    transform: scale(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-eyebrow-dot {
+    animation: none;
+  }
+}
+
+/* Hero portrait: soft single-tone bloom centred behind the cutout. Sized and
+   blurred wide enough to read as ambient light rather than a shape, kept
+   very faint so it stays a backdrop, not a second focal point. */
 .hero-portrait-glow {
-  background: radial-gradient(
-    circle at 40% 55%,
-    color-mix(in srgb, var(--color-accent-from) 38%, transparent),
-    transparent 68%
-  );
-  filter: blur(60px);
+  background: radial-gradient(circle at 50% 55%, var(--color-accent-from), transparent 62%);
+  filter: blur(48px);
+  opacity: 0.08;
 }
 
 /* Solid fade to the page background at the foot of the portrait - an opaque

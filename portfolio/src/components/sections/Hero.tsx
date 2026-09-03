@@ -65,12 +65,15 @@ export function Hero() {
 
     gsap.set([lineOne, lineTwo], { yPercent: 130 });
     gsap.set([eyebrow, tagline, cta], { opacity: 0, y: 18 });
+    // Eyebrow tracks in slightly tighter than its resting letter-spacing, so
+    // it reads as an intentional reveal rather than a plain fade.
+    gsap.set(eyebrow, { letterSpacing: "0.08em" });
     gsap.set(portraitInner, { opacity: 0, y: 48, scale: 0.965 });
 
     const timeline = gsap.timeline({ defaults: { ease: "power3.out" }, paused: true });
 
     timeline
-      .to(eyebrow, { opacity: 1, y: 0, duration: 0.5 })
+      .to(eyebrow, { opacity: 1, y: 0, letterSpacing: "0.3em", duration: 0.7 })
       .to(lineOne, { yPercent: 0, duration: 1.05, ease: "power4.out" }, "-=0.2")
       .to(lineTwo, { yPercent: 0, duration: 1.05, ease: "power4.out" }, "-=0.88")
       .to(
@@ -203,7 +206,9 @@ export function Hero() {
       >
         <p
           ref={eyebrowRef}
-          className="flex items-center gap-3 font-heading text-xs tracking-[0.2em] text-slate-500 uppercase md:ml-3">
+          className="flex items-center gap-2.5 font-heading text-[0.8125rem] font-semibold tracking-[0.3em] text-slate-600 uppercase md:ml-3 dark:text-slate-300"
+        >
+          <span className="hero-eyebrow-dot" aria-hidden="true" />
           {site.role}
         </p>
 
@@ -264,23 +269,28 @@ export function Hero() {
         className="relative z-10 mt-4 flex justify-center pointer-events-none select-none sm:mt-6 lg:absolute lg:inset-y-0 lg:right-[3vw] lg:z-20 lg:mt-0 lg:items-end lg:justify-end min-[1700px]:right-[6vw] min-[1700px]:pb-[3%]"
       >
         <div ref={portraitInnerRef} className="relative flex lg:h-full lg:items-end">
-          <div
-            className="hero-portrait-glow absolute right-[8%] bottom-[18%] h-[50%] w-[85%]"
-            aria-hidden="true"
-          />
-          <Image
-            src="/hero-img-white.png"
-            alt={`${site.name} portrait`}
-            width={882}
-            height={1087}
-            priority
-            sizes="(min-width: 1024px) 46vw, (min-width: 640px) 52vw, 68vw"
-            className="hero-portrait-img relative h-auto w-[68vw] max-w-[300px] object-contain object-bottom opacity-90 sm:w-[52vw] sm:max-w-[380px] sm:opacity-95 lg:h-[94%] lg:max-h-[720px] lg:w-auto lg:max-w-[40vw] lg:opacity-100 min-[1700px]:h-[100%] min-[1700px]:max-h-[860px]"
-          />
-          <div
-            className="hero-portrait-fade pointer-events-none absolute inset-x-0 bottom-0 h-[16%]"
-            aria-hidden="true"
-          />
+          {/* Tightly wraps the image's own rendered box (not the taller
+              flex column around it) so the glow behind it is centred and
+              sized relative to the character, not the section. */}
+          <div className="relative">
+            <div
+              className="hero-portrait-glow pointer-events-none absolute -inset-x-[6%] -inset-y-[4%]"
+              aria-hidden="true"
+            />
+            <Image
+              src="/hero-img-white.png"
+              alt={`${site.name} portrait`}
+              width={882}
+              height={1087}
+              priority
+              sizes="(min-width: 1024px) 46vw, (min-width: 640px) 52vw, 68vw"
+              className="hero-portrait-img relative h-auto w-[68vw] max-w-[300px] object-contain object-bottom opacity-90 sm:w-[52vw] sm:max-w-[380px] sm:opacity-95 lg:h-[94%] lg:max-h-[720px] lg:w-auto lg:max-w-[40vw] lg:opacity-100 min-[1700px]:h-[100%] min-[1700px]:max-h-[860px]"
+            />
+            <div
+              className="hero-portrait-fade pointer-events-none absolute inset-x-0 bottom-0 h-[16%]"
+              aria-hidden="true"
+            />
+          </div>
         </div>
       </div>
 
