@@ -265,7 +265,7 @@ export function Hero() {
 
         <p
           ref={taglineRef}
-          className="mt-16 max-w-[22rem] text-base text-slate-600 sm:max-w-[26rem] sm:text-lg lg:mt-7 dark:text-slate-400"
+          className="mt-16 max-w-[26rem] text-base text-slate-600 sm:max-w-[32rem] sm:text-lg lg:mt-7 dark:text-slate-400"
         >
           {site.tagline}
         </p>

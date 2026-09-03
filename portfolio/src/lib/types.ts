@@ -1,3 +1,5 @@
+import type { ComponentType, SVGProps } from "react";
+
 export type Project = {
   id: string;
   slug: string;
@@ -40,8 +42,9 @@ export type Skill = {
 };
 
 export type SocialLink = {
-  platform: string;
-  url: string;
+  name: string;
+  href: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
 };
 
 export type SiteSettings = {
