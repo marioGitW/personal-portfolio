@@ -27,7 +27,7 @@ export default async function Home() {
 
   return (
     <>
-      <Header name={site.name} />
+      <Header name={site.name} socialLinks={socialLinks} />
       <main className="flex-1">
         <Hero hero={content.hero} />
         <About about={content.about} />

@@ -24,6 +24,10 @@
 }
 
 @theme inline {
+  /* 1700px, in rem to match the built-in scale. Tailwind orders px-valued
+     breakpoints ahead of the rem ones, which let `lg:` win the cascade above
+     1700px and silently killed the wide-screen hero overrides. */
+  --breakpoint-3xl: 106.25rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-love: #ff6978;
@@ -36,7 +40,7 @@
 /* Repeated composites. Each is exactly the substring that was duplicated across
    call sites; radius, padding and shadows stay inline because they vary. */
 @utility section-shell {
-  @apply mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6;
+  @apply mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6 max-[430px]:py-16;
 }
 
 @utility section-eyebrow {

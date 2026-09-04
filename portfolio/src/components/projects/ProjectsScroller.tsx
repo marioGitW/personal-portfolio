@@ -18,7 +18,7 @@ export const ProjectsScroller = forwardRef<HTMLUListElement, ProjectsScrollerPro
     return (
       <ul
         ref={ref}
-        className="flex flex-col gap-6 pl-4 sm:pl-6 lg:w-max lg:flex-row lg:items-stretch lg:gap-6 lg:pr-[12vw] lg:pl-[var(--page-gutter)]"
+        className="flex flex-col gap-6 px-4 sm:px-6 lg:w-max lg:flex-row lg:items-stretch lg:gap-6 lg:pr-[12vw] lg:pl-[var(--page-gutter)]"
       >
         {projects.map((project) => (
           <li

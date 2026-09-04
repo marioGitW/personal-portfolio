@@ -120,7 +120,7 @@ export function Projects({ projects }: ProjectsProps) {
   };
 
   return (
-    <section id="projects" ref={sectionRef} className="relative w-full py-28">
+    <section id="projects" ref={sectionRef} className="relative w-full py-28 max-[430px]:py-16">
       <div ref={introRef}>
         <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
           <SectionHeading

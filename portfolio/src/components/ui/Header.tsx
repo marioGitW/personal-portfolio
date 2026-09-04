@@ -6,16 +6,22 @@ import { ArrowUpRight, Menu, X } from "lucide-react";
 import gsap from "gsap";
 import { navItems } from "@/lib/nav";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { SocialLinkList } from "@/components/ui/SocialLinkList";
+import type { SocialLinkItem } from "@/types/sanity";
 
 const pillNavItems = navItems.filter((item) => item.sectionId !== "contact");
 const contactNavItem = navItems.find((item) => item.sectionId === "contact")!;
 
-export function Header({ name }: { name: string }) {
+export function Header({ name, socialLinks = [] }: { name: string; socialLinks?: SocialLinkItem[] }) {
   const [activeId, setActiveId] = useState<string>(navItems[0].sectionId);
   const [open, setOpen] = useState(false);
+  // Mirrors `open` but only flips to false once the close animation finishes,
+  // so the panel stays mounted (and unhidden) long enough to slide out.
+  const [menuMounted, setMenuMounted] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
 
   useEffect(() => {
@@ -85,24 +91,40 @@ export function Header({ name }: { name: string }) {
 
   useEffect(() => {
     const overlay = overlayRef.current;
-    if (!overlay) {
+    const backdrop = backdropRef.current;
+    if (!overlay || !backdrop) {
       return;
     }
 
     const links = overlay.querySelectorAll("[data-mobile-link]");
 
     if (open) {
-      overlay.removeAttribute("hidden");
+      gsap.killTweensOf([overlay, backdrop]);
+      gsap.set(overlay, { xPercent: 100 });
+      gsap.set(backdrop, { opacity: 0 });
+
       const timeline = gsap.timeline();
-      timeline.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" });
+      timeline.to(backdrop, { opacity: 1, duration: 0.25, ease: "power2.out" });
+      timeline.to(overlay, { xPercent: 0, duration: 0.4, ease: "power3.out" }, "<");
       timeline.fromTo(
         links,
-        { y: 16, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.06, duration: 0.35, ease: "power3.out" },
-        "<0.05",
+        { x: 16, opacity: 0 },
+        { x: 0, opacity: 1, stagger: 0.05, duration: 0.3, ease: "power3.out" },
+        "-=0.15",
       );
       document.body.classList.add("overflow-hidden");
     } else {
+      gsap.killTweensOf([overlay, backdrop]);
+      gsap.to(overlay, {
+        xPercent: 100,
+        duration: 0.3,
+        ease: "power2.in",
+        onComplete: () => setMenuMounted(false),
+      });
+      gsap.to(backdrop, {
+        opacity: 0,
+        duration: 0.25,
+      });
       document.body.classList.remove("overflow-hidden");
     }
 
@@ -111,8 +133,23 @@ export function Header({ name }: { name: string }) {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-background/80 backdrop-blur-md dark:border-slate-800/80">
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-background dark:border-slate-800/80">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
         <a href="#home" aria-label={name} className="shrink-0">
           <Image
@@ -184,7 +221,10 @@ export function Header({ name }: { name: string }) {
             className="icon-button md:hidden"
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => {
+              setOpen((value) => !value);
+              setMenuMounted(true);
+            }}
           >
             {open ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
@@ -192,18 +232,37 @@ export function Header({ name }: { name: string }) {
       </div>
 
       <div
+        ref={backdropRef}
+        hidden={!menuMounted}
+        className="fixed inset-0 z-40 bg-black/50 md:hidden"
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      />
+
+      <div
         ref={overlayRef}
-        hidden={!open}
-        className="fixed inset-0 z-40 bg-background/95 px-6 pt-24 md:hidden"
+        hidden={!menuMounted}
+        className="fixed inset-y-0 right-0 z-50 flex w-[85%] max-w-sm flex-col bg-background px-6 pt-6 pb-8 shadow-2xl md:hidden"
       >
-        <nav aria-label="Mobile">
-          <ul className="flex flex-col gap-4">
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <nav className="mt-10 flex-1" aria-label="Mobile">
+          <ul className="flex flex-col gap-6">
             {pillNavItems.map((item) => (
               <li key={item.sectionId}>
                 <a
                   data-mobile-link
                   href={item.href}
-                  className="text-2xl font-semibold tracking-tight"
+                  className="font-heading text-xl font-semibold tracking-wide uppercase"
                   onClick={() => setOpen(false)}
                 >
                   {item.label}
@@ -214,7 +273,7 @@ export function Header({ name }: { name: string }) {
               <a
                 data-mobile-link
                 href={contactNavItem.href}
-                className="group inline-flex items-center gap-1.5 text-2xl font-semibold tracking-tight text-accent-gradient"
+                className="group inline-flex items-center gap-1.5 font-heading text-xl font-semibold tracking-wide text-accent-gradient uppercase"
                 onClick={() => setOpen(false)}
               >
                 {contactNavItem.label}
@@ -223,6 +282,17 @@ export function Header({ name }: { name: string }) {
             </li>
           </ul>
         </nav>
+
+        {socialLinks.length > 0 && (
+          <div className="mt-auto border-t border-slate-200 pt-6 dark:border-slate-800">
+            <SocialLinkList
+              links={socialLinks}
+              className="flex flex-wrap items-center gap-5"
+              linkClassName="group inline-flex text-slate-500 transition-all duration-[250ms] ease-out hover:text-[color:var(--color-accent-from)] focus-visible:text-[color:var(--color-accent-from)] dark:text-slate-400"
+              iconClassName="size-5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]"
+            />
+          </div>
+        )}
       </div>
     </header>
   );

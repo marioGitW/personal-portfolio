@@ -236,12 +236,12 @@ export function Hero({ hero }: HeroProps) {
 
         <p
           ref={taglineRef}
-          className="mt-16 max-w-[26rem] text-base text-slate-600 sm:max-w-[32rem] sm:text-lg lg:mt-7 dark:text-slate-400"
+          className="mt-16 max-w-[26rem] text-base text-slate-600 sm:max-w-[32rem] sm:text-lg md:mx-auto md:mt-24 md:max-w-[32rem] md:text-center lg:mx-0 lg:mt-7 lg:text-left dark:text-slate-400"
         >
           {hero.subtitle}
         </p>
 
-        <div ref={ctaRef} className="mt-7 flex flex-wrap gap-3">
+        <div ref={ctaRef} className="mt-7 flex flex-wrap gap-3 md:justify-center lg:justify-start">
           <Button href="#contact">Let&apos;s Connect</Button>
           <Button ref={resumeButtonRef} variant="secondary" onClick={() => setResumeOpen(true)}>
             View Resume
@@ -253,12 +253,15 @@ export function Hero({ hero }: HeroProps) {
           overlaps the name — the head should sit into the heading. */}
       <div
         ref={portraitRef}
-        className="relative z-10 mt-4 flex justify-center pointer-events-none select-none sm:mt-6 lg:absolute lg:inset-y-0 lg:right-[3vw] lg:z-20 lg:mt-0 lg:items-end lg:justify-end min-[1700px]:right-[6vw] min-[1700px]:pb-[3%]"
+        className="relative z-10 mt-4 flex justify-center pointer-events-none select-none sm:mt-6 lg:absolute lg:inset-y-0 lg:right-[3vw] lg:z-20 lg:mt-0 lg:items-end lg:justify-end 3xl:right-[6vw] 3xl:pb-[3%]"
       >
         <div ref={portraitInnerRef} className="relative flex lg:h-full lg:items-end">
           {/* Wraps the image's own box, not the taller column, so the glow is
-              sized to the character rather than the section. */}
-          <div className="relative">
+              sized to the character. It carries the height too: a percentage
+              height on the image needs a parent with a definite one.
+              49vw is the old 40vw width cap restated as height, so the width
+              still lands on ~40vw without the image letterboxing inside it. */}
+          <div className="relative lg:h-[min(94%,860px,49vw)]">
             <div
               className="hero-portrait-glow pointer-events-none absolute -inset-x-[6%] -inset-y-[4%]"
               aria-hidden="true"
@@ -270,7 +273,7 @@ export function Hero({ hero }: HeroProps) {
               height={1087}
               priority
               sizes="(min-width: 1024px) 46vw, (min-width: 640px) 52vw, 68vw"
-              className="hero-portrait-img relative h-auto w-[68vw] max-w-[300px] object-contain object-bottom opacity-90 sm:w-[52vw] sm:max-w-[380px] sm:opacity-95 lg:h-[94%] lg:max-h-[720px] lg:w-auto lg:max-w-[40vw] lg:opacity-100 min-[1700px]:h-[100%] min-[1700px]:max-h-[860px]"
+              className="hero-portrait-img relative h-auto w-[68vw] max-w-[300px] object-contain object-bottom opacity-90 sm:w-[52vw] sm:max-w-[380px] sm:opacity-95 lg:h-full lg:w-auto lg:max-w-none lg:opacity-100"
             />
             <div
               className="hero-portrait-fade pointer-events-none absolute inset-x-0 bottom-0 h-[16%]"

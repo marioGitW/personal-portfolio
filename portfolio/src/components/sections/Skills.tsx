@@ -10,7 +10,8 @@ import { sectionCopy } from "@/content/fallbacks";
 import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import type { Skills as SkillsContent } from "@/types/sanity";
 
-const CARDS_PER_PAGE = 12;
+const CARDS_PER_PAGE_DESKTOP = 12;
+const CARDS_PER_PAGE_COMPACT = 9;
 
 function chunk<T>(items: T[], size: number): T[][] {
   const pages: T[][] = [];
@@ -27,10 +28,23 @@ type SkillsProps = {
 export function Skills({ skills }: SkillsProps) {
   // Paginated, not a marquee; chunk adapts to any number of skills.
   const items = skills.skillItems ?? [];
-  const pages = chunk(items, CARDS_PER_PAGE);
-  const [page, setPage] = useState(0);
+  // Below lg (tablet and mobile) pages cap at 9 cards so a 3-col grid stays 3x3.
+  const [cardsPerPage, setCardsPerPage] = useState(CARDS_PER_PAGE_COMPACT);
+  const pages = chunk(items, cardsPerPage);
+  const [rawPage, setPage] = useState(0);
+  // Clamped during render rather than reset in an effect, so a breakpoint
+  // change that shrinks the page count never points past the new last page.
+  const page = Math.min(rawPage, Math.max(pages.length - 1, 0));
 
   const trackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setCardsPerPage(mq.matches ? CARDS_PER_PAGE_DESKTOP : CARDS_PER_PAGE_COMPACT);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     const track = trackRef.current;

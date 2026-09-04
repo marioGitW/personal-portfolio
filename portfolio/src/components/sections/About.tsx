@@ -121,15 +121,22 @@ export function About({ about }: AboutProps) {
   return (
     <section id="about" ref={sectionRef} className="section-shell">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-center lg:gap-3">
-        <div ref={imageWrapRef} className="hidden shrink-0 lg:flex lg:-mr-4">
+        {/* Scales with the viewport rather than sitting at a fixed cap, with a
+            floor so it stops shrinking once the row runs out of room at lg. */}
+        <div
+          ref={imageWrapRef}
+          className="hidden shrink-0 lg:flex lg:w-[clamp(285px,24vw,360px)] lg:-mr-4"
+        >
           <Image
             src="/about-me-character.png"
             alt={`3D illustration of ${site.name} holding a laptop, with an arm extended toward the About Me content`}
             width={768}
             height={1365}
             priority
-            sizes="32vw"
-            className="h-auto w-full max-w-[360px] object-contain select-none"
+            // Mirrors the width above: browsers also fall back to sizes for
+            // layout when the element's own width is auto.
+            sizes="(min-width: 1500px) 360px, (max-width: 1187px) 285px, 24vw"
+            className="h-auto w-full object-contain select-none"
           />
         </div>
 
@@ -149,7 +156,7 @@ export function About({ about }: AboutProps) {
 
           <div
             ref={linesRef}
-            className="mx-auto mt-6 max-w-md space-y-4 text-base text-slate-600 sm:text-lg lg:mx-0 lg:max-w-none dark:text-slate-400"
+            className="mx-auto mt-6 max-w-md space-y-4 text-base text-slate-600 sm:text-lg md:max-w-xl lg:mx-0 lg:max-w-none dark:text-slate-400"
           >
             {bioParagraphs.map((paragraph, index) => (
               <p key={index} data-line>
