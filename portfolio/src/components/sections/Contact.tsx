@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AlertCircle, CheckCircle2, Loader2, Mail, MessageSquare, Send, User } from "lucide-react";
 import gsap from "gsap";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { contactFormResolver, type ContactFormValues } from "@/lib/contact";
-import { registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 
 type SubmitStatus = "idle" | "success" | "error";
 type FieldName = keyof ContactFormValues;
@@ -25,7 +26,7 @@ export function Contact() {
     const beam = beamRef.current;
     if (!beam) return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (prefersReducedMotion()) {
       return;
     }
 
@@ -71,14 +72,12 @@ export function Contact() {
   return (
     <section id="contact" className="section-shell">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="section-eyebrow">Contact</p>
-        <h2 className="mt-3">
-          Get In Touch <span className="text-accent-gradient">— Ask Me Anything!</span>
-        </h2>
-        <p className="mt-4 text-muted">
-          Ready to collaborate or have a project in mind? I&apos;m always open to new opportunities
-          and interesting conversations.
-        </p>
+        <SectionHeading
+          eyebrow="Contact"
+          title="Get In Touch"
+          accent="— Ask Me Anything!"
+          description="Ready to collaborate or have a project in mind? I'm always open to new opportunities and interesting conversations."
+        />
       </div>
 
       <form

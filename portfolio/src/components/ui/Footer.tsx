@@ -3,10 +3,9 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
-import { SocialIcon, socialLabel } from "@/components/ui/SocialIcons";
-import { registerGsapPlugins } from "@/lib/animations";
+import { SocialLinkList } from "@/components/ui/SocialLinkList";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import { getSiteSettings } from "@/lib/content";
-import { isExternalHref, socialHref } from "@/lib/format";
 import type { SocialLinkItem } from "@/types/sanity";
 
 const iconLinkClass =
@@ -31,7 +30,7 @@ export function Footer({ links }: FooterProps) {
     }
 
     const targets = content.querySelectorAll<HTMLElement>("[data-footer-item]");
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
 
     if (reducedMotion) {
       gsap.set(targets, { opacity: 1, y: 0 });
@@ -82,34 +81,14 @@ export function Footer({ links }: FooterProps) {
           </div>
 
           {links.length > 0 && (
-            <ul data-footer-item className="flex items-center gap-3">
-              {links.map((link) => {
-                const href = socialHref(link);
-                if (!href) {
-                  return null;
-                }
-
-                const label = socialLabel(link);
-                const external = isExternalHref(href);
-
-                return (
-                  <li key={link._key}>
-                    <a
-                      href={href}
-                      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                      aria-label={label}
-                      title={label}
-                      className={iconLinkClass}
-                    >
-                      <SocialIcon
-                        link={link}
-                        className="size-4.5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]"
-                      />
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
+            <div data-footer-item>
+              <SocialLinkList
+                links={links}
+                className="flex items-center gap-3"
+                linkClassName={iconLinkClass}
+                iconClassName="size-4.5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]"
+              />
+            </div>
           )}
         </div>
 

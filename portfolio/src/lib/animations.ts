@@ -13,3 +13,9 @@ export function registerGsapPlugins(): void {
   gsap.registerPlugin(ScrollTrigger);
   registered = true;
 }
+
+// Read at call time rather than as a hook: most call sites check it inside an
+// effect body, not during render.
+export function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}

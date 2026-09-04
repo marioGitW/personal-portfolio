@@ -1,6 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
-type ButtonVariant = "primary" | "secondary";
+export type ButtonVariant = "primary" | "secondary";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -15,11 +15,17 @@ const variants: Record<ButtonVariant, string> = {
     "border border-slate-300 bg-transparent text-foreground hover:border-indigo-500 dark:border-slate-700",
 };
 
+// Shared so ProjectLinks can style its own anchors, which need target/rel that
+// this component's href branch does not carry.
+export function buttonClasses(variant: ButtonVariant = "primary", className = ""): string {
+  return `inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition duration-200 ${variants[variant]} ${className}`;
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = "primary", href, className = "", children, ...props },
   ref,
 ) {
-  const classes = `inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition duration-200 ${variants[variant]} ${className}`;
+  const classes = buttonClasses(variant, className);
 
   if (href) {
     return (

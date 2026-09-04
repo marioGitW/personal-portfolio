@@ -4,8 +4,9 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { Calendar, MapPin, Wrench } from "lucide-react";
 import { AssetIcon } from "@/components/ui/AssetIcon";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { sectionCopy } from "@/content/fallbacks";
-import { registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import { resolveDuration, sortByOrder } from "@/lib/format";
 import type { Experience as ExperienceContent } from "@/types/sanity";
 
@@ -30,7 +31,7 @@ export function Experience({ experience }: ExperienceProps) {
 
     registerGsapPlugins();
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
 
     if (reducedMotion) {
       gsap.set(progress, { scaleY: 1 });
@@ -59,14 +60,13 @@ export function Experience({ experience }: ExperienceProps) {
 
   return (
     <section id="experience" className="section-shell">
-      <p className="section-eyebrow">{sectionCopy.experience.eyebrow}</p>
-      <h2 className="mt-3">
-        {sectionCopy.experience.titleLead}{" "}
-        <span className="text-accent-gradient">{sectionCopy.experience.titleAccent}</span>
-      </h2>
-      {experience.experienceDescription && (
-        <p className="mt-4 max-w-2xl text-muted">{experience.experienceDescription}</p>
-      )}
+      <SectionHeading
+        eyebrow={sectionCopy.experience.eyebrow}
+        title={sectionCopy.experience.titleLead}
+        accent={sectionCopy.experience.titleAccent}
+        description={experience.experienceDescription}
+        descriptionClassName="max-w-2xl"
+      />
 
       <ol ref={listRef} className="relative mt-14 space-y-10">
         <span

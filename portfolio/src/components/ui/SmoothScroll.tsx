@@ -5,7 +5,7 @@ import gsap from "gsap";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 
 // Caps the blur during a link-triggered scroll so it reads as a motion cue
 // rather than a smear.
@@ -25,7 +25,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     registerGsapPlugins();
 
     const wrapper = wrapperRef.current;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = prefersReducedMotion();
     if (!wrapper || reduced) {
       return;
     }

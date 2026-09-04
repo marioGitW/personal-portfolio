@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import gsap from "gsap";
 import { Heart } from "lucide-react";
-import { registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import { LIKED_STORAGE_KEY } from "@/lib/nav";
 import type { SiteStats } from "@/lib/types";
 import { recordVisit } from "@/lib/visit";
@@ -74,7 +74,7 @@ export function ActivityCounter() {
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
     const revealTargets = [eyebrow, heading, action];
 
     if (reducedMotion) {

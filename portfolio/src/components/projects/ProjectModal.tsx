@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import gsap from "gsap";
+import { prefersReducedMotion } from "@/lib/animations";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { toParagraphs } from "@/lib/format";
 import type { Project } from "@/types/sanity";
 import { ProjectVisual } from "./ProjectVisual";
@@ -42,7 +44,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     document.body.classList.add("overflow-hidden");
 
     const items = contentRef.current?.querySelectorAll<HTMLElement>("[data-modal-item]") ?? [];
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
 
     window.requestAnimationFrame(() => closeButtonRef.current?.focus());
 
@@ -81,7 +83,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
 
     const backdrop = backdropRef.current;
     const dialog = dialogRef.current;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
 
     if (!backdrop || !dialog || reducedMotion) {
       onExited();
@@ -104,51 +106,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     };
   }, [closing, onExited]);
 
-  // Escape key + focus trap while a project is shown.
-  useEffect(() => {
-    if (!project) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onRequestClose();
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const dialog = dialogRef.current;
-      if (!dialog) {
-        return;
-      }
-
-      const focusable = dialog.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusable.length === 0) {
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [project, onRequestClose]);
+  useFocusTrap(Boolean(project), dialogRef, onRequestClose);
 
   useEffect(() => {
     return () => {

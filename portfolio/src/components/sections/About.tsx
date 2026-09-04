@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { GB, MK, RS } from "country-flag-icons/react/3x2";
-import { registerGsapPlugins } from "@/lib/animations";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import { getSiteSettings } from "@/lib/content";
 import { toParagraphs } from "@/lib/format";
 import { aboutLanguages, sectionCopy } from "@/content/fallbacks";
@@ -61,7 +62,7 @@ export function About({ about }: AboutProps) {
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
     const revealTargets = [
       imageWrap,
       panel,
@@ -138,13 +139,13 @@ export function About({ about }: AboutProps) {
         >
           <span ref={beamRef} aria-hidden="true" className="about-panel-beam" />
 
-          <p ref={eyebrowRef} className="section-eyebrow">
-            {sectionCopy.about.eyebrow}
-          </p>
-          <h2 ref={headingRef} className="mt-3">
-            {sectionCopy.about.titleLead}{" "}
-            <span className="text-accent-gradient">{sectionCopy.about.titleAccent}</span>
-          </h2>
+          <SectionHeading
+            eyebrow={sectionCopy.about.eyebrow}
+            title={sectionCopy.about.titleLead}
+            accent={sectionCopy.about.titleAccent}
+            eyebrowRef={eyebrowRef}
+            headingRef={headingRef}
+          />
 
           <div
             ref={linesRef}

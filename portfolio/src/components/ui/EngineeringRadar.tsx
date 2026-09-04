@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import gsap from "gsap";
-import { registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 
 type RadarDimension = {
   label: string;
@@ -73,7 +73,7 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
     const pointEls = points.querySelectorAll<SVGCircleElement>("circle");
 
     if (reducedMotion) {

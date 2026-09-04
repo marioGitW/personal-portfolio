@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Download, X } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const RESUME_PATH = "/Spasovski_Mario_CV.pdf";
 
@@ -24,48 +25,13 @@ export function ResumeModal({ open, onClose, triggerRef }: ResumeModalProps) {
     closeButtonRef.current?.focus();
     document.body.classList.add("overflow-hidden");
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const dialog = dialogRef.current;
-      if (!dialog) {
-        return;
-      }
-
-      const focusable = dialog.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusable.length === 0) {
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
       document.body.classList.remove("overflow-hidden");
       trigger?.focus();
     };
-  }, [open, onClose, triggerRef]);
+  }, [open, triggerRef]);
+
+  useFocusTrap(open, dialogRef, onClose);
 
   if (!open) {
     return null;

@@ -5,8 +5,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ProjectModal } from "@/components/projects/ProjectModal";
 import { ProjectsScroller } from "@/components/projects/ProjectsScroller";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { sectionCopy } from "@/content/fallbacks";
-import { registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import type { Project } from "@/types/sanity";
 
 type ProjectsProps = {
@@ -33,7 +34,7 @@ export function Projects({ projects }: ProjectsProps) {
 
     registerGsapPlugins();
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
 
     if (reducedMotion) {
       gsap.set(intro, { opacity: 1, y: 0 });
@@ -70,7 +71,7 @@ export function Projects({ projects }: ProjectsProps) {
 
     registerGsapPlugins();
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
     if (reducedMotion) {
       return;
     }
@@ -122,12 +123,12 @@ export function Projects({ projects }: ProjectsProps) {
     <section id="projects" ref={sectionRef} className="relative w-full py-28">
       <div ref={introRef}>
         <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
-          <p className="section-eyebrow">{sectionCopy.projects.eyebrow}</p>
-          <h2 className="mt-3">
-            {sectionCopy.projects.titleLead}{" "}
-            <span className="text-accent-gradient">{sectionCopy.projects.titleAccent}</span>
-          </h2>
-          <p className="mt-4 text-muted">{sectionCopy.projects.description}</p>
+          <SectionHeading
+            eyebrow={sectionCopy.projects.eyebrow}
+            title={sectionCopy.projects.titleLead}
+            accent={sectionCopy.projects.titleAccent}
+            description={sectionCopy.projects.description}
+          />
         </div>
 
         <div ref={clipRef} className="relative mt-14 lg:overflow-hidden">

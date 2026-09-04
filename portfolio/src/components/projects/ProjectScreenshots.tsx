@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { PaginationDots } from "@/components/ui/PaginationDots";
 import type { SanityScreenshot } from "@/types/sanity";
 
 /** A screenshot the caller has already confirmed has a resolved URL. */
@@ -80,25 +81,14 @@ export function ProjectScreenshots({
       </div>
 
       {screenshots.length > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-1">
-          {screenshots.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => goTo(i)}
-              aria-label={`Go to screenshot ${i + 1}`}
-              aria-current={i === index}
-              className="grid cursor-pointer place-items-center p-2.5"
-            >
-              <span
-                aria-hidden="true"
-                className={`pagination-dot ${
-                  i === index ? "w-6 bg-accent-gradient" : "w-1.5 bg-slate-300 dark:bg-slate-700"
-                }`}
-              />
-            </button>
-          ))}
-        </div>
+        <PaginationDots
+          count={screenshots.length}
+          active={index}
+          onSelect={goTo}
+          variant="current"
+          itemLabel={(i) => `Go to screenshot ${i + 1}`}
+          className="mt-4 flex items-center justify-center gap-1"
+        />
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { Button } from "@/components/ui/Button";
 import { ResumeModal } from "@/components/ui/ResumeModal";
-import { registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import { splitTitleLines } from "@/lib/format";
 import type { Hero as HeroContent } from "@/types/sanity";
 
@@ -58,7 +58,7 @@ export function Hero({ hero }: HeroProps) {
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = prefersReducedMotion();
 
     if (reducedMotion) {
       gsap.set([eyebrow, tagline, cta], { opacity: 1, y: 0 });
@@ -123,10 +123,7 @@ export function Hero({ hero }: HeroProps) {
       return;
     }
 
-    if (
-      !window.matchMedia("(pointer: fine)").matches ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (!window.matchMedia("(pointer: fine)").matches || prefersReducedMotion()) {
       return;
     }
 
@@ -153,10 +150,7 @@ export function Hero({ hero }: HeroProps) {
       return;
     }
 
-    if (
-      !window.matchMedia("(pointer: fine)").matches ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (!window.matchMedia("(pointer: fine)").matches || prefersReducedMotion()) {
       return;
     }
 

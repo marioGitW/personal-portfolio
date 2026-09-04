@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import gsap from "gsap";
+import { prefersReducedMotion } from "@/lib/animations";
 
 // Anything clickable, plus [data-cursor] as an escape hatch for custom widgets.
 const INTERACTIVE =
@@ -37,7 +38,7 @@ export function Cursor() {
     document.documentElement.classList.add("has-custom-cursor");
     gsap.set([dot, ring], { xPercent: -50, yPercent: -50 });
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = prefersReducedMotion();
     const duration = reduced ? 0 : 0.18;
     const ringDuration = reduced ? 0 : 0.35;
 
