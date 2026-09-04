@@ -1,15 +1,9 @@
-/**
- * Skill icons are referenced by devicon path rather than uploaded, which is how
- * the frontend already sources them (see `../portfolio/src/content/skills.ts`).
- * Keep this base URL in sync with the `devicon()` helper over there.
- */
+// Skill icons are devicon paths rather than uploads. Keep this in sync with
+// deviconUrl in ../portfolio/src/sanity/devicon.ts.
 export const DEVICON_BASE = 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons'
 
-/**
- * Builds a CDN URL from a devicon path such as `java/java-original.svg`.
- * Tolerates a leading slash and passes a full URL straight through, so pasting
- * either form into the Studio works.
- */
+// Builds a CDN URL from a path like `java/java-original.svg`. A full URL passes
+// straight through, so either form works in the Studio.
 export function deviconUrl(path?: string): string | undefined {
   const trimmed = path?.trim().replace(/^\/+/, '')
   if (!trimmed) return undefined

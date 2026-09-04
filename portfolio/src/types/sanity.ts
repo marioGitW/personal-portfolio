@@ -1,19 +1,14 @@
-/**
- * Types mirroring the Sanity content model.
- *
- * Every content field in the CMS is optional by design, so everything here is
- * nullable — GROQ returns `null` for an unset field and omits nothing. The
- * frontend is responsible for fallbacks and conditional rendering.
- */
+// Mirrors the Sanity content model. Every CMS field is optional by design, so
+// everything here is nullable and the frontend owns the fallbacks.
 
-/** An image asset dereferenced by GROQ. `url` is null when no image is set. */
+// An image asset dereferenced by GROQ. url is null when no image is set.
 export type SanityImage = {
   url: string | null;
   lqip: string | null;
   aspectRatio: number | null;
 };
 
-/** A screenshot: an image plus the array `_key` React needs for a stable key. */
+// An image plus the array _key React needs for a stable key.
 export type SanityScreenshot = SanityImage & {
   _key: string;
 };

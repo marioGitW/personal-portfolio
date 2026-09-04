@@ -1,11 +1,5 @@
-/**
- * GROQ lives here, never inline in components.
- *
- * Asset references are dereferenced to plain URLs in the query itself
- * (`asset->url`). That keeps one code path for both image assets (thumbnails,
- * screenshots) and file assets (experience/skill icons, which may be SVG), and
- * means client components receive strings rather than raw Sanity refs.
- */
+// Assets are dereferenced to plain URLs here (asset->url), so one code path
+// covers both image assets and SVG file assets and components get strings.
 
 const IMAGE_FIELDS = `
   "url": asset->url,
@@ -67,11 +61,8 @@ export const portfolioQuery = /* groq */ `
 }
 `;
 
-/**
- * `coalesce(order, 9999)` keeps projects that have no `order` from breaking the
- * sort — they fall to the end instead of being dropped or ordered randomly.
- * `_createdAt` is the tiebreaker so equal/absent orders stay stable.
- */
+// coalesce sinks projects with no order to the end instead of dropping them;
+// _createdAt keeps equal orders stable.
 export const projectsQuery = /* groq */ `
 *[_type == "project"] | order(coalesce(order, 9999) asc, _createdAt asc){
   _id,

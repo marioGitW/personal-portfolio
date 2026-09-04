@@ -21,10 +21,7 @@ type ProjectLinksProps = {
   className?: string;
 };
 
-/**
- * Each button renders only when its URL exists — no disabled placeholders for
- * projects that have only a demo, only source, or neither.
- */
+// Each button renders only when its URL exists — no disabled placeholders.
 export function ProjectLinks({ project, className = "" }: ProjectLinksProps) {
   // Only http(s) URLs are rendered, so a malformed CMS value can't become a
   // link with some other scheme.

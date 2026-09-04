@@ -10,17 +10,15 @@ import { Header } from "@/components/ui/Header";
 import { getPortfolioContent, getProjectList, getSocialLinks } from "@/lib/cms";
 import { getSiteSettings } from "@/lib/content";
 
-/**
- * Re-fetch CMS content at most once a minute. Publishing in the Studio shows
- * up on the site without a redeploy.
- */
+// Re-fetch at most once a minute, so publishing in the Studio shows up
+// without a redeploy.
 export const revalidate = 60;
 
 export default async function Home() {
   const site = getSiteSettings();
 
-  // Fetched in parallel. `getPortfolioContent` and `getSocialLinks` both read
-  // the cached portfolio document, so this is two round trips, not three.
+  // Two round trips, not three: getPortfolioContent and getSocialLinks share
+  // the cached portfolio document.
   const [content, projects, socialLinks] = await Promise.all([
     getPortfolioContent(),
     getProjectList(),

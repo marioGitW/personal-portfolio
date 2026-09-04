@@ -22,11 +22,8 @@ export function Projects({ projects }: ProjectsProps) {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [closing, setClosing] = useState(false);
 
-  // Intro fade for the section's content as it enters the viewport. This
-  // animates an inner wrapper rather than the section itself, because the
-  // section is also the element GSAP pins below - tweening its transform
-  // directly fought with the pin's own transform and threw off where it
-  // came to rest.
+  // Animates an inner wrapper, not the section: the section is also the pin
+  // target, and tweening its transform fought with the pin's own.
   useEffect(() => {
     const section = sectionRef.current;
     const intro = introRef.current;
@@ -62,8 +59,7 @@ export function Projects({ projects }: ProjectsProps) {
     };
   }, []);
 
-  // Desktop: vertical scroll pins the section and drives the project track
-  // horizontally, right to left, in exact proportion to scroll progress.
+  // Desktop: vertical scroll pins the section and drives the track sideways.
   useEffect(() => {
     const section = sectionRef.current;
     const clip = clipRef.current;
@@ -89,11 +85,8 @@ export function Projects({ projects }: ProjectsProps) {
         start: "top top",
         end: () => `+=${getDistance()}`,
         pin: true,
-        // anticipatePin's velocity-based prediction assumes native scroll
-        // input; against Lenis's programmatic scrollTo (the nav/footer
-        // glide) it mistimed the pin-spacer swap and threw a one-frame
-        // ~3000px flash right as the section engaged. Off, it engages a
-        // touch later but cleanly either way.
+        // anticipatePin assumes native scroll input; against Lenis's
+        // programmatic scrollTo it mistimed the pin swap and flashed ~3000px.
         anticipatePin: 0,
         scrub: 0.6,
         invalidateOnRefresh: true,
@@ -107,9 +100,8 @@ export function Projects({ projects }: ProjectsProps) {
     });
 
     return () => mm.revert();
-    // Card widths are CSS-driven (`lg:w-[42vw]`), so the scroll distance only
-    // changes when the number of cards does — `getDistance()` re-measures the
-    // live DOM on every refresh, so any project count works without hardcoding.
+    // Card widths are CSS-driven, so only the card count changes the distance;
+    // getDistance() re-measures the DOM on every refresh.
   }, [projects.length]);
 
   const handleOpen = (project: Project) => {

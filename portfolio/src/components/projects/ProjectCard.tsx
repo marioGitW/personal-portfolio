@@ -10,8 +10,7 @@ type ProjectCardProps = {
 };
 
 export function ProjectCard({ project, onOpen }: ProjectCardProps) {
-  // The card and the expanded view read the same fields — the Sanity document
-  // is the single source of truth, with no per-view duplicate copy.
+  // Card and modal read the same fields; no per-view duplicate copy.
   const title = project.thumbnailTitle ?? project.title;
 
   return (
@@ -29,16 +28,14 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
         />
       </div>
 
-      {/* Baseline legibility gradient — near-opaque at the bottom so the
-          text sits on solid dark ground, fading out well before the top so
-          the picture still reads clearly up there. */}
+      {/* Near-opaque at the bottom so the text sits on solid ground, fading
+          out before the top so the image still reads. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/80 via-45% to-black/10"
       />
 
-      {/* Hover overlay — a flat dark layer across the whole card, distinct
-          from the default (near-)bright state. */}
+      {/* Flat dark layer on hover, distinct from the default bright state. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/60"
@@ -61,7 +58,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
           )}
         </div>
 
-        {/* View Details — hidden until hover */}
+        {/* Hidden until hover. */}
         <div className="grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 group-hover:grid-rows-[1fr] group-hover:opacity-100">
           <div className="overflow-hidden">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30">

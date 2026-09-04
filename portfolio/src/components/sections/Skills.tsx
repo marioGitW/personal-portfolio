@@ -24,7 +24,7 @@ type SkillsProps = {
 };
 
 export function Skills({ skills }: SkillsProps) {
-  // Paginated, not a marquee — `chunk` already adapts to any number of skills.
+  // Paginated, not a marquee; chunk adapts to any number of skills.
   const items = skills.skillItems ?? [];
   const pages = chunk(items, CARDS_PER_PAGE);
   const [page, setPage] = useState(0);

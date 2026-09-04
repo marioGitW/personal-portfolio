@@ -3,21 +3,11 @@ import { sanityClient } from "./client";
 import { portfolioQuery, projectsQuery } from "./queries";
 import type { Portfolio, Project } from "@/types/sanity";
 
-/**
- * Call these from Server Components only — the dataset is private and the read
- * token is server-side (`SANITY_API_READ_TOKEN`, no `NEXT_PUBLIC_` prefix, so
- * Next never inlines it into client JS).
- *
- * Both fetchers swallow errors on purpose: a CMS outage, a bad token or an
- * unconfigured environment should degrade to the hardcoded fallbacks in
- * `@/content/fallbacks`, never take the site down. The error is logged so the
- * failure is still visible in server logs.
- */
+// Server Components only — the read token is deliberately not NEXT_PUBLIC_.
+// Errors are swallowed so a CMS outage degrades to the fallbacks, never a
+// broken site.
 
-/**
- * Wrapped in `cache()` so the layout (social sidebar) and the page (everything
- * else) share one round trip per request instead of querying twice.
- */
+// cache() so the layout and the page share one round trip, not two.
 export const getPortfolio = cache(async (): Promise<Portfolio | null> => {
   if (!sanityClient) {
     return null;

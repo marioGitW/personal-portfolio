@@ -33,8 +33,7 @@ export function ProjectVisual({ title, imageUrl, lqip, className = "" }: Project
     );
   }
 
-  // No thumbnail set in the CMS — render the built-in initials placeholder
-  // rather than a broken image.
+  // No thumbnail set, so fall back to the initials placeholder.
   return (
     <div
       className={`relative isolate overflow-hidden bg-slate-100 dark:bg-slate-900 ${className}`}

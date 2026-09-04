@@ -8,11 +8,9 @@ import { LIKED_STORAGE_KEY } from "@/lib/nav";
 import type { SiteStats } from "@/lib/types";
 import { recordVisit } from "@/lib/visit";
 
-// `sessionStorage` is per-tab and dies with the browser session, which is
-// exactly the "one like per session, surviving refreshes" rule. There is no
-// cross-tab change to subscribe to, so the subscription is a no-op:
-// `useSyncExternalStore` is here purely for its SSR-safe read — the server
-// snapshot is `false` and the stored value is picked up after hydration.
+// sessionStorage gives "one like per session, surviving refreshes" for free.
+// Nothing to subscribe to, so this is a no-op; useSyncExternalStore is here
+// only for its SSR-safe read.
 function subscribeLiked() {
   return () => {};
 }
@@ -40,9 +38,7 @@ export function ActivityCounter() {
   const headingRef = useRef<HTMLDivElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
 
-  // The one place a visit is recorded. `recordVisit` counts at most once per
-  // document load, so a Strict Mode remount, a re-render, a theme change or a
-  // modal opening all leave the counter alone — see `@/lib/visit`.
+  // The one place a visit is recorded; recordVisit counts once per page load.
   useEffect(() => {
     const load = async () => {
       try {
@@ -51,7 +47,7 @@ export function ActivityCounter() {
           setStats(data);
         }
       } catch {
-        // Section keeps its loading skeleton if the API is unavailable.
+        // Keeps the loading skeleton if the API is unavailable.
       }
     };
 
@@ -111,10 +107,8 @@ export function ActivityCounter() {
   }, []);
 
   const onLike = async () => {
-    // `pending` only reaches the DOM on the next render, so a burst of clicks
-    // in one tick could each still see an enabled button. The ref is claimed
-    // synchronously, which is what actually makes rapid clicking safe; the
-    // state is what re-renders the button.
+    // The ref is claimed synchronously, which is what makes rapid clicking
+    // safe — `pending` only reaches the DOM on the next render.
     if (isLiked || likeInFlight.current) {
       return;
     }
@@ -132,8 +126,7 @@ export function ActivityCounter() {
       const data = (await response.json()) as { likes: number };
       setStats((current) => (current ? { ...current, likes: data.likes } : current));
     } catch {
-      // Nothing was recorded, so roll the optimistic like back instead of
-      // showing a count the server never saw. The visitor can try again.
+      // Nothing was recorded, so roll the optimistic like back.
       window.sessionStorage.removeItem(LIKED_STORAGE_KEY);
       setLiked(false);
     } finally {

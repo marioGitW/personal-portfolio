@@ -7,16 +7,14 @@ import "lenis/dist/lenis.css";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { registerGsapPlugins } from "@/lib/animations";
 
-// Caps how blurred the page can get while a link-triggered scroll is in
-// flight, and how fast that blur reacts to scroll speed, so the effect
-// stays a subtle motion cue rather than a visible smear.
+// Caps the blur during a link-triggered scroll so it reads as a motion cue
+// rather than a smear.
 const MAX_SCROLL_BLUR_PX = 3.5;
 const BLUR_VELOCITY_FACTOR = 0.12;
 const BLUR_SMOOTHING = 0.18;
 const BLUR_IDLE_THRESHOLD = 0.02;
 
-// Slightly longer, eased-out duration so nav/footer link jumps read as a
-// deliberate glide instead of an instant snap.
+// Longer and eased so nav jumps glide instead of snapping.
 const NAV_SCROLL_DURATION = 1.4;
 const navScrollEasing = (t: number) => 1 - Math.pow(1 - t, 4);
 
@@ -32,13 +30,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // No `anchors` option here on purpose: Lenis's built-in anchor handler
-    // never calls preventDefault, so it ends up racing the browser's own
-    // instant hash jump — the two fight over scrollTop and produce a
-    // visible snap-back (most obvious scrolling into the pinned Projects
-    // section). Anchor clicks are handled explicitly below instead, as the
-    // only source of the eased glide + blur; regular wheel/touch scrolling
-    // keeps Lenis's normal (unblurred) momentum feel.
+    // No `anchors` option on purpose: Lenis's handler skips preventDefault and
+    // races the browser's own hash jump, which snaps back. Anchor clicks are
+    // handled explicitly below instead.
     const lenis = new Lenis({ autoRaf: false });
 
     lenis.on("scroll", ScrollTrigger.update);

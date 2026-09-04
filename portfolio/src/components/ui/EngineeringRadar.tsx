@@ -6,7 +6,7 @@ import { registerGsapPlugins } from "@/lib/animations";
 
 type RadarDimension = {
   label: string;
-  /** Purely visual shape weighting (0-1) — never rendered as a number. */
+  /** Visual shape weighting only; never rendered as a number. */
   value: number;
 };
 

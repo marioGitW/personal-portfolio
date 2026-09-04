@@ -26,8 +26,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  // Opening animation — runs whenever a project is provided and we're not
-  // mid-close (a fresh open, not the tail end of a previous close).
+  // Runs on a fresh open, not the tail end of a close.
   useEffect(() => {
     if (!project || closing) {
       return;
@@ -71,8 +70,8 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs on open only
   }, [project]);
 
-  // Closing animation — plays first, then hands control back to the parent
-  // via onExited so the modal is unmounted only once it's fully invisible.
+  // Plays first, then onExited unmounts, so the modal is gone only once it is
+  // fully invisible.
   useEffect(() => {
     if (!closing) {
       return;
@@ -105,7 +104,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     };
   }, [closing, onExited]);
 
-  // Escape key + focus trap while a project is being shown.
+  // Escape key + focus trap while a project is shown.
   useEffect(() => {
     if (!project) {
       return;
@@ -161,8 +160,8 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     return null;
   }
 
-  // Only screenshots whose asset actually resolved — a missing image is
-  // dropped rather than rendered as a broken slide.
+  // Drops screenshots whose asset did not resolve, rather than showing a
+  // broken slide.
   const screenshots = (project.screenshots ?? []).filter(
     (screenshot): screenshot is ResolvedScreenshot => Boolean(screenshot?.url),
   );

@@ -7,16 +7,12 @@ type ProjectsScrollerProps = {
   onOpen: (project: Project) => void;
 };
 
-// The horizontal gallery track. On desktop it's a single-row `w-max` flex
-// list that GSAP translates on the x-axis (see Projects.tsx) while its
-// wrapper clips overflow — there is no native horizontal scroll here. Below
-// the `lg` breakpoint it falls back to a plain vertical stack so touch
-// scrolling never fights a nested scroll area.
+// Desktop: a w-max flex row that GSAP translates while the wrapper clips it —
+// no native horizontal scroll. Below lg it stacks vertically so touch scrolling
+// never fights a nested scroll area.
 //
-// The left padding is `--page-gutter` (globals.css), not a viewport fraction,
-// so the first card's edge lines up with every other section's centred
-// `max-w-[1400px]` container instead of drifting left on wide screens. The
-// right padding stays a viewport fraction — it's just trailing scroll runway.
+// Left padding uses --page-gutter so the first card lines up with every other
+// section's centred container; the right padding is just scroll runway.
 export const ProjectsScroller = forwardRef<HTMLUListElement, ProjectsScrollerProps>(
   function ProjectsScroller({ projects, onOpen }, ref) {
     return (

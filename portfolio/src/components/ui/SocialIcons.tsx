@@ -3,19 +3,9 @@ import { Globe, Mail } from "lucide-react";
 import { AssetIcon } from "@/components/ui/AssetIcon";
 import type { SocialLinkItem, SocialPlatform } from "@/types/sanity";
 
-/**
- * Built-in social icons.
- *
- * These are inline SVG components rather than uploaded images on purpose:
- * `fill="currentColor"` lets them inherit the link's text colour, which is
- * what drives the hover accent and the `drop-shadow` glow in the sidebar and
- * footer. An uploaded raster/SVG asset can't recolor with the theme.
- *
- * To add a platform: add the value to `SocialPlatform` in `@/types/sanity`,
- * add a matching option in the Studio's `socialLink` schema, and add an entry
- * here. Anything not listed is authored as `platform: "other"` with an
- * uploaded icon.
- */
+// Inline SVGs, not uploads: fill="currentColor" lets them inherit the link's
+// colour, which drives the hover accent and glow. To add a platform, extend
+// SocialPlatform, the Studio's socialLink schema, and the map below.
 
 function GitHubIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -58,7 +48,7 @@ const SOCIAL_ICONS: Record<SocialPlatform, ComponentType<SVGProps<SVGSVGElement>
   other: Globe,
 };
 
-/** Human-readable platform names, used as the accessible name when no label is set. */
+// Used as the accessible name when a link has no explicit label.
 const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
   github: "GitHub",
   linkedin: "LinkedIn",
@@ -68,7 +58,7 @@ const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
   other: "Website",
 };
 
-/** The accessible name for a link: explicit label, else the platform name. */
+// Accessible name: explicit label, else the platform name.
 export function socialLabel(link: Pick<SocialLinkItem, "label" | "platform">): string {
   const label = link.label?.trim();
   if (label) {
@@ -82,12 +72,8 @@ type SocialIconProps = {
   className?: string;
 };
 
-/**
- * An uploaded icon wins over the built-in one, mirroring `skillIconUrl`.
- * The uploaded branch renders an `<img>` (it may be an SVG file asset), the
- * built-in branch a `currentColor` component — both take the same `className`
- * so call sites keep their own sizing.
- */
+// An uploaded icon wins over the built-in one, mirroring skillIconUrl. Both
+// branches take the same className so call sites keep their sizing.
 export function SocialIcon({ link, className }: SocialIconProps) {
   if (link.iconUrl) {
     return <AssetIcon src={link.iconUrl} alt="" className={className} />;

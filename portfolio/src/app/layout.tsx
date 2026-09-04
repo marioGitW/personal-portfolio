@@ -31,8 +31,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  // `getPortfolio` is wrapped in React `cache()`, so this shares the page's
-  // CMS round trip rather than issuing a second one.
+  // cache()'d, so this shares the page's CMS round trip rather than adding one.
   const socialLinks = await getSocialLinks();
 
   return (

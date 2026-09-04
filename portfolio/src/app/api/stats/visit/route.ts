@@ -4,11 +4,8 @@ import { recordVisit } from "@/lib/redis";
 const LIMIT = 30;
 const WINDOW_SECONDS = 60;
 
-/**
- * A POST, not a GET, so nothing that speculatively fetches — a crawler, a link
- * unfurler, a browser prerender — can move the counter. The client calls it at
- * most once per document load; see `@/lib/visit`.
- */
+// A POST so no crawler or prerender can move the counter. The client calls it
+// at most once per page load; see @/lib/visit.
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {

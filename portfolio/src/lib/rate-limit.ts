@@ -2,23 +2,16 @@ import { KEY_PREFIX, getRedis } from "@/lib/redis";
 
 export type RateLimitResult = { ok: true } | { ok: false; retryAfter: number };
 
-/**
- * Vercel puts the real client IP first in `x-forwarded-for`. Anything that
- * gets here without one shares a single bucket rather than bypassing the limit.
- */
+// Vercel puts the real client IP first. Anything without one shares a single
+// bucket rather than bypassing the limit.
 function clientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   const first = forwarded?.split(",")[0]?.trim();
   return first || request.headers.get("x-real-ip")?.trim() || "unknown";
 }
 
-/**
- * Fixed-window limit of `limit` requests per `windowSeconds`, keyed by IP.
- *
- * INCR is atomic and returns the new count, so concurrent requests can't slip
- * past by racing. Any Redis problem fails open — a counter outage must never
- * take the contact form down.
- */
+// Fixed window, keyed by IP. INCR is atomic so concurrent requests can't race
+// past it, and any Redis error fails open rather than blocking the form.
 export async function rateLimit(
   request: Request,
   name: string,
@@ -35,8 +28,7 @@ export async function rateLimit(
   try {
     const count = await redis.incr(key);
 
-    // Only the request that created the key sets the expiry, so the window
-    // starts at the first hit instead of sliding forward on every one.
+    // Only the first request sets the expiry, so the window doesn't slide.
     if (count === 1) {
       await redis.expire(key, windowSeconds);
     }
@@ -53,7 +45,7 @@ export async function rateLimit(
   }
 }
 
-/** The 429 every limited route returns, with the standard Retry-After header. */
+// The 429 every limited route returns, with a Retry-After header.
 export function tooManyRequests(retryAfter: number): Response {
   return Response.json(
     { error: "Too many requests" },

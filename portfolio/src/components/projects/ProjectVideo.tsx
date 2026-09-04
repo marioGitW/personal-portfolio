@@ -10,17 +10,9 @@ function isVideoFile(url: string): boolean {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
-/**
- * Converts a share URL into its embeddable player URL.
- *
- * A plain `youtube.com/watch?v=…` link — the form you get from the browser
- * address bar and the most likely thing to be pasted into the CMS — sends
- * `X-Frame-Options: SAMEORIGIN` and renders as a blank box in an iframe. The
- * `/embed/` form is the one that actually plays.
- *
- * Returns null when the URL isn't a recognised provider, so the caller can
- * decide what to do with it.
- */
+// A watch?v= link — the form most likely to be pasted into the CMS — sends
+// X-Frame-Options and renders blank in an iframe; /embed/ is the one that
+// plays. Null for an unrecognised provider, so the caller decides.
 function toEmbedUrl(url: string): string | null {
   let parsed: URL;
   try {
@@ -97,8 +89,7 @@ export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: Pro
     );
   }
 
-  // Not a usable video source — show a polished "coming soon" placeholder
-  // rather than a broken player.
+  // Not a usable source, so show a placeholder rather than a broken player.
   return (
     <div
       className={`project-visual-grid relative isolate flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900 ${className}`}

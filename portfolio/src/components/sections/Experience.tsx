@@ -14,8 +14,7 @@ type ExperienceProps = {
 };
 
 export function Experience({ experience }: ExperienceProps) {
-  // Non-mutating sort — the fetched array is left untouched. Items without an
-  // `order` sink to the end rather than disappearing.
+  // Non-mutating; items without an order sink to the end.
   const items = sortByOrder(experience.experienceItems ?? []);
 
   const listRef = useRef<HTMLOListElement>(null);

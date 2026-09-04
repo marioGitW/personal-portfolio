@@ -3,8 +3,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import gsap from "gsap";
 
-// Anything a pointer would actually click/activate - native controls plus
-// [data-cursor] as an escape hatch for one-off custom widgets.
+// Anything clickable, plus [data-cursor] as an escape hatch for custom widgets.
 const INTERACTIVE =
   "a, button, [role='button'], input[type='checkbox'], input[type='radio'], input[type='range'], input[type='submit'], input[type='button'], input[type='file'], select, summary, label, [data-cursor], [tabindex]:not([tabindex='-1'])";
 
@@ -54,8 +53,7 @@ export function Cursor() {
       yRing(event.clientY);
     };
 
-    // Same reaction for every clickable element: the ring expands while the
-    // dot shrinks down inside it.
+    // Ring expands while the dot shrinks inside it.
     const hoverIn = () => {
       gsap.to(ring, {
         scale: 1.3,

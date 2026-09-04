@@ -15,8 +15,7 @@ type HeroProps = {
 
 export function Hero({ hero }: HeroProps) {
   const title = hero.mainTitle ?? "";
-  // The lockup animates two masked lines, so the title is always split into
-  // exactly two — both spans must exist for the GSAP timeline to run.
+  // Always two lines: both spans must exist for the GSAP timeline to run.
   const [lineOne, lineTwo] = splitTitleLines(title);
   const resumeButtonRef = useRef<HTMLButtonElement>(null);
   const [resumeOpen, setResumeOpen] = useState(false);
@@ -32,9 +31,8 @@ export function Hero({ hero }: HeroProps) {
   const portraitRef = useRef<HTMLDivElement>(null);
   const portraitInnerRef = useRef<HTMLDivElement>(null);
 
-  // Entrance timeline + scroll parallax. The outer wrappers (copy, portrait)
-  // carry the scroll tween while their children carry the entrance tween, so
-  // the two never write to the same element's transform.
+  // Outer wrappers carry the scroll tween, their children the entrance tween,
+  // so the two never write to the same transform.
   useEffect(() => {
     const section = sectionRef.current;
     const copy = copyRef.current;
@@ -73,8 +71,7 @@ export function Hero({ hero }: HeroProps) {
 
     gsap.set([lineOne, lineTwo], { yPercent: 130 });
     gsap.set([eyebrow, tagline, cta], { opacity: 0, y: 18 });
-    // Eyebrow tracks in slightly tighter than its resting letter-spacing, so
-    // it reads as an intentional reveal rather than a plain fade.
+    // Starts tighter than its resting tracking so the reveal reads as intentional.
     gsap.set(eyebrow, { letterSpacing: "0.08em" });
     gsap.set(portraitInner, { opacity: 0, y: 48, scale: 0.965 });
 
@@ -92,9 +89,8 @@ export function Hero({ hero }: HeroProps) {
       .to(tagline, { opacity: 1, y: 0, duration: 0.6 }, "-=0.8")
       .to(cta, { opacity: 1, y: 0, duration: 0.6 }, "-=0.45");
 
-    // The preloader covers the viewport for ~2s on first load; wait for it so
-    // the sequence is actually seen. Fallback keeps the hero from ever sticking
-    // at its initial state if that event never arrives.
+    // Wait for the preloader so the sequence is actually seen; the timeout
+    // keeps the hero from sticking if that event never fires.
     const start = () => timeline.play();
     window.addEventListener("preloader:done", start, { once: true });
     const fallback = window.setTimeout(start, 3200);
@@ -120,8 +116,7 @@ export function Hero({ hero }: HeroProps) {
     };
   }, []);
 
-  // Cursor-tracked highlight on the name (fine pointers only). Writes CSS
-  // custom properties instead of React state so it never re-renders.
+  // Writes CSS custom properties rather than state, so it never re-renders.
   useEffect(() => {
     const lockup = lockupRef.current;
     if (!lockup) {
@@ -148,9 +143,8 @@ export function Hero({ hero }: HeroProps) {
     };
   }, []);
 
-  // Hover parallax: the portrait drifts opposite the cursor (deeper layer),
-  // the name lockup drifts slightly with it (foreground layer). Uses
-  // gsap.quickTo so repeated pointermove updates never spin up new tweens.
+  // Portrait drifts against the cursor, the name with it. quickTo so repeated
+  // pointermove updates do not spin up new tweens.
   useEffect(() => {
     const section = sectionRef.current;
     const portraitInner = portraitInnerRef.current;
@@ -204,10 +198,8 @@ export function Hero({ hero }: HeroProps) {
       ref={sectionRef}
       className="relative w-full overflow-hidden pb-10 sm:pb-14 lg:h-[calc(100svh-65px)] lg:min-h-[600px] lg:pb-0"
     >
-      {/* Copy: constrained to the page container. On mobile/tablet it sits in
-          normal flow above the portrait; from lg up it's vertically centred
-          and the portrait bleeds over it. The left padding from md up clears
-          the fixed SocialSidebar. */}
+      {/* Stacks above the portrait on mobile; centred from lg up with the
+          portrait bleeding over it. Left padding clears the SocialSidebar. */}
       <div
         ref={copyRef}
         className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-col justify-start px-4 pt-10 sm:px-6 sm:pt-14 md:pl-24 lg:h-full lg:justify-center lg:pt-0 lg:pl-28"
@@ -267,19 +259,15 @@ export function Hero({ hero }: HeroProps) {
         </div>
       </div>
 
-      {/* Portrait: sits in normal flow just under the copy on mobile/tablet,
-          scaled by viewport width. From lg up it bleeds to the right edge of
-          the viewport, anchored to the bottom of the hero and overlapping the
-          name - the head is meant to sit into the heading, not float beside
-          it. */}
+      {/* Under the copy on mobile. From lg up it bleeds to the right edge and
+          overlaps the name — the head should sit into the heading. */}
       <div
         ref={portraitRef}
         className="relative z-10 mt-4 flex justify-center pointer-events-none select-none sm:mt-6 lg:absolute lg:inset-y-0 lg:right-[3vw] lg:z-20 lg:mt-0 lg:items-end lg:justify-end min-[1700px]:right-[6vw] min-[1700px]:pb-[3%]"
       >
         <div ref={portraitInnerRef} className="relative flex lg:h-full lg:items-end">
-          {/* Tightly wraps the image's own rendered box (not the taller
-              flex column around it) so the glow behind it is centred and
-              sized relative to the character, not the section. */}
+          {/* Wraps the image's own box, not the taller column, so the glow is
+              sized to the character rather than the section. */}
           <div className="relative">
             <div
               className="hero-portrait-glow pointer-events-none absolute -inset-x-[6%] -inset-y-[4%]"

@@ -152,9 +152,8 @@ export function About({ about }: AboutProps) {
             ))}
           </div>
 
-          {/* Always rendered so the GSAP timeline's ref resolves; with no tags
-              it collapses to an unstyled, zero-height div rather than leaving
-              a stray divider line. */}
+          {/* Always rendered so the GSAP ref resolves; with no tags it
+              collapses rather than leaving a stray divider. */}
           <div
             ref={statsRef}
             className={

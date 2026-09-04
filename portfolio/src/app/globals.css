@@ -10,10 +10,8 @@
   --scrollbar-thumb: #6366f1;
   --font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  /* Distance from the viewport edge to the content edge of the centred
-     `max-w-[1400px] px-4 sm:px-6` container every section uses. The projects
-     track is full-bleed so it can scroll horizontally, and uses this to line
-     its first card up with the rest of the page. */
+  /* Viewport edge to the content edge of the centred container. The full-bleed
+     projects track uses it to line its first card up with the rest of the page. */
   --page-gutter: max(1.5rem, calc(50vw - 700px + 1.5rem));
 }
 
@@ -165,11 +163,8 @@ h6,
   }
 }
 
-/* About panel: the whole About Me content sits in a bordered card. A GSAP
-   tween continuously rotates --border-angle (see About.tsx), sweeping a
-   short accent-gradient arc around the card while the rest of the ring
-   stays fully transparent — the character (rendered just to its left on
-   desktop) reads as leaning against this border. */
+/* A GSAP tween rotates --border-angle (see About.tsx), sweeping a short accent
+   arc around the card while the rest of the ring stays transparent. */
 @property --border-angle {
   syntax: "<angle>";
   inherits: false;
@@ -228,9 +223,8 @@ h6,
   }
 }
 
-/* Hero name lockup: MARIO solid, SPASOVSKI outline-only that fills with the
-   accent gradient (left to right) on hover, plus a cursor-tracked radial
-   highlight clipped to the glyphs (--mx/--my set from Hero.tsx pointermove). */
+/* Line one solid, line two outline-only, filling with the accent gradient on
+   hover. --mx/--my come from Hero.tsx pointermove. */
 .hero-name-outline {
   color: transparent;
   -webkit-text-stroke-width: 1.5px;
@@ -273,9 +267,8 @@ h6,
   }
 }
 
-/* Hero name lines: each line sits in its own overflow window so GSAP can
-   slide it up into place. The padding/negative-margin pair widens the window
-   just enough that the tight 0.86 leading never clips the caps or the stroke. */
+/* Each line gets its own overflow window so GSAP can slide it into place. The
+   padding/margin pair keeps the tight leading from clipping the caps. */
 .hero-line-mask {
   overflow: hidden;
   padding-top: 0.14em;
@@ -284,8 +277,7 @@ h6,
   margin-bottom: -0.06em;
 }
 
-/* Eyebrow role label: a small gradient dot with a slow breathing glow gives
-   the line a quiet focal point without competing with the name below it. */
+/* A slow breathing glow, quiet enough not to compete with the name below. */
 .hero-eyebrow-dot {
   display: inline-block;
   width: 6px;
@@ -316,24 +308,19 @@ h6,
   }
 }
 
-/* Hero portrait: soft single-tone bloom centred behind the cutout. Sized and
-   blurred wide enough to read as ambient light rather than a shape, kept
-   very faint so it stays a backdrop, not a second focal point. */
+/* Blurred wide enough to read as ambient light rather than a shape. */
 .hero-portrait-glow {
   background: radial-gradient(circle at 50% 55%, var(--color-accent-from), transparent 62%);
   filter: blur(48px);
   opacity: 0.08;
 }
 
-/* Solid fade to the page background at the foot of the portrait - an opaque
-   overlay (not an alpha mask) so it reads as "the photo ends here" rather
-   than a soft glow/cloud. */
+/* An opaque overlay, not an alpha mask, so it reads as the photo ending. */
 .hero-portrait-fade {
   background: linear-gradient(to top, var(--background) 0%, var(--background) 18%, transparent 100%);
 }
 
-/* Contact form field icon: jumps and switches to the accent color while
-   its input is focused (see Contact.tsx's focused-field state). */
+/* Jumps and takes the accent colour while its input is focused. */
 @keyframes field-icon-jump {
   0% {
     transform: translateY(0) scale(1);
@@ -400,8 +387,7 @@ h6,
   animation: count-pop 0.4s ease-out;
 }
 
-/* Project placeholder visual: a fine technical grid, theme-aware via
-   --foreground, used until a real screenshot/coverImage is supplied. */
+/* Fine technical grid, theme-aware, shown until a real screenshot exists. */
 .project-visual-grid {
   background-image:
     linear-gradient(color-mix(in srgb, var(--foreground) 6%, transparent) 1px, transparent 1px),

@@ -1,19 +1,9 @@
 import type { About, Experience, Hero, Project, Skills } from "@/types/sanity";
 
-/**
- * Every hardcoded content value in the frontend lives in this one file.
- *
- * Two kinds of content are here:
- *
- * 1. **Fallbacks** — used when the CMS field is empty or the CMS is
- *    unreachable, so the site is never blank. Typed to the same shapes the
- *    Sanity queries return, so `@/lib/content` can merge them field by field.
- * 2. **Static copy** — section eyebrows/headings that have no CMS field at
- *    all. Kept here rather than inline in components so all copy is editable
- *    from one place.
- */
+// Every hardcoded content value lives here: fallbacks for when the CMS is empty
+// or unreachable, plus static copy that has no CMS field at all.
 
-/** Site-level values with no CMS equivalent (used by layout metadata + footer). */
+// Site-level values with no CMS equivalent (layout metadata + footer).
 export const siteSettings = {
   name: "Mario Spasovski",
   role: "Aspiring Software Engineer",
@@ -87,7 +77,7 @@ export const experienceFallback: Experience = {
       place: "Freelance",
       position: "Freelance Technician",
       type: "Freelance",
-      // Ongoing role: a month count can't express it, so the label is used.
+      // Ongoing role, so the label is used instead of a month count.
       durationMonths: null,
       durationLabel: "2022 — Present",
       iconUrl: null,
@@ -220,14 +210,14 @@ export const projectsFallback: Project[] = [
   },
 ];
 
-/** Languages shown in the About panel. No CMS field exists for these. */
+// Languages shown in the About panel. No CMS field exists for these.
 export const aboutLanguages = [
   { code: "MK", label: "Macedonian" },
   { code: "GB", label: "English" },
   { code: "RS", label: "Serbian" },
 ] as const;
 
-/** Section headings and eyebrows that are not editable from the CMS. */
+// Section headings and eyebrows that are not editable from the CMS.
 export const sectionCopy = {
   about: {
     eyebrow: "About",

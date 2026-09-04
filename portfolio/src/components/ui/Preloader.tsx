@@ -98,7 +98,7 @@ export function Preloader() {
       defaults: { ease: "power3.inOut" },
       onComplete: () => {
         setHidden(true);
-        // Lets the hero hold its entrance timeline until the curtain is up.
+        // Lets the hero hold its entrance until the curtain is up.
         window.dispatchEvent(new Event("preloader:done"));
       },
     });

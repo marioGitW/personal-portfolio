@@ -1,31 +1,18 @@
 import type { SiteStats } from "@/lib/types";
 
-/**
- * Visits are page loads, not unique visitors — every refresh should count once,
- * and nothing else should count at all.
- *
- * The "already counted" flag lives on `window` rather than in module scope on
- * purpose. React Strict Mode mounts effects twice in development, and a Fast
- * Refresh re-evaluates modules while keeping the page; both share one `window`,
- * so both are covered. A real navigation or refresh gets a fresh `window` and
- * counts again. That is the exact lifetime we want, with no timers and no
- * arbitrary debounce window.
- */
+// Visits are page loads, not unique visitors. The flag lives on window rather
+// than module scope so a Strict Mode remount or Fast Refresh still counts once.
 const VISIT_FLAG = "__portfolioVisitRecorded";
 
 type VisitWindow = Window & { [VISIT_FLAG]?: boolean };
 
-/**
- * Records this page load and returns the current counts. Called more than once
- * per load (a Strict Mode remount) it falls through to the read-only endpoint,
- * so the UI still gets its numbers without touching the counter.
- */
+// Records this load and returns the counts. A second call in the same load
+// falls through to the read-only endpoint instead of counting again.
 export async function recordVisit(): Promise<SiteStats | null> {
   const view = window as VisitWindow;
   const alreadyCounted = view[VISIT_FLAG] === true;
 
-  // Claimed synchronously, before the first `await`, so two effects racing in
-  // the same tick cannot both reach the incrementing endpoint.
+  // Claimed before the first await, so two effects in one tick can't both increment.
   view[VISIT_FLAG] = true;
 
   const response = alreadyCounted
