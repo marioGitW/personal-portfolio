@@ -6,14 +6,19 @@ import { Heart } from "lucide-react";
 import { registerGsapPlugins } from "@/lib/animations";
 import { LIKED_STORAGE_KEY } from "@/lib/nav";
 import type { SiteStats } from "@/lib/types";
+import { recordVisit } from "@/lib/visit";
 
-function subscribeLiked(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  return () => window.removeEventListener("storage", onStoreChange);
+// `sessionStorage` is per-tab and dies with the browser session, which is
+// exactly the "one like per session, surviving refreshes" rule. There is no
+// cross-tab change to subscribe to, so the subscription is a no-op:
+// `useSyncExternalStore` is here purely for its SSR-safe read — the server
+// snapshot is `false` and the stored value is picked up after hydration.
+function subscribeLiked() {
+  return () => {};
 }
 
 function getLikedSnapshot() {
-  return window.localStorage.getItem(LIKED_STORAGE_KEY) === "1";
+  return window.sessionStorage.getItem(LIKED_STORAGE_KEY) === "1";
 }
 
 function formatCount(value: number): string {
@@ -28,6 +33,7 @@ export function ActivityCounter() {
   const [likesPop, setLikesPop] = useState(false);
   const isLiked = liked || storedLiked;
   const prevLikes = useRef<number | null>(null);
+  const likeInFlight = useRef(false);
 
   const sectionRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -35,12 +41,14 @@ export function ActivityCounter() {
   const headingRef = useRef<HTMLDivElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
 
+  // The one place a visit is recorded. `recordVisit` counts at most once per
+  // document load, so a Strict Mode remount, a re-render, a theme change or a
+  // modal opening all leave the counter alone — see `@/lib/visit`.
   useEffect(() => {
     const load = async () => {
       try {
-        const response = await fetch("/api/stats");
-        if (response.ok) {
-          const data = (await response.json()) as SiteStats;
+        const data = await recordVisit();
+        if (data) {
           setStats(data);
         }
       } catch {
@@ -104,25 +112,33 @@ export function ActivityCounter() {
   }, []);
 
   const onLike = async () => {
-    if (isLiked || pending) {
+    // `pending` only reaches the DOM on the next render, so a burst of clicks
+    // in one tick could each still see an enabled button. The ref is claimed
+    // synchronously, which is what actually makes rapid clicking safe; the
+    // state is what re-renders the button.
+    if (isLiked || likeInFlight.current) {
       return;
     }
+    likeInFlight.current = true;
 
     setPending(true);
-    window.localStorage.setItem(LIKED_STORAGE_KEY, "1");
+    window.sessionStorage.setItem(LIKED_STORAGE_KEY, "1");
     setLiked(true);
 
     try {
       const response = await fetch("/api/stats/like", { method: "POST" });
-      if (response.ok) {
-        const data = (await response.json()) as { likes: number };
-        setStats((current) => (current ? { ...current, likes: data.likes } : current));
-      } else {
-        setStats((current) => (current ? { ...current, likes: current.likes + 1 } : current));
+      if (!response.ok) {
+        throw new Error(`Like request failed with ${response.status}`);
       }
+      const data = (await response.json()) as { likes: number };
+      setStats((current) => (current ? { ...current, likes: data.likes } : current));
     } catch {
-      setStats((current) => (current ? { ...current, likes: current.likes + 1 } : current));
+      // Nothing was recorded, so roll the optimistic like back instead of
+      // showing a count the server never saw. The visitor can try again.
+      window.sessionStorage.removeItem(LIKED_STORAGE_KEY);
+      setLiked(false);
     } finally {
+      likeInFlight.current = false;
       setPending(false);
     }
   };

@@ -104,7 +104,7 @@ export default defineType({
       type: 'array',
       group: 'details',
       description:
-        'Technologies used. Free text, so every project can list whatever it actually uses. Examples: "React", "TypeScript", "Spring Boot", "PostgreSQL".',
+        'Technologies used. Type one and press Enter to turn it into a tag, then type the next — no quotes, no commas. Anything left untagged in the box is not saved. Examples: React, TypeScript, Spring Boot, PostgreSQL.',
       of: [defineArrayMember({type: 'string'})],
       options: {layout: 'tags'},
     }),
