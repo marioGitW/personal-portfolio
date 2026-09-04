@@ -49,7 +49,7 @@ function WhatsAppIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export const SOCIAL_ICONS: Record<SocialPlatform, ComponentType<SVGProps<SVGSVGElement>>> = {
+const SOCIAL_ICONS: Record<SocialPlatform, ComponentType<SVGProps<SVGSVGElement>>> = {
   github: GitHubIcon,
   linkedin: LinkedInIcon,
   instagram: InstagramIcon,
@@ -59,7 +59,7 @@ export const SOCIAL_ICONS: Record<SocialPlatform, ComponentType<SVGProps<SVGSVGE
 };
 
 /** Human-readable platform names, used as the accessible name when no label is set. */
-export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
+const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
   github: "GitHub",
   linkedin: "LinkedIn",
   instagram: "Instagram",

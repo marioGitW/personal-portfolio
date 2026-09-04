@@ -14,7 +14,7 @@ const DEVICON_BASE = "https://cdn.jsdelivr.net/gh/devicons/devicon/icons";
  * Builds a devicon CDN URL from a path such as `java/java-original.svg`.
  * A full URL is passed straight through, so either form works in the CMS.
  */
-export function deviconUrl(path: string | null | undefined): string | null {
+function deviconUrl(path: string | null | undefined): string | null {
   const trimmed = path?.trim().replace(/^\/+/, "");
   if (!trimmed) {
     return null;

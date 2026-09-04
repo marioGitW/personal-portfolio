@@ -36,7 +36,6 @@ export function ActivityCounter() {
   const likeInFlight = useRef(false);
 
   const sectionRef = useRef<HTMLElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   const eyebrowRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
@@ -146,7 +145,6 @@ export function ActivityCounter() {
   return (
     <section ref={sectionRef} className="mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-6">
       <div
-        ref={cardRef}
         className="relative overflow-hidden rounded-3xl border border-slate-200 bg-background px-6 py-12 dark:border-slate-800 sm:px-12 sm:py-14"
       >
         <span

@@ -26,7 +26,7 @@ export function splitTitleLines(title: string | null | undefined): [string, stri
  * Returns null for missing/zero/negative values so no pill is rendered at all
  * rather than something like "0 months".
  */
-export function formatDurationMonths(months: number | null | undefined): string | null {
+function formatDurationMonths(months: number | null | undefined): string | null {
   if (typeof months !== "number" || !Number.isFinite(months) || months <= 0) {
     return null;
   }

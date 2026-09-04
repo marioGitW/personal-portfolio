@@ -11,8 +11,6 @@ const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION ?? "2024-01-01";
  */
 const readToken = process.env.SANITY_API_READ_TOKEN;
 
-export const isSanityConfigured = Boolean(projectId && dataset);
-
 /**
  * `null` when the project isn't configured, so the app degrades to its
  * hardcoded fallbacks instead of throwing at import time (e.g. a fresh clone
@@ -29,5 +27,3 @@ export const sanityClient: SanityClient | null =
         perspective: "published",
       })
     : null;
-
-export const sanityConfig = { projectId, dataset, apiVersion } as const;

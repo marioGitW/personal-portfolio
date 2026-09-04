@@ -59,7 +59,6 @@ h3,
 h4,
 h5,
 h6,
-.heading,
 .font-heading {
   font-family: var(--font-heading);
 }
@@ -133,155 +132,15 @@ h6,
   );
 }
 
-.text-ghost {
-  color: transparent;
-  -webkit-text-stroke: 1px var(--ghost-stroke);
-}
-
-.text-ghost:hover,
-.text-name-fill {
-  color: transparent;
-  -webkit-text-stroke: 0;
-  background-image: linear-gradient(to right, #6366f1, #22d3ee);
-  background-clip: text;
-  -webkit-background-clip: text;
-}
-
 .text-accent-gradient {
-  background-image: linear-gradient(to right, #6366f1, #22d3ee);
+  background-image: linear-gradient(to right, var(--color-accent-from), var(--color-accent-to));
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
 }
 
 .bg-accent-gradient {
-  background-image: linear-gradient(to right, #6366f1, #22d3ee);
-}
-
-@keyframes hero-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.94);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.hero-reveal {
-  animation: hero-reveal 0.75s ease-out both;
-}
-
-.hero-image {
-  animation: hero-reveal 0.8s ease-out both;
-  transform-origin: center;
-}
-
-@keyframes hero-orbit-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.hero-orbit-stage {
-  --hero-orbit-gradient: conic-gradient(transparent, transparent, var(--color-accent-from), var(--color-accent-to), var(--foreground));
-  --hero-orbit-gradient-alt: conic-gradient(var(--foreground), var(--color-accent-from), var(--color-accent-to), transparent, transparent);
-  --hero-orbit-dot-color: var(--foreground);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: min(90vw, 400px);
-  aspect-ratio: 1 / 1;
-}
-
-@media (min-width: 640px) {
-  .hero-orbit-stage {
-    width: min(72vw, 500px);
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-orbit-stage {
-    width: min(46vw, 600px);
-  }
-}
-
-.hero-orbit-avatar {
-  position: relative;
-  z-index: 10;
-  width: 53%;
-  aspect-ratio: 1 / 1;
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-.hero-orbit-trail {
-  position: absolute;
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  animation: hero-orbit-spin linear infinite;
-}
-
-.hero-orbit-trail::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 99%;
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  background-color: var(--background);
-}
-
-.hero-orbit-trail-1 {
-  width: 60%;
-  z-index: 5;
-  background: var(--hero-orbit-gradient);
-  animation-duration: 6s;
-}
-
-.hero-orbit-trail-2 {
-  width: 70%;
-  z-index: 4;
-  background: var(--hero-orbit-gradient-alt);
-  animation-duration: 8s;
-  animation-direction: reverse;
-}
-
-.hero-orbit-trail-3 {
-  width: 80%;
-  z-index: 3;
-  background: var(--hero-orbit-gradient);
-  animation-duration: 10s;
-}
-
-.hero-orbit-trail-4 {
-  width: 90%;
-  z-index: 2;
-  background: var(--hero-orbit-gradient-alt);
-  animation-duration: 12s;
-  animation-direction: reverse;
-}
-
-.hero-orbit-dot {
-  position: absolute;
-  top: -0.2rem;
-  left: 50%;
-  width: 0.5rem;
-  aspect-ratio: 1 / 1;
-  border-radius: 0 50% 50%;
-  background-color: var(--hero-orbit-dot-color);
-  outline: 0.5px solid var(--hero-orbit-dot-color);
-  box-shadow: 0 0 10px var(--hero-orbit-dot-color);
-  overflow: hidden;
-  transform: rotate(-45deg);
+  background-image: linear-gradient(to right, var(--color-accent-from), var(--color-accent-to));
 }
 
 @keyframes resume-modal-backdrop {
@@ -348,9 +207,6 @@ h6,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-reveal,
-  .hero-image,
-  .hero-orbit-trail,
   .count-pop,
   .hero-portrait-img {
     animation: none !important;
@@ -553,13 +409,3 @@ h6,
   background-size: 28px 28px;
 }
 
-/* Projects slider: native scroll-snap, scrollbar hidden (arrow buttons /
-   dots drive it, but keyboard + touch scrolling still work natively). */
-.no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
