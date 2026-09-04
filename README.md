@@ -153,4 +153,4 @@ environment variables above, then push. `portfolio-studio/` is published separat
 
 Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
 `Permissions-Policy`) are set in `next.config.ts`, and all four API routes are IP rate
-limited. See [`PRD.md` §9](PRD.md) for the full posture and what was deliberately left out.
+limited. See [`PRD.md`](PRD.md) for the full security posture.
