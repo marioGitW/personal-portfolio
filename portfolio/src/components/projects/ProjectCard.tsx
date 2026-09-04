@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import type { Project } from "@/lib/types";
+import type { Project } from "@/types/sanity";
 import { ProjectVisual } from "./ProjectVisual";
 
 type ProjectCardProps = {
@@ -10,6 +10,10 @@ type ProjectCardProps = {
 };
 
 export function ProjectCard({ project, onOpen }: ProjectCardProps) {
+  // The card and the expanded view read the same fields — the Sanity document
+  // is the single source of truth, with no per-view duplicate copy.
+  const title = project.thumbnailTitle ?? project.title;
+
   return (
     <button
       type="button"
@@ -18,7 +22,9 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
     >
       <div className="absolute inset-0 h-full w-full overflow-hidden">
         <ProjectVisual
-          project={project}
+          title={title}
+          imageUrl={project.thumbnail?.url ?? null}
+          lqip={project.thumbnail?.lqip}
           className="h-full w-full transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
       </div>
@@ -40,11 +46,19 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
 
       <div className="relative flex flex-col gap-4 p-6 sm:p-8">
         <div>
-          <p className="text-xs font-medium tracking-[0.2em] text-cyan-300 uppercase">
-            {project.category}
-          </p>
-          <h3 className="mt-1.5 text-2xl font-bold text-white sm:text-3xl">{project.title}</h3>
-          <p className="mt-2 text-sm text-white/70 sm:text-base">{project.shortDescription}</p>
+          {project.thumbnailTag && (
+            <p className="text-xs font-medium tracking-[0.2em] text-cyan-300 uppercase">
+              {project.thumbnailTag}
+            </p>
+          )}
+          {title && (
+            <h3 className="mt-1.5 text-2xl font-bold text-white sm:text-3xl">{title}</h3>
+          )}
+          {project.thumbnailDescription && (
+            <p className="mt-2 text-sm text-white/70 sm:text-base">
+              {project.thumbnailDescription}
+            </p>
+          )}
         </div>
 
         {/* View Details — hidden until hover */}

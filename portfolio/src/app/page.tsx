@@ -7,24 +7,39 @@ import { Projects } from "@/components/sections/Projects";
 import { Skills } from "@/components/sections/Skills";
 import { Footer } from "@/components/ui/Footer";
 import { Header } from "@/components/ui/Header";
+import { getPortfolioContent, getProjectList, getSocialLinks } from "@/lib/cms";
 import { getSiteSettings } from "@/lib/content";
 
-export default function Home() {
+/**
+ * Re-fetch CMS content at most once a minute. Publishing in the Studio shows
+ * up on the site without a redeploy.
+ */
+export const revalidate = 60;
+
+export default async function Home() {
   const site = getSiteSettings();
+
+  // Fetched in parallel. `getPortfolioContent` and `getSocialLinks` both read
+  // the cached portfolio document, so this is two round trips, not three.
+  const [content, projects, socialLinks] = await Promise.all([
+    getPortfolioContent(),
+    getProjectList(),
+    getSocialLinks(),
+  ]);
 
   return (
     <>
       <Header name={site.name} />
       <main className="flex-1">
-        <Hero />
-        <About />
-        <Experience />
-        <Projects />
-        <Skills />
+        <Hero hero={content.hero} />
+        <About about={content.about} />
+        <Experience experience={content.experience} />
+        <Projects projects={projects} />
+        <Skills skills={content.skills} />
         <Contact />
         <ActivityCounter />
       </main>
-      <Footer />
+      <Footer links={socialLinks} />
     </>
   );
 }

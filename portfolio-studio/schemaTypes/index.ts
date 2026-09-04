@@ -7,6 +7,8 @@ import experienceItem from './objects/experienceItem'
 import hero from './objects/hero'
 import skillItem from './objects/skillItem'
 import skills from './objects/skills'
+import social from './objects/social'
+import socialLink from './objects/socialLink'
 
 export const schemaTypes = [
   // Documents
@@ -20,4 +22,6 @@ export const schemaTypes = [
   experienceItem,
   skills,
   skillItem,
+  social,
+  socialLink,
 ]

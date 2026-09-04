@@ -1,32 +1,11 @@
-import { experience } from "@/content/experience";
-import { projects } from "@/content/projects";
-import { siteSettings } from "@/content/site";
-import { skills } from "@/content/skills";
-import { socialLinks } from "@/content/social";
-import type {
-  ExperienceItem,
-  Project,
-  SiteSettings,
-  Skill,
-  SocialLink,
-} from "@/lib/types";
+import { siteSettings } from "@/content/fallbacks";
+import type { SiteSettings } from "@/lib/types";
 
-export function getProjects(): Project[] {
-  return projects;
-}
-
-export function getExperience(): ExperienceItem[] {
-  return experience;
-}
-
-export function getSkills(): Skill[] {
-  return skills;
-}
-
-export function getSocialLinks(): SocialLink[] {
-  return socialLinks;
-}
-
+/**
+ * Sync accessor for content that is *not* CMS-driven, safe to call from client
+ * components. CMS-backed content — including social links — is resolved in
+ * `@/lib/cms`, which is async and server-only.
+ */
 export function getSiteSettings(): SiteSettings {
   return siteSettings;
 }

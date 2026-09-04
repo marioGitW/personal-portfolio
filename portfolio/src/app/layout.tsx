@@ -5,6 +5,7 @@ import { Preloader } from "@/components/ui/Preloader";
 import { Providers } from "@/components/ui/Providers";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
 import { SocialSidebar } from "@/components/ui/SocialSidebar";
+import { getSocialLinks } from "@/lib/cms";
 import { getSiteSettings } from "@/lib/content";
 import "./globals.css";
 
@@ -29,7 +30,11 @@ export const metadata: Metadata = {
   description: site.tagline,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // `getPortfolio` is wrapped in React `cache()`, so this shares the page's
+  // CMS round trip rather than issuing a second one.
+  const socialLinks = await getSocialLinks();
+
   return (
     <html
       lang="en"
@@ -40,7 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           <Preloader />
           <Cursor />
-          <SocialSidebar />
+          <SocialSidebar links={socialLinks} />
           <SmoothScroll>{children}</SmoothScroll>
         </Providers>
       </body>

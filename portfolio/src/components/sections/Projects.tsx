@@ -5,12 +5,15 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ProjectModal } from "@/components/projects/ProjectModal";
 import { ProjectsScroller } from "@/components/projects/ProjectsScroller";
+import { sectionCopy } from "@/content/fallbacks";
 import { registerGsapPlugins } from "@/lib/animations";
-import { getProjects } from "@/lib/content";
-import type { Project } from "@/lib/types";
+import type { Project } from "@/types/sanity";
 
-export function Projects() {
-  const projects = getProjects();
+type ProjectsProps = {
+  projects: Project[];
+};
+
+export function Projects({ projects }: ProjectsProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
@@ -104,7 +107,10 @@ export function Projects() {
     });
 
     return () => mm.revert();
-  }, [projects]);
+    // Card widths are CSS-driven (`lg:w-[42vw]`), so the scroll distance only
+    // changes when the number of cards does — `getDistance()` re-measures the
+    // live DOM on every refresh, so any project count works without hardcoding.
+  }, [projects.length]);
 
   const handleOpen = (project: Project) => {
     setActiveProject(project);
@@ -124,10 +130,15 @@ export function Projects() {
     <section id="projects" ref={sectionRef} className="relative w-full py-28">
       <div ref={introRef}>
         <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
-          <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">Projects</p>
-          <h2 className="mt-3">Best Works</h2>
+          <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
+            {sectionCopy.projects.eyebrow}
+          </p>
+          <h2 className="mt-3">
+            {sectionCopy.projects.titleLead}{" "}
+            <span className="text-accent-gradient">{sectionCopy.projects.titleAccent}</span>
+          </h2>
           <p className="mt-4 text-slate-600 dark:text-slate-400">
-            A selection of things I&apos;ve built — click a project to see more.
+            {sectionCopy.projects.description}
           </p>
         </div>
 

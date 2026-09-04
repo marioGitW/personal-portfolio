@@ -2,17 +2,22 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { Mail } from "lucide-react";
 import gsap from "gsap";
+import { SocialIcon, socialLabel } from "@/components/ui/SocialIcons";
 import { registerGsapPlugins } from "@/lib/animations";
-import { getSiteSettings, getSocialLinks } from "@/lib/content";
+import { getSiteSettings } from "@/lib/content";
+import { isExternalHref, socialHref } from "@/lib/format";
+import type { SocialLinkItem } from "@/types/sanity";
 
 const iconLinkClass =
   "group inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-[250ms] ease-out hover:-translate-y-0.5 hover:border-[color:var(--color-accent-from)] hover:text-[color:var(--color-accent-from)] focus-visible:-translate-y-0.5 focus-visible:border-[color:var(--color-accent-from)] focus-visible:text-[color:var(--color-accent-from)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:border-slate-800";
 
-export function Footer() {
+type FooterProps = {
+  links: SocialLinkItem[];
+};
+
+export function Footer({ links }: FooterProps) {
   const site = getSiteSettings();
-  const socials = getSocialLinks();
   const year = new Date().getFullYear();
 
   const sectionRef = useRef<HTMLElement>(null);
@@ -76,20 +81,36 @@ export function Footer() {
             </p>
           </div>
 
-          <ul data-footer-item className="flex items-center gap-3">
-            {socials.map(({ name, href, icon: Icon }) => (
-              <li key={name}>
-                <a href={href} target="_blank" rel="noopener noreferrer" aria-label={name} className={iconLinkClass}>
-                  <Icon className="size-4.5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]" />
-                </a>
-              </li>
-            ))}
-            <li>
-              <a href={`mailto:${site.email}`} aria-label="Email" className={iconLinkClass}>
-                <Mail className="size-4.5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]" />
-              </a>
-            </li>
-          </ul>
+          {links.length > 0 && (
+            <ul data-footer-item className="flex items-center gap-3">
+              {links.map((link) => {
+                const href = socialHref(link);
+                if (!href) {
+                  return null;
+                }
+
+                const label = socialLabel(link);
+                const external = isExternalHref(href);
+
+                return (
+                  <li key={link._key}>
+                    <a
+                      href={href}
+                      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      aria-label={label}
+                      title={label}
+                      className={iconLinkClass}
+                    >
+                      <SocialIcon
+                        link={link}
+                        className="size-4.5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]"
+                      />
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
 
         <div

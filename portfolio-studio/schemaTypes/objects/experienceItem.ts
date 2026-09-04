@@ -63,6 +63,13 @@ export default defineType({
         'Numeric value only — enter 1, 2, 6 … The frontend decides whether to show "month" or "months".',
       validation: (Rule) => Rule.greaterThan(0),
     }),
+    defineField({
+      name: 'durationLabel',
+      title: 'Duration Label',
+      type: 'string',
+      description:
+        'Overrides the month count above when filled. Use it for open-ended or calendar periods, e.g. "2022 — Present" or "Summer 2024". Leave empty to show the month count instead.',
+    }),
   ],
   preview: {
     select: {

@@ -3,10 +3,14 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { SanityScreenshot } from "@/types/sanity";
+
+/** A screenshot the caller has already confirmed has a resolved URL. */
+export type ResolvedScreenshot = SanityScreenshot & { url: string };
 
 type ProjectScreenshotsProps = {
-  screenshots: string[];
-  projectTitle: string;
+  screenshots: ResolvedScreenshot[];
+  projectTitle: string | null;
   className?: string;
 };
 
@@ -21,6 +25,11 @@ export function ProjectScreenshots({
     return null;
   }
 
+  const altFor = (position: number) =>
+    projectTitle
+      ? `${projectTitle} screenshot ${position} of ${screenshots.length}`
+      : `Screenshot ${position} of ${screenshots.length}`;
+
   const goTo = (next: number) => {
     setIndex((next + screenshots.length) % screenshots.length);
   };
@@ -32,14 +41,17 @@ export function ProjectScreenshots({
           className="flex h-full transition-transform duration-300 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
-          {screenshots.map((src, i) => (
-            <div key={i} className="relative h-full w-full shrink-0">
+          {screenshots.map((screenshot, i) => (
+            <div key={screenshot._key} className="relative h-full w-full shrink-0">
               <Image
-                src={src}
-                alt={`${projectTitle} screenshot ${i + 1} of ${screenshots.length}`}
+                src={screenshot.url}
+                alt={altFor(i + 1)}
                 fill
                 sizes="(min-width: 640px) 60vw, 90vw"
                 className="object-cover"
+                {...(screenshot.lqip
+                  ? { placeholder: "blur" as const, blurDataURL: screenshot.lqip }
+                  : {})}
               />
             </div>
           ))}

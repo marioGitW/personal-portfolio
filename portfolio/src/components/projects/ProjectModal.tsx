@@ -4,9 +4,10 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import gsap from "gsap";
-import type { Project } from "@/lib/types";
+import { toParagraphs } from "@/lib/format";
+import type { Project } from "@/types/sanity";
 import { ProjectVisual } from "./ProjectVisual";
-import { ProjectScreenshots } from "./ProjectScreenshots";
+import { ProjectScreenshots, type ResolvedScreenshot } from "./ProjectScreenshots";
 import { ProjectVideo } from "./ProjectVideo";
 import { TechStack } from "./TechStack";
 import { ProjectLinks } from "./ProjectLinks";
@@ -160,12 +161,15 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     return null;
   }
 
-  const screenshots = project.screenshots ?? [];
-  const technologies = project.technologies ?? [];
-  const overviewParagraphs = (project.description ?? "")
-    .split("\n\n")
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+  // Only screenshots whose asset actually resolved — a missing image is
+  // dropped rather than rendered as a broken slide.
+  const screenshots = (project.screenshots ?? []).filter(
+    (screenshot): screenshot is ResolvedScreenshot => Boolean(screenshot?.url),
+  );
+  const technologies = project.techStack ?? [];
+  const keyFeatures = project.keyFeatures ?? [];
+  const overviewParagraphs = toParagraphs(project.projectOverview);
+  const title = project.thumbnailTitle ?? project.title;
 
   return createPortal(
     <div
@@ -194,18 +198,22 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
           <div ref={contentRef} className="p-6 sm:p-10">
             <div data-modal-item>
-              <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-                {project.category}
-              </p>
+              {project.thumbnailTag && (
+                <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
+                  {project.thumbnailTag}
+                </p>
+              )}
               <h2
                 id="project-modal-title"
                 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl"
               >
-                {project.title}
+                {title}
               </h2>
-              <p className="mt-3 text-base text-slate-600 sm:text-lg dark:text-slate-400">
-                {project.shortDescription}
-              </p>
+              {project.thumbnailDescription && (
+                <p className="mt-3 text-base text-slate-600 sm:text-lg dark:text-slate-400">
+                  {project.thumbnailDescription}
+                </p>
+              )}
             </div>
 
             <div data-modal-item>
@@ -214,12 +222,17 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
                   <h3 className="text-sm font-semibold tracking-wide uppercase">Screenshots</h3>
                   <ProjectScreenshots
                     screenshots={screenshots}
-                    projectTitle={project.title}
+                    projectTitle={title}
                     className="mt-4"
                   />
                 </div>
               ) : (
-                <ProjectVisual project={project} className="mt-8 aspect-video w-full rounded-xl" />
+                <ProjectVisual
+                  title={title}
+                  imageUrl={project.thumbnail?.url ?? null}
+                  lqip={project.thumbnail?.lqip}
+                  className="mt-8 aspect-video w-full rounded-xl"
+                />
               )}
             </div>
 
@@ -228,7 +241,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
                 <h3 className="text-sm font-semibold tracking-wide uppercase">Demo Video</h3>
                 <ProjectVideo
                   demoVideoUrl={project.demoVideoUrl}
-                  projectTitle={project.title}
+                  projectTitle={title}
                   className="mt-4"
                 />
               </div>
@@ -252,13 +265,14 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
               </div>
             )}
 
-            {project.keyFeatures && project.keyFeatures.length > 0 && (
+            {keyFeatures.length > 0 && (
               <div data-modal-item className="mt-8">
                 <h3 className="text-sm font-semibold tracking-wide uppercase">Key Features</h3>
                 <ul className="mt-3 space-y-2">
-                  {project.keyFeatures.map((feature) => (
+                  {keyFeatures.map((feature, index) => (
+                    // Index-keyed: feature text is free-form and may repeat.
                     <li
-                      key={feature}
+                      key={index}
                       className="flex items-start gap-2.5 text-sm text-slate-600 sm:text-base dark:text-slate-400"
                     >
                       <span

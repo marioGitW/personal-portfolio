@@ -1,13 +1,15 @@
 import Image from "next/image";
-import type { Project } from "@/lib/types";
 
 type ProjectVisualProps = {
-  project: Pick<Project, "title" | "coverImage">;
+  title: string | null;
+  imageUrl: string | null;
+  /** Blur placeholder from Sanity's asset metadata, when available. */
+  lqip?: string | null;
   className?: string;
 };
 
-function getInitials(title: string): string {
-  return title
+function getInitials(title: string | null): string {
+  return (title ?? "")
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
@@ -15,15 +17,24 @@ function getInitials(title: string): string {
     .join("");
 }
 
-export function ProjectVisual({ project, className = "" }: ProjectVisualProps) {
-  if (project.coverImage) {
+export function ProjectVisual({ title, imageUrl, lqip, className = "" }: ProjectVisualProps) {
+  if (imageUrl) {
     return (
       <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-900 ${className}`}>
-        <Image src={project.coverImage} alt="" fill className="object-cover" />
+        <Image
+          src={imageUrl}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 42vw, 100vw"
+          className="object-cover"
+          {...(lqip ? { placeholder: "blur" as const, blurDataURL: lqip } : {})}
+        />
       </div>
     );
   }
 
+  // No thumbnail set in the CMS — render the built-in initials placeholder
+  // rather than a broken image.
   return (
     <div
       className={`relative isolate overflow-hidden bg-slate-100 dark:bg-slate-900 ${className}`}
@@ -38,7 +49,7 @@ export function ProjectVisual({ project, className = "" }: ProjectVisualProps) {
         className="absolute -bottom-10 -left-10 size-40 rounded-full bg-accent-gradient opacity-10 blur-3xl"
       />
       <span className="relative flex h-full items-center justify-center font-heading text-5xl font-bold text-accent-gradient opacity-70 sm:text-6xl">
-        {getInitials(project.title)}
+        {getInitials(title)}
       </span>
     </div>
   );

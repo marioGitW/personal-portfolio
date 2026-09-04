@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 import { ExternalLink } from "lucide-react";
-import type { Project } from "@/lib/types";
+import type { Project } from "@/types/sanity";
 
 function GitHubIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -11,20 +11,24 @@ function GitHubIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 type ProjectLinksProps = {
-  project: Pick<Project, "liveUrl" | "githubUrl">;
+  project: Pick<Project, "liveProjectUrl" | "sourceCodeUrl">;
   className?: string;
 };
 
+/**
+ * Each button renders only when its URL exists — no disabled placeholders for
+ * projects that have only a demo, only source, or neither.
+ */
 export function ProjectLinks({ project, className = "" }: ProjectLinksProps) {
-  if (!project.liveUrl && !project.githubUrl) {
+  if (!project.liveProjectUrl && !project.sourceCodeUrl) {
     return null;
   }
 
   return (
     <div className={`flex flex-wrap gap-3 ${className}`}>
-      {project.liveUrl && (
+      {project.liveProjectUrl && (
         <a
-          href={project.liveUrl}
+          href={project.liveProjectUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full bg-accent-gradient px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition duration-200 hover:shadow-xl hover:shadow-cyan-400/30"
@@ -33,9 +37,9 @@ export function ProjectLinks({ project, className = "" }: ProjectLinksProps) {
           Live Project
         </a>
       )}
-      {project.githubUrl && (
+      {project.sourceCodeUrl && (
         <a
-          href={project.githubUrl}
+          href={project.sourceCodeUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-transparent px-5 py-2.5 text-sm font-medium text-foreground transition duration-200 hover:border-indigo-500 dark:border-slate-700"

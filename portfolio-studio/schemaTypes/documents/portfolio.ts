@@ -14,6 +14,7 @@ export default defineType({
     {name: 'about', title: 'About'},
     {name: 'experience', title: 'Experience'},
     {name: 'skills', title: 'Skills'},
+    {name: 'social', title: 'Social'},
   ],
   fields: [
     defineField({name: 'hero', title: 'Hero', type: 'hero', group: 'hero'}),
@@ -25,6 +26,7 @@ export default defineType({
       group: 'experience',
     }),
     defineField({name: 'skills', title: 'Skills', type: 'skills', group: 'skills'}),
+    defineField({name: 'social', title: 'Social', type: 'social', group: 'social'}),
   ],
   preview: {
     select: {mainTitle: 'hero.mainTitle'},

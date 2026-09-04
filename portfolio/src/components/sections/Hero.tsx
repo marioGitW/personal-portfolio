@@ -6,10 +6,18 @@ import gsap from "gsap";
 import { Button } from "@/components/ui/Button";
 import { ResumeModal } from "@/components/ui/ResumeModal";
 import { registerGsapPlugins } from "@/lib/animations";
-import { getSiteSettings } from "@/lib/content";
+import { splitTitleLines } from "@/lib/format";
+import type { Hero as HeroContent } from "@/types/sanity";
 
-export function Hero() {
-  const site = getSiteSettings();
+type HeroProps = {
+  hero: HeroContent;
+};
+
+export function Hero({ hero }: HeroProps) {
+  const title = hero.mainTitle ?? "";
+  // The lockup animates two masked lines, so the title is always split into
+  // exactly two — both spans must exist for the GSAP timeline to run.
+  const [lineOne, lineTwo] = splitTitleLines(title);
   const resumeButtonRef = useRef<HTMLButtonElement>(null);
   const [resumeOpen, setResumeOpen] = useState(false);
 
@@ -209,12 +217,12 @@ export function Hero() {
           className="flex items-center gap-2.5 font-heading text-[0.8125rem] font-semibold tracking-[0.3em] text-slate-600 uppercase md:ml-3 dark:text-slate-300"
         >
           <span className="hero-eyebrow-dot" aria-hidden="true" />
-          {site.role}
+          {hero.roleTag}
         </p>
 
         <h1
           ref={lockupRef}
-          aria-label={site.name}
+          aria-label={title}
           className="hero-name mt-5 font-heading leading-[0.86] font-bold tracking-[-0.055em] whitespace-nowrap uppercase"
         >
           <span aria-hidden="true" className="block">
@@ -223,7 +231,7 @@ export function Hero() {
                 ref={lineOneRef}
                 className="block text-[clamp(3.5rem,15vw,13rem)] lg:text-[clamp(3.5rem,12.5vw,13rem)] text-foreground"
               >
-                {site.nameWords[0]}
+                {lineOne}
               </span>
             </span>
             <span className="hero-line-mask block">
@@ -231,9 +239,9 @@ export function Hero() {
                 ref={lineTwoRef}
                 className="relative block text-[clamp(3.5rem,15vw,13rem)] lg:text-[clamp(3.5rem,12.5vw,13rem)]"
               >
-                <span className="hero-name-outline">{site.nameWords[1]}</span>
+                <span className="hero-name-outline">{lineTwo}</span>
                 <span className="hero-name-glow" aria-hidden="true">
-                  {site.nameWords[1]}
+                  {lineTwo}
                 </span>
               </span>
             </span>
@@ -244,7 +252,7 @@ export function Hero() {
           ref={taglineRef}
           className="mt-16 max-w-[26rem] text-base text-slate-600 sm:max-w-[32rem] sm:text-lg lg:mt-7 dark:text-slate-400"
         >
-          {site.tagline}
+          {hero.subtitle}
         </p>
 
         <div ref={ctaRef} className="mt-7 flex flex-wrap gap-3">
@@ -279,7 +287,7 @@ export function Hero() {
             />
             <Image
               src="/hero-img-white.png"
-              alt={`${site.name} portrait`}
+              alt={title ? `${title} portrait` : "Portrait"}
               width={882}
               height={1087}
               priority

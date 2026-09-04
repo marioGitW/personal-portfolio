@@ -11,9 +11,10 @@ export function TechStack({ technologies, limit, className = "" }: TechStackProp
 
   return (
     <div className={`flex flex-wrap gap-1.5 ${className}`}>
-      {visible.map((tech) => (
+      {visible.map((tech, index) => (
+        // Index-keyed: the CMS array is free text and may contain duplicates.
         <span
-          key={tech}
+          key={index}
           className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-0.5 text-[0.7rem] font-medium tracking-wide text-cyan-600 uppercase dark:text-cyan-300"
         >
           {tech}

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import gsap from "gsap";
+import { AssetIcon } from "@/components/ui/AssetIcon";
 import { EngineeringRadar } from "@/components/ui/EngineeringRadar";
+import { sectionCopy } from "@/content/fallbacks";
 import { registerGsapPlugins } from "@/lib/animations";
-import { getSkills } from "@/lib/content";
-import type { Skill } from "@/lib/types";
+import { skillIconUrl } from "@/sanity/devicon";
+import type { Skills as SkillsContent, SkillItem } from "@/types/sanity";
 
 const CARDS_PER_PAGE = 12;
 
@@ -18,9 +19,14 @@ function chunk<T>(items: T[], size: number): T[][] {
   return pages;
 }
 
-export function Skills() {
-  const skills = getSkills();
-  const pages = chunk(skills, CARDS_PER_PAGE);
+type SkillsProps = {
+  skills: SkillsContent;
+};
+
+export function Skills({ skills }: SkillsProps) {
+  // Paginated, not a marquee — `chunk` already adapts to any number of skills.
+  const items = skills.skillItems ?? [];
+  const pages = chunk(items, CARDS_PER_PAGE);
   const [page, setPage] = useState(0);
 
   const trackRef = useRef<HTMLDivElement>(null);
@@ -60,32 +66,32 @@ export function Skills() {
       tween.scrollTrigger?.kill();
       tween.kill();
     };
-  }, []);
+    // Re-runs if the CMS returns a different number of skills.
+  }, [items.length]);
 
   return (
     <section id="skills" className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
       <div className="mx-auto max-w-2xl text-center">
         <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-          What I work with
+          {sectionCopy.skills.eyebrow}
         </p>
-        <h2 className="mt-3">Skills</h2>
+        <h2 className="mt-3">{sectionCopy.skills.title}</h2>
         <p className="mt-4 text-slate-600 dark:text-slate-400">
-          How I approach engineering, and the tools I reach for when building and shipping
-          software.
+          {sectionCopy.skills.description}
         </p>
       </div>
 
       <div className="mt-14 grid gap-16 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-10">
         <div className="flex flex-col items-center text-center">
           <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-            Engineering Profile
+            {sectionCopy.skills.radarLabel}
           </p>
           <EngineeringRadar className="mt-8 w-full max-w-md sm:max-w-lg" />
         </div>
 
         <div>
           <p className="font-heading text-center text-xs tracking-[0.2em] text-slate-500 uppercase lg:text-left">
-            Tools &amp; Technologies
+            {sectionCopy.skills.toolsLabel}
           </p>
 
           <div className="mt-6 min-h-[380px] overflow-hidden sm:min-h-[440px]">
@@ -101,7 +107,7 @@ export function Skills() {
                   className="grid w-full shrink-0 auto-rows-min grid-cols-3 content-start gap-2 sm:gap-3"
                 >
                   {pageSkills.map((skill) => (
-                    <SkillCard key={skill.name} skill={skill} />
+                    <SkillCard key={skill._key} skill={skill} />
                   ))}
                 </ul>
               ))}
@@ -142,7 +148,9 @@ export function Skills() {
   );
 }
 
-function SkillCard({ skill }: { skill: Skill }) {
+function SkillCard({ skill }: { skill: SkillItem }) {
+  const iconUrl = skillIconUrl(skill);
+
   return (
     <li className="group relative">
       <span
@@ -160,19 +168,16 @@ function SkillCard({ skill }: { skill: Skill }) {
             aria-hidden="true"
             className="absolute inset-0 rounded-full bg-accent-gradient opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-50"
           />
-          <Image
-            src={skill.icon}
-            alt={skill.name}
-            width={80}
-            height={80}
-            loading="lazy"
+          <AssetIcon
+            src={iconUrl}
+            alt={skill.title ?? ""}
             className="relative size-full object-contain p-0.5 transition-transform duration-300 group-hover:scale-110"
           />
         </span>
 
         <div className="relative">
           <p className="text-[11px] leading-tight font-semibold text-foreground transition-colors duration-300 group-hover:text-indigo-500 sm:text-xs dark:group-hover:text-cyan-300">
-            {skill.name}
+            {skill.title}
           </p>
           <span
             aria-hidden="true"

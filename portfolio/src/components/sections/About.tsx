@@ -6,26 +6,25 @@ import gsap from "gsap";
 import { GB, MK, RS } from "country-flag-icons/react/3x2";
 import { registerGsapPlugins } from "@/lib/animations";
 import { getSiteSettings } from "@/lib/content";
+import { toParagraphs } from "@/lib/format";
+import { aboutLanguages, sectionCopy } from "@/content/fallbacks";
+import type { About as AboutContent } from "@/types/sanity";
 
-const stats = [
-  { value: "22", label: "Years old" },
-  { value: "4th", label: "Year student" },
-  { value: "24/7", label: "Available" },
-  { value: "3", label: "Languages" },
-];
+const FLAGS = { MK, GB, RS } as const;
 
-const languages = [
-  { flag: MK, label: "Macedonian" },
-  { flag: GB, label: "English" },
-  { flag: RS, label: "Serbian" },
-];
+const languages = aboutLanguages.map((language) => ({
+  flag: FLAGS[language.code],
+  label: language.label,
+}));
 
-export function About() {
+type AboutProps = {
+  about: AboutContent;
+};
+
+export function About({ about }: AboutProps) {
   const site = getSiteSettings();
-  const bioParagraphs = site.bio
-    .split("\n\n")
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+  const bioParagraphs = toParagraphs(about.description);
+  const tags = about.tags ?? [];
 
   const sectionRef = useRef<HTMLElement>(null);
   const imageWrapRef = useRef<HTMLDivElement>(null);
@@ -135,10 +134,11 @@ export function About() {
             ref={eyebrowRef}
             className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase"
           >
-            About
+            {sectionCopy.about.eyebrow}
           </p>
           <h2 ref={headingRef} className="mt-3">
-            About <span className="text-accent-gradient">Me</span>
+            {sectionCopy.about.titleLead}{" "}
+            <span className="text-accent-gradient">{sectionCopy.about.titleAccent}</span>
           </h2>
 
           <div
@@ -152,17 +152,24 @@ export function About() {
             ))}
           </div>
 
+          {/* Always rendered so the GSAP timeline's ref resolves; with no tags
+              it collapses to an unstyled, zero-height div rather than leaving
+              a stray divider line. */}
           <div
             ref={statsRef}
-            className="mx-auto mt-10 grid max-w-sm grid-cols-2 gap-x-6 gap-y-8 border-t border-slate-200 pt-8 sm:max-w-lg sm:grid-cols-4 lg:mx-0 lg:max-w-none lg:gap-x-4 lg:gap-y-6 dark:border-slate-800"
+            className={
+              tags.length > 0
+                ? "mx-auto mt-10 grid max-w-sm grid-cols-2 gap-x-6 gap-y-8 border-t border-slate-200 pt-8 sm:max-w-lg sm:grid-cols-4 lg:mx-0 lg:max-w-none lg:gap-x-4 lg:gap-y-6 dark:border-slate-800"
+                : undefined
+            }
           >
-            {stats.map((stat) => (
-              <div key={stat.label}>
+            {tags.map((tag) => (
+              <div key={tag._key}>
                 <p className="font-heading text-2xl font-bold text-accent-gradient sm:text-3xl">
-                  {stat.value}
+                  {tag.highlightedText}
                 </p>
                 <p className="mt-1 text-xs tracking-[0.12em] text-slate-500 uppercase">
-                  {stat.label}
+                  {tag.description}
                 </p>
               </div>
             ))}
