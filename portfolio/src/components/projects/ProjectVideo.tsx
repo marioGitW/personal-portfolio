@@ -90,6 +90,7 @@ export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: Pro
           className="h-full w-full"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
           allowFullScreen
         />
       </div>

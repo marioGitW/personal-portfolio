@@ -22,7 +22,7 @@ function resolveStatsEnv(): "production" | "preview" | "development" {
   return env === "production" || env === "preview" ? env : "development";
 }
 
-const KEY_PREFIX = { production: "", preview: "preview:", development: "dev:" }[
+export const KEY_PREFIX = { production: "", preview: "preview:", development: "dev:" }[
   resolveStatsEnv()
 ];
 
@@ -31,7 +31,7 @@ const LIKES_KEY = `${KEY_PREFIX}portfolio:likes`;
 
 let client: Redis | null = null;
 
-function getRedis(): Redis | null {
+export function getRedis(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 

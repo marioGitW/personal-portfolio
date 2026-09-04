@@ -1,16 +1,29 @@
 import { NextResponse } from "next/server";
 import { contactFormSchema } from "@/lib/contact";
+import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { resend } from "@/lib/resend";
 
+// Every POST sends a real email, so this is the route worth limiting hardest.
+const LIMIT = 5;
+const WINDOW_SECONDS = 60 * 60;
+
 export async function POST(request: Request) {
+  const limit = await rateLimit(request, "contact", LIMIT, WINDOW_SECONDS);
+  if (!limit.ok) {
+    return tooManyRequests(limit.retryAfter);
+  }
+
   const body = await request.json().catch(() => null);
   const result = contactFormSchema.safeParse(body);
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: "Invalid submission", issues: result.error.issues },
-      { status: 400 },
-    );
+    // A flat field -> message map; the raw Zod issues stay server-side.
+    const fields: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const key = String(issue.path[0] ?? "form");
+      fields[key] ??= issue.message;
+    }
+    return NextResponse.json({ error: "Invalid submission", fields }, { status: 400 });
   }
 
   const contactEmail = process.env.CONTACT_EMAIL;
