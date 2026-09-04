@@ -76,9 +76,7 @@ export function Skills({ skills }: SkillsProps) {
           {sectionCopy.skills.eyebrow}
         </p>
         <h2 className="mt-3">{sectionCopy.skills.title}</h2>
-        <p className="mt-4 text-slate-600 dark:text-slate-400">
-          {sectionCopy.skills.description}
-        </p>
+        <p className="mt-4 text-slate-600 dark:text-slate-400">{sectionCopy.skills.description}</p>
       </div>
 
       <div className="mt-14 grid gap-16 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-10">

@@ -195,7 +195,10 @@ export function Preloader() {
             <span aria-hidden="true" className="h-px w-8 bg-foreground/25 sm:w-10" />
           </div>
 
-          <div className="mt-10 flex w-full max-w-md flex-col items-center gap-3" aria-hidden="true">
+          <div
+            className="mt-10 flex w-full max-w-md flex-col items-center gap-3"
+            aria-hidden="true"
+          >
             <div
               className="h-1.5 w-full overflow-hidden rounded-full ring-1 ring-foreground/10"
               style={{ backgroundColor: trackColor }}

@@ -58,7 +58,10 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const targetBlur = Math.min(Math.abs(lenis.velocity) * BLUR_VELOCITY_FACTOR, MAX_SCROLL_BLUR_PX);
+      const targetBlur = Math.min(
+        Math.abs(lenis.velocity) * BLUR_VELOCITY_FACTOR,
+        MAX_SCROLL_BLUR_PX,
+      );
       currentBlur += (targetBlur - currentBlur) * BLUR_SMOOTHING;
 
       if (currentBlur > BLUR_IDLE_THRESHOLD) {

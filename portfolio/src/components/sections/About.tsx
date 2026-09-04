@@ -62,7 +62,15 @@ export function About({ about }: AboutProps) {
     }
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const revealTargets = [imageWrap, panel, eyebrow, heading, ...Array.from(lines), statsRow, langRow];
+    const revealTargets = [
+      imageWrap,
+      panel,
+      eyebrow,
+      heading,
+      ...Array.from(lines),
+      statsRow,
+      langRow,
+    ];
 
     if (reducedMotion) {
       gsap.set(revealTargets, { opacity: 1, y: 0, filter: "blur(0px)" });
@@ -110,7 +118,11 @@ export function About({ about }: AboutProps) {
   }, []);
 
   return (
-    <section id="about" ref={sectionRef} className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
+    <section
+      id="about"
+      ref={sectionRef}
+      className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6"
+    >
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-center lg:gap-3">
         <div ref={imageWrapRef} className="hidden shrink-0 lg:flex lg:-mr-4">
           <Image

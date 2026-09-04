@@ -249,11 +249,7 @@ export function Hero({ hero }: HeroProps) {
 
         <div ref={ctaRef} className="mt-7 flex flex-wrap gap-3">
           <Button href="#contact">Let&apos;s Connect</Button>
-          <Button
-            ref={resumeButtonRef}
-            variant="secondary"
-            onClick={() => setResumeOpen(true)}
-          >
+          <Button ref={resumeButtonRef} variant="secondary" onClick={() => setResumeOpen(true)}>
             View Resume
           </Button>
         </div>

@@ -76,8 +76,8 @@ export function Contact() {
           Get In Touch <span className="text-accent-gradient">— Ask Me Anything!</span>
         </h2>
         <p className="mt-4 text-slate-600 dark:text-slate-400">
-          Ready to collaborate or have a project in mind? I&apos;m always open to new
-          opportunities and interesting conversations.
+          Ready to collaborate or have a project in mind? I&apos;m always open to new opportunities
+          and interesting conversations.
         </p>
       </div>
 
@@ -101,7 +101,9 @@ export function Contact() {
             />
             <User className={fieldIconClass("name")} />
             {errors.name && (
-              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">{errors.name.message}</span>
+              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">
+                {errors.name.message}
+              </span>
             )}
           </label>
 
@@ -119,7 +121,9 @@ export function Contact() {
             />
             <Mail className={fieldIconClass("email")} />
             {errors.email && (
-              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">{errors.email.message}</span>
+              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">
+                {errors.email.message}
+              </span>
             )}
           </label>
 
@@ -130,13 +134,16 @@ export function Contact() {
               aria-invalid={Boolean(errors.message)}
               className="mt-1 w-full resize-none border-b border-slate-300 bg-transparent py-2 pr-8 text-foreground outline-none transition focus:border-indigo-500 dark:border-slate-700"
               {...register("message", {
-                onBlur: () => setFocusedField((current) => (current === "message" ? null : current)),
+                onBlur: () =>
+                  setFocusedField((current) => (current === "message" ? null : current)),
               })}
               onFocus={() => setFocusedField("message")}
             />
             <MessageSquare className={fieldIconClass("message")} />
             {errors.message && (
-              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">{errors.message.message}</span>
+              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">
+                {errors.message.message}
+              </span>
             )}
           </label>
         </div>

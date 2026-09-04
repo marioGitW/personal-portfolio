@@ -48,9 +48,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
               {project.thumbnailTag}
             </p>
           )}
-          {title && (
-            <h3 className="mt-1.5 text-2xl font-bold text-white sm:text-3xl">{title}</h3>
-          )}
+          {title && <h3 className="mt-1.5 text-2xl font-bold text-white sm:text-3xl">{title}</h3>}
           {project.thumbnailDescription && (
             <p className="mt-2 text-sm text-white/70 sm:text-base">
               {project.thumbnailDescription}

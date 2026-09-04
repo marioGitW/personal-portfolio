@@ -120,7 +120,9 @@ export function Footer({ links }: FooterProps) {
           <p>
             © {year} {site.name}. All rights reserved.
           </p>
-          <p className="text-slate-400 dark:text-slate-500">Built with Next.js, GSAP &amp; Tailwind CSS.</p>
+          <p className="text-slate-400 dark:text-slate-500">
+            Built with Next.js, GSAP &amp; Tailwind CSS.
+          </p>
         </div>
       </div>
     </footer>

@@ -13,8 +13,8 @@ type RadarDimension = {
 const DIMENSIONS: RadarDimension[] = [
   { label: "Problem Solving", value: 0.8 },
   { label: "Product Development", value: 0.7 },
-  { label: "Automation", value: 0.50 },
-  { label: "Learning", value: 0.90 },
+  { label: "Automation", value: 0.5 },
+  { label: "Learning", value: 0.9 },
   { label: "Systems Thinking", value: 0.6 },
   { label: "Teamwork", value: 0.85 },
 ];
@@ -193,11 +193,7 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
                 className="fill-foreground/75 text-[11px] font-semibold tracking-[0.06em] uppercase"
               >
                 {words.map((word, wordIndex) => (
-                  <tspan
-                    key={word}
-                    x={x}
-                    dy={wordIndex === 0 ? (words.length > 1 ? -6 : 4) : 13}
-                  >
+                  <tspan key={word} x={x} dy={wordIndex === 0 ? (words.length > 1 ? -6 : 4) : 13}>
                     {word}
                   </tspan>
                 ))}

@@ -57,10 +57,7 @@ export async function recordVisit(): Promise<SiteStats> {
     return { visits: 0, likes: 0 };
   }
 
-  const [visits, likes] = await Promise.all([
-    redis.incr(VISITS_KEY),
-    readCount(redis, LIKES_KEY),
-  ]);
+  const [visits, likes] = await Promise.all([redis.incr(VISITS_KEY), readCount(redis, LIKES_KEY)]);
 
   return { visits, likes };
 }

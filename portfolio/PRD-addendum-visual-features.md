@@ -1,4 +1,5 @@
 # PRD Addendum — Visual & Interaction Features
+
 ### Reference: https://qazimaazarshad.github.io/
 
 This addendum adds new features on top of the existing `PRD.md`. Scope: visual polish + one new interactive section. Does not change backend/CMS decisions already made, except where noted (visit/like counter needs persistent storage — see Feature 6).
@@ -64,6 +65,7 @@ Styled scrollbar (thin track, accent-colored thumb, rounded) instead of the brow
 Placed directly before the Footer. This is **not** a generic stats-card grid — it's a specific composition, confirmed from your screenshot:
 
 **Layout (top to bottom):**
+
 1. A thin top row: left side reads small monospace-style label like `EOF — THANKS FOR SCROLLING`; right side shows a small pulsing dot (green) + live **visit count** (e.g. `● 697 visits`)
 2. Below that: the owner's **full name spelled out in large outlined/ghost text** (stroke-only, same color as background so it's barely visible — essentially `text-transparent` with a subtle 1px border/stroke), spanning close to full container width, big bold display font
 3. **One word of the name** (in the reference, the middle name) is filled solid with the accent gradient (Feature 3) instead of being ghost-outlined — this is the visual focal point
@@ -110,10 +112,12 @@ Everything else (custom cursor, loading circle, scrollbar, menu, gradient) is ac
 ## Env Variables — New
 
 Add to `.env.example` / `.env.local`:
+
 ```
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 ```
+
 (Get these from your Upstash dashboard after creating a free Redis database.)
 
 ---

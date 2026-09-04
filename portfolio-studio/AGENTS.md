@@ -57,13 +57,13 @@ sanity.config.ts        # wires structure, filters singleton templates/actions
 
 **`portfolio` (singleton, document id `portfolio`)** — grouped into Studio tabs:
 
-| Group | Field | Shape |
-|---|---|---|
-| Hero | `hero` | `roleTag`, `mainTitle`, `subtitle` |
-| About | `about` | `description`, `tags[]` (`highlightedText`, `description`) |
-| Experience | `experience` | `experienceDescription`, `experienceItems[]` |
-| Skills | `skills` | `skillItems[]` (`title`, `deviconPath`, `icon` override) |
-| Social | `social` | `socialLinks[]` (`platform`, `linkType`, `value`, `label`, `icon` override) |
+| Group      | Field        | Shape                                                                       |
+| ---------- | ------------ | --------------------------------------------------------------------------- |
+| Hero       | `hero`       | `roleTag`, `mainTitle`, `subtitle`                                          |
+| About      | `about`      | `description`, `tags[]` (`highlightedText`, `description`)                  |
+| Experience | `experience` | `experienceDescription`, `experienceItems[]`                                |
+| Skills     | `skills`     | `skillItems[]` (`title`, `deviconPath`, `icon` override)                    |
+| Social     | `social`     | `socialLinks[]` (`platform`, `linkType`, `value`, `label`, `icon` override) |
 
 `experienceItem`: `order`, `icon`, `name`, `place` (On-site/Remote/Hybrid select), `position`, `type` (free string — deliberately **not** an enum), `keyFeatures[]`, `durationMonths` (number only, no unit text), `durationLabel` (free-text override for open-ended periods like "2022 — Present"; wins over `durationMonths` — see `resolveDuration` in the frontend's `lib/format.ts`).
 
@@ -90,15 +90,15 @@ The `thumbnail*` fields are the **single source of truth** — the expanded/moda
 
 **Connected.** `../portfolio` reads this CMS live. The relevant frontend files:
 
-| File | Role |
-|---|---|
-| `src/sanity/client.ts` | Client; reads `NEXT_PUBLIC_SANITY_*` + server-only `SANITY_API_READ_TOKEN` |
-| `src/sanity/queries.ts` | All GROQ. Dereferences `asset->url` for images *and* file assets |
-| `src/sanity/devicon.ts` | Client-safe icon helpers (no `@sanity/client` import) |
-| `src/sanity/image.ts` | `urlFor` builder — **server-side only** |
-| `src/types/sanity.ts` | Types mirroring this schema; every field nullable |
-| `src/lib/cms.ts` | Merges CMS content over fallbacks, per field |
-| `src/content/fallbacks.ts` | Every hardcoded value in the frontend, in one file |
+| File                       | Role                                                                       |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `src/sanity/client.ts`     | Client; reads `NEXT_PUBLIC_SANITY_*` + server-only `SANITY_API_READ_TOKEN` |
+| `src/sanity/queries.ts`    | All GROQ. Dereferences `asset->url` for images _and_ file assets           |
+| `src/sanity/devicon.ts`    | Client-safe icon helpers (no `@sanity/client` import)                      |
+| `src/sanity/image.ts`      | `urlFor` builder — **server-side only**                                    |
+| `src/types/sanity.ts`      | Types mirroring this schema; every field nullable                          |
+| `src/lib/cms.ts`           | Merges CMS content over fallbacks, per field                               |
+| `src/content/fallbacks.ts` | Every hardcoded value in the frontend, in one file                         |
 
 **Schema changes must be mirrored in `src/types/sanity.ts` and `src/sanity/queries.ts`** — a new field is invisible to the frontend until it's added to the GROQ projection.
 

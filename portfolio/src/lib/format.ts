@@ -34,9 +34,7 @@ export function resolveDuration(
 
 // linkType exists because wa.me only accepts bare digits, so a formatted number
 // has to be stripped. Null for a blank value, so half-filled rows are skipped.
-export function socialHref(
-  link: Pick<SocialLinkItem, "linkType" | "value">,
-): string | null {
+export function socialHref(link: Pick<SocialLinkItem, "linkType" | "value">): string | null {
   const value = link.value?.trim();
   if (!value) {
     return null;

@@ -35,9 +35,7 @@ export function ProjectVisual({ title, imageUrl, lqip, className = "" }: Project
 
   // No thumbnail set, so fall back to the initials placeholder.
   return (
-    <div
-      className={`relative isolate overflow-hidden bg-slate-100 dark:bg-slate-900 ${className}`}
-    >
+    <div className={`relative isolate overflow-hidden bg-slate-100 dark:bg-slate-900 ${className}`}>
       <span aria-hidden="true" className="project-visual-grid absolute inset-0" />
       <span
         aria-hidden="true"

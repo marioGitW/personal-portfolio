@@ -20,7 +20,10 @@ export function Header({ name }: { name: string }) {
 
   useEffect(() => {
     const elements = navItems
-      .map((item) => ({ id: item.sectionId as string, el: document.getElementById(item.sectionId) }))
+      .map((item) => ({
+        id: item.sectionId as string,
+        el: document.getElementById(item.sectionId),
+      }))
       .filter((entry): entry is { id: string; el: HTMLElement } => entry.el !== null);
 
     if (elements.length === 0) {
@@ -91,11 +94,7 @@ export function Header({ name }: { name: string }) {
     if (open) {
       overlay.removeAttribute("hidden");
       const timeline = gsap.timeline();
-      timeline.fromTo(
-        overlay,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.2, ease: "power2.out" },
-      );
+      timeline.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" });
       timeline.fromTo(
         links,
         { y: 16, opacity: 0 },
@@ -116,7 +115,14 @@ export function Header({ name }: { name: string }) {
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-background/80 backdrop-blur-md dark:border-slate-800/80">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
         <a href="#home" aria-label={name} className="shrink-0">
-          <Image src="/ms-logo.svg" alt={name} width={220} height={152} className="h-8 w-auto" priority />
+          <Image
+            src="/ms-logo.svg"
+            alt={name}
+            width={220}
+            height={152}
+            className="h-8 w-auto"
+            priority
+          />
         </a>
 
         <nav className="hidden md:block" aria-label="Primary">

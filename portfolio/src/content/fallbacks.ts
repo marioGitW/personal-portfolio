@@ -90,8 +90,7 @@ export const experienceFallback: Experience = {
   ],
 };
 
-const devicon = (path: string) =>
-  `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${path}`;
+const devicon = (path: string) => `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${path}`;
 
 const fallbackSkill = (title: string, path: string) => ({
   _key: `fallback-${path}`,
@@ -160,8 +159,7 @@ export const projectsFallback: Project[] = [
     featured: false,
     thumbnailTag: "Frontend",
     thumbnailTitle: "Personal Portfolio",
-    thumbnailDescription:
-      "This site — a fast, animated portfolio built with Next.js and GSAP.",
+    thumbnailDescription: "This site — a fast, animated portfolio built with Next.js and GSAP.",
     thumbnail: localImage("/project5.webp"),
     screenshots: [
       { _key: "fb-pp-1", ...localImage("/project5.webp") },
@@ -188,8 +186,7 @@ export const projectsFallback: Project[] = [
     featured: false,
     thumbnailTag: "Internal Tool",
     thumbnailTitle: "Team Activity Tracker",
-    thumbnailDescription:
-      "An internal app for tracking employee activity and learning progress.",
+    thumbnailDescription: "An internal app for tracking employee activity and learning progress.",
     thumbnail: localImage("/project2.webp"),
     screenshots: [
       { _key: "fb-tat-1", ...localImage("/project2.webp") },

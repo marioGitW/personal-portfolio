@@ -317,7 +317,12 @@ h6,
 
 /* An opaque overlay, not an alpha mask, so it reads as the photo ending. */
 .hero-portrait-fade {
-  background: linear-gradient(to top, var(--background) 0%, var(--background) 18%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    var(--background) 0%,
+    var(--background) 18%,
+    transparent 100%
+  );
 }
 
 /* Jumps and takes the accent colour while its input is focused. */
@@ -391,7 +396,10 @@ h6,
 .project-visual-grid {
   background-image:
     linear-gradient(color-mix(in srgb, var(--foreground) 6%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--foreground) 6%, transparent) 1px, transparent 1px);
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--foreground) 6%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 28px 28px;
 }
-

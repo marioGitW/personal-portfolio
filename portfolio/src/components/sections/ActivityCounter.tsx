@@ -137,9 +137,7 @@ export function ActivityCounter() {
 
   return (
     <section ref={sectionRef} className="mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-6">
-      <div
-        className="relative overflow-hidden rounded-3xl border border-slate-200 bg-background px-6 py-12 dark:border-slate-800 sm:px-12 sm:py-14"
-      >
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-background px-6 py-12 dark:border-slate-800 sm:px-12 sm:py-14">
         <span
           aria-hidden="true"
           className="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-accent-gradient opacity-[0.07] blur-3xl"
@@ -147,7 +145,10 @@ export function ActivityCounter() {
 
         <div className="relative flex flex-col items-center gap-10 text-center lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:text-left">
           <div className="max-w-md">
-            <p ref={eyebrowRef} className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
+            <p
+              ref={eyebrowRef}
+              className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase"
+            >
               One last thing
             </p>
             <div ref={headingRef}>
