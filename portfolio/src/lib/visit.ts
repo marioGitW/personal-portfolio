@@ -1,5 +1,8 @@
 import type { SiteStats } from "@/lib/types";
 
+// sessionStorage key: one like per browser session, surviving refreshes.
+export const LIKED_STORAGE_KEY = "portfolio:liked";
+
 // Visits are page loads, not unique visitors. The flag lives on window rather
 // than module scope so a Strict Mode remount or Fast Refresh still counts once.
 const VISIT_FLAG = "__portfolioVisitRecorded";

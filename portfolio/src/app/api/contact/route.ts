@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { contactFormSchema } from "@/lib/contact";
-import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { rateLimit, tooManyRequests } from "@/lib/rateLimit";
 import { resend } from "@/lib/resend";
 
 // Every POST sends a real email, so this is the route worth limiting hardest.

@@ -4,9 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import gsap from "gsap";
 import { Heart } from "lucide-react";
 import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
-import { LIKED_STORAGE_KEY } from "@/lib/nav";
+import { LIKED_STORAGE_KEY, recordVisit } from "@/lib/visit";
 import type { SiteStats } from "@/lib/types";
-import { recordVisit } from "@/lib/visit";
 
 // sessionStorage gives "one like per session, surviving refreshes" for free.
 // Nothing to subscribe to, so this is a no-op; useSyncExternalStore is here

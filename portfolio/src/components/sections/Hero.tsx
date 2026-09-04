@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import gsap from "gsap";
 import { Button } from "@/components/ui/Button";
 import { ResumeModal } from "@/components/ui/ResumeModal";

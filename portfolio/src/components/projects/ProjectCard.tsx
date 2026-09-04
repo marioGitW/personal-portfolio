@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { ProjectVisual } from "@/components/projects/ProjectVisual";
 import type { Project } from "@/types/sanity";
-import { ProjectVisual } from "./ProjectVisual";
 
 type ProjectCardProps = {
   project: Project;

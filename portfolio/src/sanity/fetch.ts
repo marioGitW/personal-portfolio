@@ -1,6 +1,6 @@
 import { cache } from "react";
-import { sanityClient } from "./client";
-import { portfolioQuery, projectsQuery } from "./queries";
+import { sanityClient } from "@/sanity/client";
+import { portfolioQuery, projectsQuery } from "@/sanity/queries";
 import type { Portfolio, Project } from "@/types/sanity";
 
 // Server Components only — the read token is deliberately not NEXT_PUBLIC_.

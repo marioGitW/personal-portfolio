@@ -1,4 +1,4 @@
-import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { rateLimit, tooManyRequests } from "@/lib/rateLimit";
 import { recordVisit } from "@/lib/redis";
 
 const LIMIT = 30;

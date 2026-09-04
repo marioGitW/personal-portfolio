@@ -7,12 +7,15 @@ import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/animations";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { toParagraphs } from "@/lib/format";
+import { ProjectVisual } from "@/components/projects/ProjectVisual";
+import {
+  ProjectScreenshots,
+  type ResolvedScreenshot,
+} from "@/components/projects/ProjectScreenshots";
+import { ProjectVideo } from "@/components/projects/ProjectVideo";
+import { TechStack } from "@/components/projects/TechStack";
+import { ProjectLinks } from "@/components/projects/ProjectLinks";
 import type { Project } from "@/types/sanity";
-import { ProjectVisual } from "./ProjectVisual";
-import { ProjectScreenshots, type ResolvedScreenshot } from "./ProjectScreenshots";
-import { ProjectVideo } from "./ProjectVideo";
-import { TechStack } from "./TechStack";
-import { ProjectLinks } from "./ProjectLinks";
 
 type ProjectModalProps = {
   project: Project | null;

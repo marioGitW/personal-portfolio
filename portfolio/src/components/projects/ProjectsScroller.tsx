@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
+import { ProjectCard } from "@/components/projects/ProjectCard";
 import type { Project } from "@/types/sanity";
-import { ProjectCard } from "./ProjectCard";
 
 type ProjectsScrollerProps = {
   projects: Project[];
