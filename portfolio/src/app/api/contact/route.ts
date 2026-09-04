@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { contactFormSchema } from "@/lib/contact";
 import { rateLimit, tooManyRequests } from "@/lib/rateLimit";
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
 
 // Every POST sends a real email, so this is the route worth limiting hardest.
 const LIMIT = 5;
@@ -26,9 +26,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid submission", fields }, { status: 400 });
   }
 
+  const resend = getResend();
   const contactEmail = process.env.CONTACT_EMAIL;
-  if (!contactEmail) {
-    console.error("CONTACT_EMAIL is not configured");
+  if (!resend || !contactEmail) {
+    console.error("Contact form unconfigured: need RESEND_API_KEY and CONTACT_EMAIL");
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
