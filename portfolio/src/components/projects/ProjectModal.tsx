@@ -182,14 +182,14 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
         aria-modal="true"
         aria-labelledby="project-modal-title"
         onClick={(event) => event.stopPropagation()}
-        className="relative flex h-full w-full max-w-4xl flex-col overflow-hidden border border-slate-200 bg-background shadow-2xl shadow-indigo-500/20 sm:h-auto sm:max-h-[90vh] sm:rounded-2xl dark:border-slate-800"
+        className="relative flex h-full w-full max-w-4xl flex-col overflow-hidden surface-card shadow-2xl shadow-indigo-500/20 sm:h-auto sm:max-h-[90vh] sm:rounded-2xl"
       >
         <button
           ref={closeButtonRef}
           type="button"
           onClick={onRequestClose}
           aria-label="Close project details"
-          className="absolute top-4 right-4 z-10 inline-flex size-9 items-center justify-center rounded-full border border-slate-300 bg-background/80 backdrop-blur-sm transition hover:border-indigo-500 dark:border-slate-700"
+          className="absolute top-4 right-4 z-10 icon-button bg-background/80 backdrop-blur-sm transition hover:border-indigo-500"
         >
           <X className="size-4" />
         </button>
@@ -197,11 +197,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
           <div ref={contentRef} className="p-6 sm:p-10">
             <div data-modal-item>
-              {project.thumbnailTag && (
-                <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-                  {project.thumbnailTag}
-                </p>
-              )}
+              {project.thumbnailTag && <p className="section-eyebrow">{project.thumbnailTag}</p>}
               <h2
                 id="project-modal-title"
                 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl"

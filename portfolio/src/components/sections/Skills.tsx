@@ -70,20 +70,16 @@ export function Skills({ skills }: SkillsProps) {
   }, [items.length]);
 
   return (
-    <section id="skills" className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
+    <section id="skills" className="section-shell">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-          {sectionCopy.skills.eyebrow}
-        </p>
+        <p className="section-eyebrow">{sectionCopy.skills.eyebrow}</p>
         <h2 className="mt-3">{sectionCopy.skills.title}</h2>
-        <p className="mt-4 text-slate-600 dark:text-slate-400">{sectionCopy.skills.description}</p>
+        <p className="mt-4 text-muted">{sectionCopy.skills.description}</p>
       </div>
 
       <div className="mt-14 grid gap-16 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-10">
         <div className="flex flex-col items-center text-center">
-          <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-            {sectionCopy.skills.radarLabel}
-          </p>
+          <p className="section-eyebrow">{sectionCopy.skills.radarLabel}</p>
           <EngineeringRadar className="mt-8 w-full max-w-md sm:max-w-lg" />
         </div>
 
@@ -130,7 +126,7 @@ export function Skills({ skills }: SkillsProps) {
                 >
                   <span
                     aria-hidden="true"
-                    className={`block h-1.5 rounded-full transition-all duration-300 ${
+                    className={`pagination-dot ${
                       i === page
                         ? "w-6 bg-accent-gradient"
                         : "w-1.5 bg-slate-300 group-hover:bg-slate-400 dark:bg-slate-700"
@@ -155,7 +151,7 @@ function SkillCard({ skill }: { skill: SkillItem }) {
         aria-hidden="true"
         className="absolute -inset-1.5 -z-10 rounded-xl bg-accent-gradient opacity-0 blur-lg transition-opacity duration-500 group-hover:opacity-25"
       />
-      <div className="relative flex min-h-[86px] flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-slate-200 bg-background p-2.5 text-center shadow-sm transition-transform duration-300 group-hover:-translate-y-1 sm:min-h-[100px] sm:p-3 dark:border-slate-800">
+      <div className="relative flex min-h-[86px] flex-col items-center justify-center gap-2 overflow-hidden rounded-xl surface-card p-2.5 text-center shadow-sm transition-transform duration-300 group-hover:-translate-y-1 sm:min-h-[100px] sm:p-3">
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full dark:via-white/10"

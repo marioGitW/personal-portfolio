@@ -69,13 +69,13 @@ export function Contact() {
     }`;
 
   return (
-    <section id="contact" className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
+    <section id="contact" className="section-shell">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">Contact</p>
+        <p className="section-eyebrow">Contact</p>
         <h2 className="mt-3">
           Get In Touch <span className="text-accent-gradient">— Ask Me Anything!</span>
         </h2>
-        <p className="mt-4 text-slate-600 dark:text-slate-400">
+        <p className="mt-4 text-muted">
           Ready to collaborate or have a project in mind? I&apos;m always open to new opportunities
           and interesting conversations.
         </p>
@@ -84,7 +84,7 @@ export function Contact() {
       <form
         noValidate
         onSubmit={handleSubmit(onSubmit)}
-        className="mx-auto mt-10 max-w-2xl rounded-2xl border border-slate-200 bg-background p-6 shadow-lg shadow-indigo-500/10 sm:p-8 dark:border-slate-800"
+        className="mx-auto mt-10 max-w-2xl rounded-2xl surface-card p-6 shadow-lg shadow-indigo-500/10 sm:p-8"
       >
         <div className="flex flex-col gap-6">
           <label className="relative block">

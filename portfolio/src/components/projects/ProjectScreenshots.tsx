@@ -92,7 +92,7 @@ export function ProjectScreenshots({
             >
               <span
                 aria-hidden="true"
-                className={`block h-1.5 rounded-full transition-all duration-300 ${
+                className={`pagination-dot ${
                   i === index ? "w-6 bg-accent-gradient" : "w-1.5 bg-slate-300 dark:bg-slate-700"
                 }`}
               />

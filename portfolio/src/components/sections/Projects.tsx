@@ -122,16 +122,12 @@ export function Projects({ projects }: ProjectsProps) {
     <section id="projects" ref={sectionRef} className="relative w-full py-28">
       <div ref={introRef}>
         <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
-          <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-            {sectionCopy.projects.eyebrow}
-          </p>
+          <p className="section-eyebrow">{sectionCopy.projects.eyebrow}</p>
           <h2 className="mt-3">
             {sectionCopy.projects.titleLead}{" "}
             <span className="text-accent-gradient">{sectionCopy.projects.titleAccent}</span>
           </h2>
-          <p className="mt-4 text-slate-600 dark:text-slate-400">
-            {sectionCopy.projects.description}
-          </p>
+          <p className="mt-4 text-muted">{sectionCopy.projects.description}</p>
         </div>
 
         <div ref={clipRef} className="relative mt-14 lg:overflow-hidden">

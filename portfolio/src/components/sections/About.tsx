@@ -118,11 +118,7 @@ export function About({ about }: AboutProps) {
   }, []);
 
   return (
-    <section
-      id="about"
-      ref={sectionRef}
-      className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6"
-    >
+    <section id="about" ref={sectionRef} className="section-shell">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-center lg:gap-3">
         <div ref={imageWrapRef} className="hidden shrink-0 lg:flex lg:-mr-4">
           <Image
@@ -138,14 +134,11 @@ export function About({ about }: AboutProps) {
 
         <div
           ref={panelRef}
-          className="about-panel relative w-full rounded-2xl border border-slate-200 bg-background px-6 py-8 text-center sm:px-10 sm:py-10 lg:max-w-2xl lg:px-10 lg:py-12 lg:text-left dark:border-slate-800"
+          className="about-panel relative w-full rounded-2xl surface-card px-6 py-8 text-center sm:px-10 sm:py-10 lg:max-w-2xl lg:px-10 lg:py-12 lg:text-left"
         >
           <span ref={beamRef} aria-hidden="true" className="about-panel-beam" />
 
-          <p
-            ref={eyebrowRef}
-            className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase"
-          >
+          <p ref={eyebrowRef} className="section-eyebrow">
             {sectionCopy.about.eyebrow}
           </p>
           <h2 ref={headingRef} className="mt-3">
@@ -190,7 +183,7 @@ export function About({ about }: AboutProps) {
             {languages.map((language) => (
               <span
                 key={language.label}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-background px-3 py-1.5 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400"
+                className="inline-flex items-center gap-2 rounded-full surface-card px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400"
               >
                 <language.flag title={language.label} className="h-3 w-4.5 rounded-[2px]" />
                 {language.label}

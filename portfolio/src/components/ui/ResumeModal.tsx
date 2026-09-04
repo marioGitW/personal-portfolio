@@ -82,7 +82,7 @@ export function ResumeModal({ open, onClose, triggerRef }: ResumeModalProps) {
         aria-modal="true"
         aria-label="Resume preview"
         onClick={(event) => event.stopPropagation()}
-        className="relative flex h-[min(94vh,64rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-background shadow-2xl shadow-indigo-500/20 [animation:resume-modal-pop_0.25s_ease-out] dark:border-slate-800"
+        className="relative flex h-[min(94vh,64rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl surface-card shadow-2xl shadow-indigo-500/20 [animation:resume-modal-pop_0.25s_ease-out]"
       >
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-3 dark:border-slate-800">
           <h2 className="font-heading text-sm font-semibold tracking-tight">Resume</h2>

@@ -58,18 +58,14 @@ export function Experience({ experience }: ExperienceProps) {
   }, [items.length]);
 
   return (
-    <section id="experience" className="mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6">
-      <p className="font-heading text-xs tracking-[0.2em] text-slate-500 uppercase">
-        {sectionCopy.experience.eyebrow}
-      </p>
+    <section id="experience" className="section-shell">
+      <p className="section-eyebrow">{sectionCopy.experience.eyebrow}</p>
       <h2 className="mt-3">
         {sectionCopy.experience.titleLead}{" "}
         <span className="text-accent-gradient">{sectionCopy.experience.titleAccent}</span>
       </h2>
       {experience.experienceDescription && (
-        <p className="mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
-          {experience.experienceDescription}
-        </p>
+        <p className="mt-4 max-w-2xl text-muted">{experience.experienceDescription}</p>
       )}
 
       <ol ref={listRef} className="relative mt-14 space-y-10">
@@ -105,7 +101,7 @@ export function Experience({ experience }: ExperienceProps) {
                   aria-hidden="true"
                   className="absolute -inset-2 -z-10 rounded-2xl bg-accent-gradient opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-25"
                 />
-                <div className="rounded-2xl border border-slate-200 bg-background p-6 shadow-lg shadow-indigo-500/10 transition-transform duration-300 hover:-translate-y-1 sm:p-8 dark:border-slate-800">
+                <div className="rounded-2xl surface-card p-6 shadow-lg shadow-indigo-500/10 transition-transform duration-300 hover:-translate-y-1 sm:p-8">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       {item.name && (
@@ -132,11 +128,7 @@ export function Experience({ experience }: ExperienceProps) {
                   {(item.position || item.type) && (
                     <div className="mt-5 flex flex-wrap items-center gap-2.5">
                       {item.position && <h4>{item.position}</h4>}
-                      {item.type && (
-                        <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-0.5 text-[0.7rem] font-medium tracking-wide text-cyan-600 uppercase dark:text-cyan-300">
-                          {item.type}
-                        </span>
-                      )}
+                      {item.type && <span className="pill-tech">{item.type}</span>}
                     </div>
                   )}
 

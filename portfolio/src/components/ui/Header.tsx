@@ -181,7 +181,7 @@ export function Header({ name }: { name: string }) {
           <ThemeToggle />
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-full border border-slate-300 md:hidden dark:border-slate-700"
+            className="icon-button md:hidden"
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((value) => !value)}
