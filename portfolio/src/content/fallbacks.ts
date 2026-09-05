@@ -7,6 +7,8 @@ import type { About, Experience, Hero, Project, Skills } from "@/types/sanity";
 export const siteSettings = {
   name: "Mario Spasovski",
   role: "Aspiring Software Engineer",
+  description:
+    "Portfolio of Mario Spasovski — a final-year Computer Science and Engineering student at FINKI building web applications with React, Next.js, .NET and Spring Boot.",
   tagline: "Curious about technology. Passionate about building things that make sense.",
   email: "mrspasovski@gmail.com",
 } as const;
@@ -133,6 +135,7 @@ export const projectsFallback: Project[] = [
     thumbnailTitle: "Phone Price Aggregator",
     thumbnailDescription:
       "Compares mobile phone prices from multiple retailers in North Macedonia in one place.",
+    seoDescription: null,
     thumbnail: localImage("/fallback-project-1.webp"),
     screenshots: [
       { _key: "fb-ppa-1", ...localImage("/fallback-project-1.webp") },
@@ -160,6 +163,7 @@ export const projectsFallback: Project[] = [
     thumbnailTag: "Frontend",
     thumbnailTitle: "Personal Portfolio",
     thumbnailDescription: "This site — a fast, animated portfolio built with Next.js and GSAP.",
+    seoDescription: null,
     thumbnail: localImage("/fallback-project-5.webp"),
     screenshots: [
       { _key: "fb-pp-1", ...localImage("/fallback-project-5.webp") },
@@ -187,6 +191,7 @@ export const projectsFallback: Project[] = [
     thumbnailTag: "Internal Tool",
     thumbnailTitle: "Team Activity Tracker",
     thumbnailDescription: "An internal app for tracking employee activity and learning progress.",
+    seoDescription: null,
     thumbnail: localImage("/fallback-project-2.webp"),
     screenshots: [
       { _key: "fb-tat-1", ...localImage("/fallback-project-2.webp") },

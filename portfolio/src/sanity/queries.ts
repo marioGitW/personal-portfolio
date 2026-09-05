@@ -73,6 +73,7 @@ export const projectsQuery = /* groq */ `
   thumbnailTag,
   thumbnailTitle,
   thumbnailDescription,
+  seoDescription,
   thumbnail{${IMAGE_FIELDS}},
   screenshots[]{
     _key,

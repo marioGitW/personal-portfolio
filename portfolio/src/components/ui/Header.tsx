@@ -17,10 +17,23 @@ const contactNavItem = navItems.find((item) => item.sectionId === "contact")!;
 export function Header({
   name,
   socialLinks = [],
+  variant = "home",
 }: {
   name: string;
   socialLinks?: SocialLinkItem[];
+  /**
+   * "sub" is for routes that are not the one-page site (e.g. /projects/[slug]),
+   * where the section anchors have to point back at the homepage.
+   */
+  variant?: "home" | "sub";
 }) {
+  const isHome = variant === "home";
+
+  // Plain hrefs, not <Link>: off the homepage a full navigation lets the
+  // browser resolve the hash itself, instead of racing Lenis and Next's scroll
+  // restoration after a client transition. Still a real, crawlable link.
+  const navHref = (hash: string) => (isHome ? hash : `/${hash}`);
+
   const [activeId, setActiveId] = useState<string>(navItems[0].sectionId);
   const [open, setOpen] = useState(false);
   // Mirrors `open` but only flips to false once the close animation finishes,
@@ -38,6 +51,10 @@ export function Header({
   useFocusTrap(open, overlayRef, closeMenu);
 
   useEffect(() => {
+    if (!isHome) {
+      return;
+    }
+
     const elements = navItems
       .map((item) => ({
         id: item.sectionId as string,
@@ -81,7 +98,7 @@ export function Header({
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
     };
-  }, []);
+  }, [isHome]);
 
   useLayoutEffect(() => {
     const indicator = indicatorRef.current;
@@ -154,30 +171,44 @@ export function Header({
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-background dark:border-slate-800/80">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
-        <a href="#home" aria-label={name} className="shrink-0">
+        <a href={isHome ? "#home" : "/"} aria-label={name} className="shrink-0">
+          {/* alt="" because the link already carries aria-label={name}; both
+              would read the name twice. eager rather than priority: it is
+              above the fold, but a preload here competes with the hero image,
+              which is the actual LCP element. */}
           <Image
-            src="/ms-logo.svg"
-            alt={name}
-            width={220}
-            height={152}
+            src="/ms-logo.png"
+            alt=""
+            width={613}
+            height={415}
+            sizes="48px"
             className="h-8 w-auto"
-            priority
+            loading="eager"
           />
         </a>
 
         <nav className="hidden md:block" aria-label="Primary">
           <ul ref={listRef} className="relative flex items-center gap-1 rounded-full p-1">
-            <span
-              ref={indicatorRef}
-              className="bg-accent-gradient absolute top-1 bottom-1 left-0 rounded-full opacity-90"
-            />
+            {/* display:contents so this generates no flex box and cannot add a
+                gap between the pills; the span keeps its own absolute
+                positioning. Wrapped at all because a bare <span> is not valid
+                as a child of <ul>. */}
+            {isHome && (
+              <li aria-hidden="true" className="contents">
+                <span
+                  ref={indicatorRef}
+                  className="bg-accent-gradient absolute top-1 bottom-1 left-0 rounded-full opacity-90"
+                />
+              </li>
+            )}
             {pillNavItems.map((item) => (
               <li key={item.sectionId}>
                 <a
                   ref={(node) => {
                     linkRefs.current[item.sectionId] = node;
                   }}
-                  href={item.href}
+                  href={navHref(item.href)}
+                  aria-current={isHome && activeId === item.sectionId ? "true" : undefined}
                   className={`relative z-10 rounded-full px-4 py-2 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                     activeId === item.sectionId
                       ? "font-semibold text-white"
@@ -193,7 +224,8 @@ export function Header({
                 ref={(node) => {
                   linkRefs.current[contactNavItem.sectionId] = node;
                 }}
-                href={contactNavItem.href}
+                href={navHref(contactNavItem.href)}
+                aria-current={isHome && activeId === contactNavItem.sectionId ? "true" : undefined}
                 className="group relative z-10 inline-flex items-center gap-1 rounded-full px-4 py-2 text-base font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <span
@@ -262,7 +294,7 @@ export function Header({
               <li key={item.sectionId}>
                 <a
                   data-mobile-link
-                  href={item.href}
+                  href={navHref(item.href)}
                   className="font-heading text-xl font-semibold tracking-wide uppercase"
                   onClick={closeMenu}
                 >
@@ -273,7 +305,7 @@ export function Header({
             <li>
               <a
                 data-mobile-link
-                href={contactNavItem.href}
+                href={navHref(contactNavItem.href)}
                 className="group inline-flex items-center gap-1.5 font-heading text-xl font-semibold tracking-wide text-accent-gradient uppercase"
                 onClick={closeMenu}
               >

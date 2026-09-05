@@ -5,6 +5,8 @@
 export type SiteSettings = {
   name: string;
   role: string;
+  /** Meta description. Longer and more factual than `tagline`, which is UI copy. */
+  description: string;
   tagline: string;
   email: string;
 };

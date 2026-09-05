@@ -154,12 +154,14 @@ portfolio/
                           # SocialIcons, SocialLinkList, SocialSidebar
     hooks/useFocusTrap.ts
     lib/                  # cms, content, format, animations, redis, rateLimit,
-                          # resend, contact, visit, nav, types
+                          # resend, contact, visit, nav, types, site, seo,
+                          # structuredData
     sanity/               # client, fetch, queries, devicon
     content/fallbacks.ts  # every hardcoded content value
     types/sanity.ts       # CMS-shaped types
   scripts/reset-stats.mjs
-  public/                 # CV pdf, hero/about art, logo, fallback project images, robots.txt
+  public/                 # CV pdf, hero/about art, logo, fallback project images,
+                          # opengraph-image.png (the share card)
 
 portfolio-studio/
   schemaTypes/{documents,objects,shared}/
@@ -280,6 +282,5 @@ npm run deploy         # publish the studio
 
 Not built, not scheduled:
 
-- OpenGraph / Twitter metadata and a `sitemap.ts` — link previews are currently bare
 - Analytics (`@vercel/analytics` was installed but never wired up, so it was removed)
 - A test suite

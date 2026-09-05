@@ -33,8 +33,11 @@ export default defineType({
       type: 'slug',
       group: 'card',
       description:
-        'URL-friendly id, generated from the title. Not used yet — projects open in a modal — but reserved for a future /projects/[slug] page.',
+        'URL-friendly id for this project’s page at /projects/<slug>. Press Generate to derive it from the title. Changing it changes the URL, so existing links break — only edit it deliberately.',
       options: {source: 'title', maxLength: 96},
+      // Required because without a slug the project has no page and is left
+      // out of the sitemap; the card still works, but nothing is linkable.
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'featured',
@@ -107,6 +110,16 @@ export default defineType({
         'Technologies used. Type one and press Enter to turn it into a tag, then type the next — no quotes, no commas. Anything left untagged in the box is not saved. Examples: React, TypeScript, Spring Boot, PostgreSQL.',
       of: [defineArrayMember({type: 'string'})],
       options: {layout: 'tags'},
+    }),
+    defineField({
+      name: 'seoDescription',
+      title: 'SEO Description',
+      type: 'text',
+      rows: 2,
+      group: 'details',
+      description:
+        'Optional. Overrides the card description in Google results and link previews. Aim for around 155 characters. Leave empty to reuse the card description.',
+      validation: (Rule) => Rule.max(200),
     }),
     defineField({
       name: 'projectOverview',

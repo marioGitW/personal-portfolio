@@ -86,9 +86,10 @@ export function Skills({ skills }: SkillsProps) {
   }, [items.length]);
 
   return (
-    <section id="skills" className="section-shell">
+    <section id="skills" aria-labelledby="skills-title" className="section-shell">
       <div className="mx-auto max-w-2xl text-center">
         <SectionHeading
+          titleId="skills-title"
           eyebrow={sectionCopy.skills.eyebrow}
           title={sectionCopy.skills.title}
           description={sectionCopy.skills.description}

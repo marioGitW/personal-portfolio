@@ -189,6 +189,7 @@ export function Hero({ hero }: HeroProps) {
   return (
     <section
       id="home"
+      aria-labelledby="hero-title"
       ref={sectionRef}
       className="relative w-full overflow-hidden pb-10 sm:pb-14 lg:h-[calc(100svh-65px)] lg:min-h-[600px] lg:pb-0"
     >
@@ -207,6 +208,7 @@ export function Hero({ hero }: HeroProps) {
         </p>
 
         <h1
+          id="hero-title"
           ref={lockupRef}
           aria-label={title}
           className="hero-name mt-5 text-center font-heading leading-[0.86] font-bold tracking-[-0.055em] whitespace-nowrap uppercase lg:text-left"

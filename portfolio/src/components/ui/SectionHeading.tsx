@@ -8,6 +8,8 @@ type SectionHeadingProps = {
   description?: string | null;
   /** Experience constrains its description; the centred sections do not. */
   descriptionClassName?: string;
+  /** Target for the section's aria-labelledby, so it is a named region. */
+  titleId?: string;
   /** About animates the eyebrow and heading separately, so it needs both refs. */
   eyebrowRef?: Ref<HTMLParagraphElement>;
   headingRef?: Ref<HTMLHeadingElement>;
@@ -19,6 +21,7 @@ export function SectionHeading({
   accent,
   description,
   descriptionClassName = "",
+  titleId,
   eyebrowRef,
   headingRef,
 }: SectionHeadingProps) {
@@ -27,7 +30,7 @@ export function SectionHeading({
       <p ref={eyebrowRef} className="section-eyebrow">
         {eyebrow}
       </p>
-      <h2 ref={headingRef} className="mt-3">
+      <h2 id={titleId} ref={headingRef} className="mt-3">
         {title}
         {accent ? (
           <>

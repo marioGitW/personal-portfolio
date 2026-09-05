@@ -100,12 +100,15 @@ export type Project = {
   _id: string;
   order: number | null;
   title: string | null;
+  /** Drives /projects/[slug]. Projects without one render card-and-modal only. */
   slug: string | null;
   /** Fetched and typed for future use; no UI depends on it yet. */
   featured: boolean | null;
   thumbnailTag: string | null;
   thumbnailTitle: string | null;
   thumbnailDescription: string | null;
+  /** Optional meta-description override. Falls back to the card copy. */
+  seoDescription: string | null;
   thumbnail: SanityImage | null;
   screenshots: SanityScreenshot[] | null;
   demoVideoUrl: string | null;

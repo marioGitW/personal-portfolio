@@ -70,9 +70,10 @@ export function Contact() {
     }`;
 
   return (
-    <section id="contact" className="section-shell">
+    <section id="contact" aria-labelledby="contact-title" className="section-shell">
       <div className="mx-auto max-w-2xl text-center">
         <SectionHeading
+          titleId="contact-title"
           eyebrow="Contact"
           title="Get In Touch"
           accent="— Ask Me Anything!"
@@ -92,6 +93,7 @@ export function Contact() {
               type="text"
               autoComplete="name"
               aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? "name-error" : undefined}
               className="mt-1 w-full border-b border-slate-300 bg-transparent py-2 pr-8 text-foreground outline-none transition focus:border-indigo-500 dark:border-slate-700"
               {...register("name", {
                 onBlur: () => setFocusedField((current) => (current === "name" ? null : current)),
@@ -100,7 +102,11 @@ export function Contact() {
             />
             <User className={fieldIconClass("name")} />
             {errors.name && (
-              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">
+              <span
+                id="name-error"
+                role="alert"
+                className="mt-1 block text-xs text-red-800 dark:text-red-700"
+              >
                 {errors.name.message}
               </span>
             )}
@@ -112,6 +118,7 @@ export function Contact() {
               type="email"
               autoComplete="email"
               aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
               className="mt-1 w-full border-b border-slate-300 bg-transparent py-2 pr-8 text-foreground outline-none transition focus:border-indigo-500 dark:border-slate-700"
               {...register("email", {
                 onBlur: () => setFocusedField((current) => (current === "email" ? null : current)),
@@ -120,7 +127,11 @@ export function Contact() {
             />
             <Mail className={fieldIconClass("email")} />
             {errors.email && (
-              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">
+              <span
+                id="email-error"
+                role="alert"
+                className="mt-1 block text-xs text-red-800 dark:text-red-700"
+              >
                 {errors.email.message}
               </span>
             )}
@@ -131,6 +142,7 @@ export function Contact() {
             <textarea
               rows={4}
               aria-invalid={Boolean(errors.message)}
+              aria-describedby={errors.message ? "message-error" : undefined}
               className="mt-1 w-full resize-none border-b border-slate-300 bg-transparent py-2 pr-8 text-foreground outline-none transition focus:border-indigo-500 dark:border-slate-700"
               {...register("message", {
                 onBlur: () =>
@@ -140,7 +152,11 @@ export function Contact() {
             />
             <MessageSquare className={fieldIconClass("message")} />
             {errors.message && (
-              <span className="mt-1 block text-xs text-red-800 dark:text-red-700">
+              <span
+                id="message-error"
+                role="alert"
+                className="mt-1 block text-xs text-red-800 dark:text-red-700"
+              >
                 {errors.message.message}
               </span>
             )}
@@ -168,19 +184,23 @@ export function Contact() {
           </span>
         </button>
 
-        {status === "success" && (
-          <p className="mt-4 flex items-center justify-center gap-2 text-sm text-emerald-500">
-            <CheckCircle2 className="size-4" />
-            Message sent — I&apos;ll get back to you soon.
-          </p>
-        )}
+        {/* Wrapper rather than aria-live on each <p>: a live region has to be
+            in the DOM before its content changes to be announced. */}
+        <div aria-live="polite">
+          {status === "success" && (
+            <p className="mt-4 flex items-center justify-center gap-2 text-sm text-emerald-500">
+              <CheckCircle2 className="size-4" />
+              Message sent — I&apos;ll get back to you soon.
+            </p>
+          )}
 
-        {status === "error" && (
-          <p className="mt-4 flex items-center justify-center gap-2 text-sm text-red-500">
-            <AlertCircle className="size-4" />
-            Something went wrong. Please try again.
-          </p>
-        )}
+          {status === "error" && (
+            <p className="mt-4 flex items-center justify-center gap-2 text-sm text-red-500">
+              <AlertCircle className="size-4" />
+              Something went wrong. Please try again.
+            </p>
+          )}
+        </div>
       </form>
     </section>
   );

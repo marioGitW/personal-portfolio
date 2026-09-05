@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# Nothing to index here, and /api/stats would otherwise be crawled.
-Disallow: /api/

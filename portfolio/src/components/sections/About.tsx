@@ -119,7 +119,7 @@ export function About({ about }: AboutProps) {
   }, []);
 
   return (
-    <section id="about" ref={sectionRef} className="section-shell">
+    <section id="about" aria-labelledby="about-title" ref={sectionRef} className="section-shell">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-center lg:gap-3">
         {/* Scales with the viewport rather than sitting at a fixed cap, with a
             floor so it stops shrinking once the row runs out of room at lg. */}
@@ -132,7 +132,7 @@ export function About({ about }: AboutProps) {
             alt={`3D illustration of ${site.name} holding a laptop, with an arm extended toward the About Me content`}
             width={768}
             height={1365}
-            priority
+            loading="lazy"
             // Mirrors the width above: browsers also fall back to sizes for
             // layout when the element's own width is auto.
             sizes="(min-width: 1500px) 360px, (max-width: 1187px) 285px, 24vw"
@@ -147,6 +147,7 @@ export function About({ about }: AboutProps) {
           <span ref={beamRef} aria-hidden="true" className="about-panel-beam" />
 
           <SectionHeading
+            titleId="about-title"
             eyebrow={sectionCopy.about.eyebrow}
             title={sectionCopy.about.titleLead}
             accent={sectionCopy.about.titleAccent}

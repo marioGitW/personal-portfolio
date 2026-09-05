@@ -26,7 +26,7 @@ export function SkillCard({ skill }: { skill: SkillItem }) {
           />
           <AssetIcon
             src={iconUrl}
-            alt={skill.title ?? ""}
+            alt=""
             className="relative size-full object-contain p-0.5 transition-transform duration-300 group-hover:scale-110"
           />
         </span>

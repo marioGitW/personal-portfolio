@@ -6,7 +6,7 @@ import {
   skillsFallback,
 } from "@/content/fallbacks";
 import { getPortfolio, getProjects } from "@/sanity/fetch";
-import { socialHref } from "@/lib/format";
+import { projectSlug, socialHref } from "@/lib/format";
 import type { About, Experience, Hero, Project, Skills, SocialLinkItem } from "@/types/sanity";
 
 // CMS content first, hardcoded fallback second, applied per field so a
@@ -73,4 +73,20 @@ export async function getSocialLinks(): Promise<SocialLinkItem[]> {
 export async function getProjectList(): Promise<Project[]> {
   const projects = await getProjects();
   return projects.length > 0 ? projects : projectsFallback;
+}
+
+// De-duplicated so the route, generateStaticParams and the sitemap can never
+// disagree about which project pages exist.
+export async function getProjectSlugs(): Promise<string[]> {
+  const slugs = (await getProjectList())
+    .map(projectSlug)
+    .filter((slug): slug is string => slug !== null);
+  return [...new Set(slugs)];
+}
+
+// Reads the same cached list the page renders, so metadata and content can
+// never describe different projects.
+export async function getProjectBySlug(slug: string): Promise<Project | null> {
+  const projects = await getProjectList();
+  return projects.find((project) => projectSlug(project) === slug) ?? null;
 }

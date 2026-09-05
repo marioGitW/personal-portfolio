@@ -7,7 +7,9 @@ import type { Portfolio, Project } from "@/types/sanity";
 // Errors are swallowed so a CMS outage degrades to the fallbacks, never a
 // broken site.
 
-// cache() so the layout and the page share one round trip, not two.
+// cache() so every caller in a request shares one round trip, not several:
+// the layout, the page, generateMetadata, generateStaticParams and the sitemap
+// all read through these.
 export const getPortfolio = cache(async (): Promise<Portfolio | null> => {
   if (!sanityClient) {
     return null;
@@ -21,7 +23,7 @@ export const getPortfolio = cache(async (): Promise<Portfolio | null> => {
   }
 });
 
-export async function getProjects(): Promise<Project[]> {
+export const getProjects = cache(async (): Promise<Project[]> => {
   if (!sanityClient) {
     return [];
   }
@@ -32,4 +34,4 @@ export async function getProjects(): Promise<Project[]> {
     console.error("[sanity] Failed to fetch projects:", error);
     return [];
   }
-}
+});

@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ProjectVisual } from "@/components/projects/ProjectVisual";
+import { projectPath, projectSlug } from "@/lib/format";
 import type { Project } from "@/types/sanity";
 
 type ProjectCardProps = {
@@ -9,9 +11,16 @@ type ProjectCardProps = {
   onOpen: (project: Project) => void;
 };
 
+// One class string, shared by both branches below so they cannot drift apart.
+// The focus ring replaces a bare focus-visible:outline-none, which left the
+// card keyboard-focusable with no visible indicator.
+const cardClasses =
+  "group relative isolate flex h-full w-full flex-col justify-end overflow-hidden rounded-3xl text-left shadow-xl shadow-slate-900/10 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none";
+
 export function ProjectCard({ project, onOpen }: ProjectCardProps) {
   // Card and modal read the same fields; no per-view duplicate copy.
   const title = project.thumbnailTitle ?? project.title;
+  const slug = projectSlug(project);
 
   // The card box itself never moves: only its contents react to hover. Lifting
   // the whole card pushed it under the track's clip and gave the transformed
@@ -20,12 +29,8 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
   // No border either: `inset-0` resolves to the padding box, so a border ring
   // sits outside the image and both overlays and nothing can darken it. Any
   // light colour there reads as a hairline around the card.
-  return (
-    <button
-      type="button"
-      onClick={() => onOpen(project)}
-      className="group relative isolate flex h-full w-full flex-col justify-end overflow-hidden rounded-3xl text-left shadow-xl shadow-slate-900/10 focus-visible:outline-none"
-    >
+  const body = (
+    <>
       {/* Every clip in this stack carries the card's radius. Without it the
           image is clipped square here and only rounded by the button, two
           layers up — and because the hover zoom pushes the image past the card
@@ -78,6 +83,34 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
           </div>
         </div>
       </div>
+    </>
+  );
+
+  // A real href, so the project page is crawlable and middle-click or
+  // Cmd-click opens it — but preventDefault on a plain left click keeps the
+  // modal exactly as it was, URL and all. prefetch is off because a left click
+  // never navigates, so prefetching every card would be pure waste.
+  if (slug) {
+    return (
+      <Link
+        href={projectPath(slug)}
+        prefetch={false}
+        draggable={false}
+        onClick={(event) => {
+          event.preventDefault();
+          onOpen(project);
+        }}
+        className={cardClasses}
+      >
+        {body}
+      </Link>
+    );
+  }
+
+  // No slug means no project page exists, so there is nothing to link to.
+  return (
+    <button type="button" onClick={() => onOpen(project)} className={cardClasses}>
+      {body}
     </button>
   );
 }

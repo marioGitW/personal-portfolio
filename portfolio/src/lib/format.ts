@@ -1,4 +1,4 @@
-import type { ExperienceItem, SocialLinkItem } from "@/types/sanity";
+import type { ExperienceItem, Project, SocialLinkItem } from "@/types/sanity";
 
 // Pure formatters shared by client components. Type-only imports, so this is
 // safe in the browser bundle.
@@ -69,6 +69,18 @@ export function toParagraphs(text: string | null | undefined): string[] {
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
+}
+
+// Trimmed, or null when blank. A project without a slug has no /projects page,
+// so its card stays a button and it is left out of the sitemap.
+export function projectSlug(project: Pick<Project, "slug">): string | null {
+  const slug = project.slug?.trim();
+  return slug ? slug : null;
+}
+
+/** Route for a project detail page. The one place the URL shape is defined. */
+export function projectPath(slug: string): string {
+  return `/projects/${slug}`;
 }
 
 // Non-mutating sort; items without an order sink to the end.

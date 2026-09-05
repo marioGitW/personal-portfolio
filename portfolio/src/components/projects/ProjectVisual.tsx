@@ -5,6 +5,8 @@ type ProjectVisualProps = {
   imageUrl: string | null;
   /** Blur placeholder from Sanity's asset metadata, when available. */
   lqip?: string | null;
+  /** Defaults to the card's own layout; the modal and detail page differ. */
+  sizes?: string;
   className?: string;
 };
 
@@ -17,7 +19,13 @@ function getInitials(title: string | null): string {
     .join("");
 }
 
-export function ProjectVisual({ title, imageUrl, lqip, className = "" }: ProjectVisualProps) {
+export function ProjectVisual({
+  title,
+  imageUrl,
+  lqip,
+  sizes = "(min-width: 1024px) 42vw, 100vw",
+  className = "",
+}: ProjectVisualProps) {
   if (imageUrl) {
     return (
       // Dark placeholder in both themes, not bg-slate-100: the card always
@@ -29,7 +37,7 @@ export function ProjectVisual({ title, imageUrl, lqip, className = "" }: Project
           src={imageUrl}
           alt=""
           fill
-          sizes="(min-width: 1024px) 42vw, 100vw"
+          sizes={sizes}
           className="object-cover"
           {...(lqip ? { placeholder: "blur" as const, blurDataURL: lqip } : {})}
         />

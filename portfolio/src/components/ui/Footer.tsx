@@ -69,10 +69,11 @@ export function Footer({ links }: FooterProps) {
         <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
           <div data-footer-item>
             <Image
-              src="/ms-logo.svg"
+              src="/ms-logo.png"
               alt={site.name}
-              width={220}
-              height={152}
+              width={613}
+              height={415}
+              sizes="54px"
               className="h-9 w-auto"
             />
             <p className="mt-3 max-w-sm text-sm text-slate-500 dark:text-slate-400">

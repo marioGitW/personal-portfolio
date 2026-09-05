@@ -124,10 +124,16 @@ export function Projects({ projects }: ProjectsProps) {
   };
 
   return (
-    <section id="projects" ref={sectionRef} className="relative w-full py-28 max-[431px]:py-10">
+    <section
+      id="projects"
+      aria-labelledby="projects-title"
+      ref={sectionRef}
+      className="relative w-full py-28 max-[431px]:py-10"
+    >
       <div ref={introRef}>
         <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
           <SectionHeading
+            titleId="projects-title"
             eyebrow={sectionCopy.projects.eyebrow}
             title={sectionCopy.projects.titleLead}
             accent={sectionCopy.projects.titleAccent}

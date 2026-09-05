@@ -59,8 +59,9 @@ export function Experience({ experience }: ExperienceProps) {
   }, [items.length]);
 
   return (
-    <section id="experience" className="section-shell">
+    <section id="experience" aria-labelledby="experience-title" className="section-shell">
       <SectionHeading
+        titleId="experience-title"
         eyebrow={sectionCopy.experience.eyebrow}
         title={sectionCopy.experience.titleLead}
         accent={sectionCopy.experience.titleAccent}

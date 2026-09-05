@@ -72,6 +72,7 @@ export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: Pro
       <div className={`${frameClasses} ${className}`} data-cursor-native>
         <video
           controls
+          aria-label={title}
           preload="metadata"
           className="h-full w-full rounded-lg"
           src={demoVideoUrl}

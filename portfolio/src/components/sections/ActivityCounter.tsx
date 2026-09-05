@@ -136,6 +136,7 @@ export function ActivityCounter() {
 
   return (
     <section
+      aria-labelledby="activity-title"
       ref={sectionRef}
       className="mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-6 max-[431px]:py-10"
     >
@@ -151,7 +152,7 @@ export function ActivityCounter() {
               One last thing
             </p>
             <div ref={headingRef}>
-              <h2 className="mt-3 text-3xl sm:text-4xl">
+              <h2 id="activity-title" className="mt-3 text-3xl sm:text-4xl">
                 Enjoyed the <span className="text-accent-gradient">journey?</span>
               </h2>
               <p className="mt-3 text-muted">

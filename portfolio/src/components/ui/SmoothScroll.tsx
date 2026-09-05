@@ -100,6 +100,12 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // The skip link must move keyboard focus into <main>, and only the
+      // browser's own hash navigation does that.
+      if (anchor.hasAttribute("data-skip-link")) {
+        return;
+      }
+
       const hash = anchor.getAttribute("href");
       if (!hash || hash.length < 2) {
         return;
