@@ -5,15 +5,23 @@ import { Download, X } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
-const RESUME_PATH = "/Spasovski_Mario_CV.pdf";
+// The `download` attribute is ignored on cross-origin hrefs, and the PDF is
+// served from the Sanity CDN, so the browser would open it in a tab instead of
+// saving it. `?dl=` is how Sanity is asked for a Content-Disposition attachment.
+function downloadHref(url: string, filename: string | null): string {
+  return `${url}?dl=${encodeURIComponent(filename ?? "resume.pdf")}`;
+}
 
 type ResumeModalProps = {
   open: boolean;
   onClose: () => void;
   triggerRef: React.RefObject<HTMLElement | null>;
+  /** CMS-resolved PDF URL. The caller only renders this modal once it has one. */
+  url: string;
+  filename: string | null;
 };
 
-export function ResumeModal({ open, onClose, triggerRef }: ResumeModalProps) {
+export function ResumeModal({ open, onClose, triggerRef, url, filename }: ResumeModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -55,8 +63,7 @@ export function ResumeModal({ open, onClose, triggerRef }: ResumeModalProps) {
           <h2 className="font-heading text-sm font-semibold tracking-tight">Resume</h2>
           <div className="flex items-center gap-2">
             <a
-              href={RESUME_PATH}
-              download
+              href={downloadHref(url, filename)}
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium transition hover:border-indigo-500 dark:border-slate-700"
             >
               <Download className="size-3.5" />
@@ -75,7 +82,7 @@ export function ResumeModal({ open, onClose, triggerRef }: ResumeModalProps) {
         </div>
         <div className="min-h-0 flex-1 overflow-auto bg-slate-100 dark:bg-slate-900">
           <iframe
-            src={RESUME_PATH}
+            src={url}
             title="Resume PDF"
             className="h-full min-h-[60rem] w-full sm:min-h-full"
           />

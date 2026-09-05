@@ -12,7 +12,9 @@ export const portfolioQuery = /* groq */ `
   hero{
     roleTag,
     mainTitle,
-    subtitle
+    subtitle,
+    "resumeUrl": resume.asset->url,
+    "resumeFilename": resume.asset->originalFilename
   },
   about{
     description,

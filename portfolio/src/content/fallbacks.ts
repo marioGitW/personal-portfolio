@@ -17,6 +17,10 @@ export const heroFallback: Hero = {
   roleTag: "Aspiring Software Engineer",
   mainTitle: "Mario Spasovski",
   subtitle: "Curious about technology. Passionate about building things that make sense.",
+  // No fallback path on purpose: the CV lives in the CMS only, so a hardcoded
+  // path here would 404. Null hides the resume button instead.
+  resumeUrl: null,
+  resumeFilename: null,
 };
 
 export const aboutFallback: About = {

@@ -17,6 +17,10 @@ export type Hero = {
   roleTag: string | null;
   mainTitle: string | null;
   subtitle: string | null;
+  /** Resolved file-asset URL for the CV. Null hides the resume button. */
+  resumeUrl: string | null;
+  /** Original upload filename, used to name the download. */
+  resumeFilename: string | null;
 };
 
 export type AboutTag = {

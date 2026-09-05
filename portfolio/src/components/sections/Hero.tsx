@@ -17,6 +17,9 @@ export function Hero({ hero }: HeroProps) {
   const title = hero.mainTitle ?? "";
   // Always two lines: both spans must exist for the GSAP timeline to run.
   const [lineOne, lineTwo] = splitTitleLines(title);
+  // Set only when a CV is uploaded in the CMS; without one the button and its
+  // modal are left out entirely rather than opening onto a dead iframe.
+  const resumeUrl = hero.resumeUrl;
   const resumeButtonRef = useRef<HTMLButtonElement>(null);
   const [resumeOpen, setResumeOpen] = useState(false);
 
@@ -245,9 +248,11 @@ export function Hero({ hero }: HeroProps) {
 
         <div ref={ctaRef} className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
           <Button href="#contact">Let&apos;s Connect</Button>
-          <Button ref={resumeButtonRef} variant="secondary" onClick={() => setResumeOpen(true)}>
-            View Resume
-          </Button>
+          {resumeUrl && (
+            <Button ref={resumeButtonRef} variant="secondary" onClick={() => setResumeOpen(true)}>
+              View Resume
+            </Button>
+          )}
         </div>
       </div>
 
@@ -281,11 +286,15 @@ export function Hero({ hero }: HeroProps) {
         </div>
       </div>
 
-      <ResumeModal
-        open={resumeOpen}
-        onClose={() => setResumeOpen(false)}
-        triggerRef={resumeButtonRef}
-      />
+      {resumeUrl && (
+        <ResumeModal
+          open={resumeOpen}
+          onClose={() => setResumeOpen(false)}
+          triggerRef={resumeButtonRef}
+          url={resumeUrl}
+          filename={hero.resumeFilename}
+        />
+      )}
     </section>
   );
 }

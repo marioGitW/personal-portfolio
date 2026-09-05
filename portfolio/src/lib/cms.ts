@@ -39,6 +39,8 @@ export async function getPortfolioContent(): Promise<PortfolioContent> {
       roleTag: text(cms?.hero?.roleTag, heroFallback.roleTag),
       mainTitle: text(cms?.hero?.mainTitle, heroFallback.mainTitle),
       subtitle: text(cms?.hero?.subtitle, heroFallback.subtitle),
+      resumeUrl: text(cms?.hero?.resumeUrl, heroFallback.resumeUrl),
+      resumeFilename: text(cms?.hero?.resumeFilename, heroFallback.resumeFilename),
     },
     about: {
       description: text(cms?.about?.description, aboutFallback.description),

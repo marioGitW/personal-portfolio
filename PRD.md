@@ -63,6 +63,7 @@ never blank.
 - Hero / About / Experience / Skills fall back **per field**, so a half-filled CMS still renders a complete page
 - Projects are **all-or-nothing** — if the CMS has any project, only those show, so a deleted project actually disappears
 - Social links have **no fallback**; entries that don't resolve to an href are dropped rather than rendered dead
+- The hero resume PDF has **no fallback** either — it lives only in the CMS, so with nothing uploaded the "View Resume" button is not rendered at all
 
 Content is re-fetched at most once a minute (`export const revalidate = 60` in
 `src/app/page.tsx`), so publishing in the Studio appears on the site without a redeploy.
@@ -80,7 +81,8 @@ Rendered in order by `src/app/page.tsx`:
 
 1. **Hero** — two-line masked name lockup animated in by GSAP, cursor-tracked gradient
    highlight on the name, portrait with cursor and scroll parallax, CTA buttons
-   ("Let's Connect" anchor, "View Resume" opens the resume modal)
+   ("Let's Connect" anchor; "View Resume" opens the resume modal, and renders only when a
+   CV is uploaded in the CMS)
 2. **About** — portrait illustration, bio paragraphs, stat tags, language pills, and a
    rotating accent beam around the panel border
 3. **Experience** — vertical timeline whose progress line scrubs with scroll; per entry:
@@ -160,7 +162,7 @@ portfolio/
     content/fallbacks.ts  # every hardcoded content value
     types/sanity.ts       # CMS-shaped types
   scripts/reset-stats.mjs
-  public/                 # CV pdf, hero/about art, logo, fallback project images,
+  public/                 # hero/about art, logo, fallback project images,
                           # opengraph-image.png (the share card)
 
 portfolio-studio/
@@ -214,7 +216,7 @@ Documented in `portfolio/.env.example`. Set all of these in the Vercel dashboard
 | `CMS_API_VERSION` | yes      | `2024-01-01`                                                                               |
 | `CMS_READ_TOKEN`          | yes      | Read-only viewer token; the dataset is private                                             |
 | `STATS_ENV`                      | no       | Only needed if hosted somewhere `VERCEL_ENV` is absent                                     |
-| `SITE_URL`                       | no       | Origin for Open Graph URLs; falls back to `VERCEL_PROJECT_PRODUCTION_URL`                  |
+| `SITE_URL`                       | no       | Overrides the canonical origin for local/staging; production lives in `src/lib/site.ts`    |
 
 No variable carries a `NEXT_PUBLIC_` prefix, so none is inlined into client JS.
 `src/sanity/client.ts` imports `server-only`, which turns an accidental client
