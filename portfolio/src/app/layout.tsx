@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { CursorSmoke } from "@/components/effects/CursorSmoke";
 import { Preloader } from "@/components/ui/Preloader";
@@ -124,6 +125,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <SocialSidebar links={socialLinks} />
           <SmoothScroll>{children}</SmoothScroll>
         </Providers>
+        {/* Vercel Web Analytics. Sits outside Providers because it renders no
+            markup — it only ships the page-view beacon, and is inert when the
+            site is not served from Vercel. */}
+        <Analytics />
       </body>
     </html>
   );
