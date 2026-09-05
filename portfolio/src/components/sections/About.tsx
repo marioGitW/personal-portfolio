@@ -156,7 +156,7 @@ export function About({ about }: AboutProps) {
 
           <div
             ref={linesRef}
-            className="mx-auto mt-6 max-w-md space-y-4 text-base text-slate-600 sm:text-lg md:max-w-xl lg:mx-0 lg:max-w-none dark:text-slate-400"
+            className="mx-auto mt-6 max-w-md space-y-4 text-base text-slate-600 sm:max-w-xl sm:text-lg md:max-w-none lg:mx-0 dark:text-slate-400"
           >
             {bioParagraphs.map((paragraph, index) => (
               <p key={index} data-line>

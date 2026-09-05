@@ -196,11 +196,11 @@ export function Hero({ hero }: HeroProps) {
           portrait bleeding over it. Left padding clears the SocialSidebar. */}
       <div
         ref={copyRef}
-        className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-col justify-start px-4 pt-10 sm:px-6 sm:pt-14 md:pl-24 lg:h-full lg:justify-center lg:pt-0 lg:pl-28"
+        className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-col justify-start px-4 pt-10 sm:px-6 sm:pt-14 md:pr-24 md:pl-24 lg:h-full lg:justify-center lg:pt-0 lg:pr-6 lg:pl-28"
       >
         <p
           ref={eyebrowRef}
-          className="flex items-center gap-2.5 font-heading text-[0.8125rem] font-semibold tracking-[0.3em] text-slate-600 uppercase md:ml-3 dark:text-slate-300"
+          className="flex items-center justify-center gap-2 font-heading text-[0.6875rem] font-semibold tracking-[0.3em] text-slate-600 uppercase sm:gap-2.5 lg:ml-3 lg:justify-start lg:text-[0.8125rem] dark:text-slate-300"
         >
           <span className="hero-eyebrow-dot" aria-hidden="true" />
           {hero.roleTag}
@@ -209,7 +209,7 @@ export function Hero({ hero }: HeroProps) {
         <h1
           ref={lockupRef}
           aria-label={title}
-          className="hero-name mt-5 font-heading leading-[0.86] font-bold tracking-[-0.055em] whitespace-nowrap uppercase"
+          className="hero-name mt-5 text-center font-heading leading-[0.86] font-bold tracking-[-0.055em] whitespace-nowrap uppercase lg:text-left"
         >
           <span aria-hidden="true" className="block">
             <span className="hero-line-mask block">
@@ -236,12 +236,12 @@ export function Hero({ hero }: HeroProps) {
 
         <p
           ref={taglineRef}
-          className="mt-16 max-w-[26rem] text-base text-slate-600 sm:max-w-[32rem] sm:text-lg md:mx-auto md:mt-24 md:max-w-[32rem] md:text-center lg:mx-0 lg:mt-7 lg:text-left dark:text-slate-400"
+          className="mx-auto mt-6 max-w-[26rem] text-center text-base text-slate-600 sm:mt-8 sm:max-w-[32rem] sm:text-lg md:mt-10 md:max-w-[32rem] lg:mx-0 lg:mt-7 lg:text-left dark:text-slate-400"
         >
           {hero.subtitle}
         </p>
 
-        <div ref={ctaRef} className="mt-7 flex flex-wrap gap-3 md:justify-center lg:justify-start">
+        <div ref={ctaRef} className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
           <Button href="#contact">Let&apos;s Connect</Button>
           <Button ref={resumeButtonRef} variant="secondary" onClick={() => setResumeOpen(true)}>
             View Resume
@@ -274,10 +274,6 @@ export function Hero({ hero }: HeroProps) {
               priority
               sizes="(min-width: 1024px) 46vw, (min-width: 640px) 52vw, 68vw"
               className="hero-portrait-img relative h-auto w-[68vw] max-w-[300px] object-contain object-bottom opacity-90 sm:w-[52vw] sm:max-w-[380px] sm:opacity-95 lg:h-full lg:w-auto lg:max-w-none lg:opacity-100"
-            />
-            <div
-              className="hero-portrait-fade pointer-events-none absolute inset-x-0 bottom-0 h-[16%]"
-              aria-hidden="true"
             />
           </div>
         </div>

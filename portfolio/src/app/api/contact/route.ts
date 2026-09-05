@@ -27,9 +27,9 @@ export async function POST(request: Request) {
   }
 
   const resend = getResend();
-  const contactEmail = process.env.CONTACT_EMAIL;
+  const contactEmail = process.env.MAIL_TO;
   if (!resend || !contactEmail) {
-    console.error("Contact form unconfigured: need RESEND_API_KEY and CONTACT_EMAIL");
+    console.error("Contact form unconfigured: need MAIL_API_KEY and MAIL_TO");
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 

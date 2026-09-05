@@ -135,7 +135,10 @@ export function ActivityCounter() {
   };
 
   return (
-    <section ref={sectionRef} className="mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-6">
+    <section
+      ref={sectionRef}
+      className="mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-6 max-[431px]:py-10"
+    >
       <div className="relative overflow-hidden rounded-3xl surface-card px-6 py-12 sm:px-12 sm:py-14">
         <span
           aria-hidden="true"

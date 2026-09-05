@@ -1,11 +1,14 @@
+import "server-only";
 import { createClient, type SanityClient } from "@sanity/client";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
-const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION ?? "2024-01-01";
+// None of these carry the NEXT_PUBLIC_ prefix, so Next never inlines them into
+// client JS. The `server-only` import above is what keeps that true: a client
+// component importing this file fails the build instead of leaking the values.
+const projectId = process.env.CMS_PROJECT_ID;
+const dataset = process.env.CMS_DATASET;
+const apiVersion = process.env.CMS_API_VERSION ?? "2024-01-01";
 
-// Server-only. Not NEXT_PUBLIC_, so Next never inlines it into client JS.
-const readToken = process.env.SANITY_API_READ_TOKEN;
+const readToken = process.env.CMS_READ_TOKEN;
 
 // null when unconfigured, so a fresh clone falls back instead of throwing.
 export const sanityClient: SanityClient | null =

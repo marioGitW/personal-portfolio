@@ -89,6 +89,10 @@ export function Projects({ projects }: ProjectsProps) {
         // anticipatePin assumes native scroll input; against Lenis's
         // programmatic scrollTo it mistimed the pin swap and flashed ~3000px.
         anticipatePin: 0,
+        // The nav-scroll blur puts a filter on an ancestor, which would make a
+        // position:fixed pin resolve against that wrapper instead of the
+        // viewport. Transform pinning is immune.
+        pinType: "transform",
         scrub: 0.6,
         invalidateOnRefresh: true,
         animation: gsap.to(track, {
@@ -120,7 +124,7 @@ export function Projects({ projects }: ProjectsProps) {
   };
 
   return (
-    <section id="projects" ref={sectionRef} className="relative w-full py-28 max-[430px]:py-16">
+    <section id="projects" ref={sectionRef} className="relative w-full py-28 max-[431px]:py-10">
       <div ref={introRef}>
         <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
           <SectionHeading

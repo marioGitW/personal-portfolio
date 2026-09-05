@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import gsap from "gsap";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { navItems } from "@/lib/nav";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SocialLinkList } from "@/components/ui/SocialLinkList";
@@ -12,7 +14,13 @@ import type { SocialLinkItem } from "@/types/sanity";
 const pillNavItems = navItems.filter((item) => item.sectionId !== "contact");
 const contactNavItem = navItems.find((item) => item.sectionId === "contact")!;
 
-export function Header({ name, socialLinks = [] }: { name: string; socialLinks?: SocialLinkItem[] }) {
+export function Header({
+  name,
+  socialLinks = [],
+}: {
+  name: string;
+  socialLinks?: SocialLinkItem[];
+}) {
   const [activeId, setActiveId] = useState<string>(navItems[0].sectionId);
   const [open, setOpen] = useState(false);
   // Mirrors `open` but only flips to false once the close animation finishes,
@@ -23,6 +31,11 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
   const overlayRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+
+  const closeMenu = useCallback(() => setOpen(false), []);
+
+  // Escape to close plus Tab containment, same as the two modals.
+  useFocusTrap(open, overlayRef, closeMenu);
 
   useEffect(() => {
     const elements = navItems
@@ -89,7 +102,12 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
     });
   }, [activeId]);
 
-  useEffect(() => {
+  // useLayoutEffect, not useEffect: passive effects run *after* paint, so on the
+  // first open React would unhide the panel and paint one frame of the finished
+  // menu before GSAP moved it off-screen. A CSS transform cannot substitute here
+  // — translateX(100%) resolves to a pixel matrix that GSAP reads back as `x`,
+  // and `xPercent: 100` would then stack on top of it.
+  useLayoutEffect(() => {
     const overlay = overlayRef.current;
     const backdrop = backdropRef.current;
     if (!overlay || !backdrop) {
@@ -112,7 +130,7 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
         { x: 0, opacity: 1, stagger: 0.05, duration: 0.3, ease: "power3.out" },
         "-=0.15",
       );
-      document.body.classList.add("overflow-hidden");
+      lockScroll();
     } else {
       gsap.killTweensOf([overlay, backdrop]);
       gsap.to(overlay, {
@@ -125,27 +143,12 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
         opacity: 0,
         duration: 0.25,
       });
-      document.body.classList.remove("overflow-hidden");
+      unlockScroll();
     }
 
     return () => {
-      document.body.classList.remove("overflow-hidden");
+      unlockScroll();
     };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
   return (
@@ -220,13 +223,13 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
             type="button"
             className="icon-button md:hidden"
             aria-expanded={open}
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label="Open menu"
             onClick={() => {
-              setOpen((value) => !value);
+              setOpen(true);
               setMenuMounted(true);
             }}
           >
-            {open ? <X className="size-4" /> : <Menu className="size-4" />}
+            <Menu className="size-4" />
           </button>
         </div>
       </div>
@@ -235,27 +238,25 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
         ref={backdropRef}
         hidden={!menuMounted}
         className="fixed inset-0 z-40 bg-black/50 md:hidden"
-        onClick={() => setOpen(false)}
+        onClick={closeMenu}
         aria-hidden="true"
       />
 
       <div
         ref={overlayRef}
         hidden={!menuMounted}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site menu"
         className="fixed inset-y-0 right-0 z-50 flex w-[85%] max-w-sm flex-col bg-background px-6 pt-6 pb-8 shadow-2xl md:hidden"
       >
         <div className="flex items-center justify-end">
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-          >
+          <button type="button" className="icon-button" aria-label="Close menu" onClick={closeMenu}>
             <X className="size-4" />
           </button>
         </div>
 
-        <nav className="mt-10 flex-1" aria-label="Mobile">
+        <nav className="mt-10" aria-label="Mobile">
           <ul className="flex flex-col gap-6">
             {pillNavItems.map((item) => (
               <li key={item.sectionId}>
@@ -263,7 +264,7 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
                   data-mobile-link
                   href={item.href}
                   className="font-heading text-xl font-semibold tracking-wide uppercase"
-                  onClick={() => setOpen(false)}
+                  onClick={closeMenu}
                 >
                   {item.label}
                 </a>
@@ -274,7 +275,7 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
                 data-mobile-link
                 href={contactNavItem.href}
                 className="group inline-flex items-center gap-1.5 font-heading text-xl font-semibold tracking-wide text-accent-gradient uppercase"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 {contactNavItem.label}
                 <ArrowUpRight className="size-5 shrink-0 text-indigo-500 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 dark:text-cyan-400" />
@@ -284,7 +285,7 @@ export function Header({ name, socialLinks = [] }: { name: string; socialLinks?:
         </nav>
 
         {socialLinks.length > 0 && (
-          <div className="mt-auto border-t border-slate-200 pt-6 dark:border-slate-800">
+          <div className="mt-10 border-t border-slate-200 pt-6 dark:border-slate-800">
             <SocialLinkList
               links={socialLinks}
               className="flex flex-wrap items-center gap-5"

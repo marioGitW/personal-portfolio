@@ -3,7 +3,7 @@ import { sanityClient } from "@/sanity/client";
 import { portfolioQuery, projectsQuery } from "@/sanity/queries";
 import type { Portfolio, Project } from "@/types/sanity";
 
-// Server Components only — the read token is deliberately not NEXT_PUBLIC_.
+// Server Components only — @/sanity/client imports "server-only" to enforce it.
 // Errors are swallowed so a CMS outage degrades to the fallbacks, never a
 // broken site.
 

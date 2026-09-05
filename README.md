@@ -130,15 +130,22 @@ npm run dev                  # http://localhost:3333
 Documented in [`portfolio/.env.example`](portfolio/.env.example); set the same values in the
 Vercel dashboard.
 
-| Variable                            | Notes                                                                                      |
-| ----------------------------------- | ------------------------------------------------------------------------------------------ |
-| `RESEND_API_KEY`                    | Contact form delivery                                                                      |
-| `CONTACT_EMAIL`                     | Destination inbox                                                                          |
-| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Counters and rate limiting                                                                 |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID`     | Public identifier; grants no access on its own                                             |
-| `NEXT_PUBLIC_SANITY_DATASET`        | `production`                                                                               |
-| `NEXT_PUBLIC_SANITY_API_VERSION`    | `2024-01-01`                                                                               |
-| `SANITY_API_READ_TOKEN`             | Read-only viewer token. **Not** `NEXT_PUBLIC_` — server-only, never bundled into client JS |
+Every variable is server-only — the project ships no `NEXT_PUBLIC_*` values, so
+nothing here is inlined into the browser bundle. `src/sanity/client.ts` imports
+`server-only` to keep it that way: importing it from a client component fails the
+build rather than leaking the values.
+
+| Variable           | Notes                                          |
+| ------------------ | ---------------------------------------------- |
+| `MAIL_API_KEY`     | Contact form delivery                          |
+| `MAIL_TO`          | Destination inbox                              |
+| `KV_REST_URL`      | Counters and rate limiting                     |
+| `KV_REST_TOKEN`    | "                                              |
+| `CMS_PROJECT_ID`   | Sanity project id                              |
+| `CMS_DATASET`      | `production`                                   |
+| `CMS_API_VERSION`  | `2024-01-01`                                   |
+| `CMS_READ_TOKEN`   | Read-only viewer token; the dataset is private |
+| `SITE_URL`         | Origin for Open Graph URLs; optional on Vercel |
 
 Counters are namespaced by environment (`portfolio:*`, `preview:portfolio:*`, `dev:portfolio:*`)
 off `VERCEL_ENV`, so preview deploys and local work never touch the live numbers.

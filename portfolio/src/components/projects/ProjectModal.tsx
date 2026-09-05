@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/animations";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { toParagraphs } from "@/lib/format";
 import { ProjectVisual } from "@/components/projects/ProjectVisual";
 import {
@@ -44,7 +45,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     }
 
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-    document.body.classList.add("overflow-hidden");
+    lockScroll();
 
     const items = contentRef.current?.querySelectorAll<HTMLElement>("[data-modal-item]") ?? [];
     const reducedMotion = prefersReducedMotion();
@@ -82,7 +83,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
       return;
     }
 
-    document.body.classList.remove("overflow-hidden");
+    unlockScroll();
 
     const backdrop = backdropRef.current;
     const dialog = dialogRef.current;
@@ -113,7 +114,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
 
   useEffect(() => {
     return () => {
-      document.body.classList.remove("overflow-hidden");
+      unlockScroll();
     };
   }, []);
 

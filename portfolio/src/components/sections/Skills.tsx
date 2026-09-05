@@ -40,7 +40,8 @@ export function Skills({ skills }: SkillsProps) {
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setCardsPerPage(mq.matches ? CARDS_PER_PAGE_DESKTOP : CARDS_PER_PAGE_COMPACT);
+    const update = () =>
+      setCardsPerPage(mq.matches ? CARDS_PER_PAGE_DESKTOP : CARDS_PER_PAGE_COMPACT);
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);

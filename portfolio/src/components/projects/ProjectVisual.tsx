@@ -20,7 +20,11 @@ function getInitials(title: string | null): string {
 export function ProjectVisual({ title, imageUrl, lqip, className = "" }: ProjectVisualProps) {
   if (imageUrl) {
     return (
-      <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-900 ${className}`}>
+      // Dark placeholder in both themes, not bg-slate-100: the card always
+      // renders this behind a photo under a near-black gradient, so a light
+      // backdrop can only ever show up as a pale seam if the scaled image and
+      // its container disagree by a sub-pixel at the rounded edge.
+      <div className={`relative overflow-hidden bg-slate-900 ${className}`}>
         <Image
           src={imageUrl}
           alt=""

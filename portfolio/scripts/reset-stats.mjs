@@ -35,11 +35,11 @@ function loadEnvLocal() {
 }
 
 const env = { ...loadEnvLocal(), ...process.env };
-const url = env.UPSTASH_REDIS_REST_URL;
-const token = env.UPSTASH_REDIS_REST_TOKEN;
+const url = env.KV_REST_URL;
+const token = env.KV_REST_TOKEN;
 
 if (!url || !token) {
-  console.error("Missing UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN in .env.local.");
+  console.error("Missing KV_REST_URL / KV_REST_TOKEN in .env.local.");
   process.exit(1);
 }
 

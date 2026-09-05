@@ -39,8 +39,12 @@
 
 /* Repeated composites. Each is exactly the substring that was duplicated across
    call sites; radius, padding and shadows stay inline because they vary. */
+
+/* max-[431px], not 430: Tailwind compiles `max-[Npx]` to
+   `not all and (min-width: Npx)`, which is strictly below N. 431 is what
+   actually covers "430px and narrower". */
 @utility section-shell {
-  @apply mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6 max-[430px]:py-16;
+  @apply mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6 max-[431px]:py-10;
 }
 
 @utility section-eyebrow {
@@ -131,6 +135,23 @@ h6,
 .has-custom-cursor,
 .has-custom-cursor * {
   cursor: none !important;
+}
+
+/* `cursor: none` cannot reach native scrollbars, the shadow DOM behind
+   <video controls>, or a cross-origin iframe — and over any of those the page
+   stops receiving mousemove, so the custom cursor would freeze mid-screen.
+   Cursor.tsx flags those regions and we hand control back to the real pointer. */
+.custom-cursor {
+  transition: opacity 0.15s ease-out;
+}
+
+.has-custom-cursor.cursor-native,
+.has-custom-cursor.cursor-native * {
+  cursor: auto !important;
+}
+
+.cursor-native .custom-cursor {
+  opacity: 0;
 }
 
 @media (pointer: coarse) {
@@ -351,14 +372,15 @@ h6,
   opacity: 0.08;
 }
 
-/* An opaque overlay, not an alpha mask, so it reads as the photo ending. */
-.hero-portrait-fade {
-  background: linear-gradient(
-    to top,
-    var(--background) 0%,
-    var(--background) 18%,
-    transparent 100%
-  );
+/* An alpha mask, not an opaque overlay. This used to paint --background over
+   the base of the photo, which was invisible while nothing sat behind it. The
+   cursor-smoke canvas now does, so that block read as a box around the portrait.
+   Fading the photo's own alpha lets the background and the smoke through alike.
+   The stops mirror the overlay it replaces: it covered the bottom 16% and was
+   solid across the first 18% of that band, so 0.18 x 16% = 2.9%. */
+.hero-portrait-img {
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, transparent 2.9%, #000 16%);
+  mask-image: linear-gradient(to top, transparent 0%, transparent 2.9%, #000 16%);
 }
 
 /* Jumps and takes the accent colour while its input is focused. */

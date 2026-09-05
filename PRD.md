@@ -203,15 +203,20 @@ Documented in `portfolio/.env.example`. Set all of these in the Vercel dashboard
 
 | Variable                         | Required | Notes                                                                                      |
 | -------------------------------- | -------- | ------------------------------------------------------------------------------------------ |
-| `RESEND_API_KEY`                 | yes      | Contact form delivery                                                                      |
-| `CONTACT_EMAIL`                  | yes      | Destination inbox                                                                          |
-| `UPSTASH_REDIS_REST_URL`         | yes      | Counters and rate limiting                                                                 |
-| `UPSTASH_REDIS_REST_TOKEN`       | yes      | "                                                                                          |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID`  | yes      | Public identifier, grants no access                                                        |
-| `NEXT_PUBLIC_SANITY_DATASET`     | yes      | `production`                                                                               |
-| `NEXT_PUBLIC_SANITY_API_VERSION` | yes      | `2024-01-01`                                                                               |
-| `SANITY_API_READ_TOKEN`          | yes      | Read-only viewer token. **Not** `NEXT_PUBLIC_` — server-only, never bundled into client JS |
+| `MAIL_API_KEY`                 | yes      | Contact form delivery                                                                      |
+| `MAIL_TO`                  | yes      | Destination inbox                                                                          |
+| `KV_REST_URL`         | yes      | Counters and rate limiting                                                                 |
+| `KV_REST_TOKEN`       | yes      | "                                                                                          |
+| `CMS_PROJECT_ID`  | yes      | Sanity project id                                                                          |
+| `CMS_DATASET`     | yes      | `production`                                                                               |
+| `CMS_API_VERSION` | yes      | `2024-01-01`                                                                               |
+| `CMS_READ_TOKEN`          | yes      | Read-only viewer token; the dataset is private                                             |
 | `STATS_ENV`                      | no       | Only needed if hosted somewhere `VERCEL_ENV` is absent                                     |
+| `SITE_URL`                       | no       | Origin for Open Graph URLs; falls back to `VERCEL_PROJECT_PRODUCTION_URL`                  |
+
+No variable carries a `NEXT_PUBLIC_` prefix, so none is inlined into client JS.
+`src/sanity/client.ts` imports `server-only`, which turns an accidental client
+import into a build error rather than a silent leak.
 
 Without Sanity configured the site still builds and renders from fallbacks.
 

@@ -6,6 +6,7 @@ import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
+import { SCROLL_LOCK_OFF, SCROLL_LOCK_ON } from "@/lib/scrollLock";
 
 // Caps the blur during a link-triggered scroll so it reads as a motion cue
 // rather than a smear.
@@ -40,6 +41,17 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     let currentBlur = 0;
     let blurActive = false;
     let navScrolling = false;
+    let navTimeout = 0;
+
+    // Lenis drops onComplete when its scrollTo animation is interrupted, so that
+    // callback alone would strand navScrolling at true and blur every subsequent
+    // scroll for the rest of the session. Whichever of the three signals lands
+    // first clears it.
+    const endNavScroll = () => {
+      navScrolling = false;
+      window.clearTimeout(navTimeout);
+      navTimeout = 0;
+    };
 
     const resetBlur = () => {
       currentBlur = 0;
@@ -99,20 +111,37 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       }
 
       event.preventDefault();
+      window.clearTimeout(navTimeout);
       navScrolling = true;
+      navTimeout = window.setTimeout(endNavScroll, NAV_SCROLL_DURATION * 1000 + 200);
+
       lenis.scrollTo(target, {
         duration: NAV_SCROLL_DURATION,
         easing: navScrollEasing,
-        onComplete: () => {
-          navScrolling = false;
-        },
+        onComplete: endNavScroll,
       });
     };
 
     document.addEventListener("click", handleClick);
+    // Any real input means the user took the scroll back off the nav animation.
+    window.addEventListener("wheel", endNavScroll, { passive: true });
+    window.addEventListener("touchstart", endNavScroll, { passive: true });
+    window.addEventListener("keydown", endNavScroll);
+
+    const handleScrollLock = () => lenis.stop();
+    const handleScrollUnlock = () => lenis.start();
+
+    window.addEventListener(SCROLL_LOCK_ON, handleScrollLock);
+    window.addEventListener(SCROLL_LOCK_OFF, handleScrollUnlock);
 
     return () => {
       document.removeEventListener("click", handleClick);
+      window.removeEventListener("wheel", endNavScroll);
+      window.removeEventListener("touchstart", endNavScroll);
+      window.removeEventListener("keydown", endNavScroll);
+      window.removeEventListener(SCROLL_LOCK_ON, handleScrollLock);
+      window.removeEventListener(SCROLL_LOCK_OFF, handleScrollUnlock);
+      window.clearTimeout(navTimeout);
       gsap.ticker.remove(tick);
       lenis.destroy();
       resetBlur();

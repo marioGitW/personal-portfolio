@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Download, X } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 const RESUME_PATH = "/Spasovski_Mario_CV.pdf";
 
@@ -23,10 +24,10 @@ export function ResumeModal({ open, onClose, triggerRef }: ResumeModalProps) {
 
     const trigger = triggerRef.current;
     closeButtonRef.current?.focus();
-    document.body.classList.add("overflow-hidden");
+    lockScroll();
 
     return () => {
-      document.body.classList.remove("overflow-hidden");
+      unlockScroll();
       trigger?.focus();
     };
   }, [open, triggerRef]);

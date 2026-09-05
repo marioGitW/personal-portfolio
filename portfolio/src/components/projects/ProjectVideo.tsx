@@ -59,14 +59,23 @@ function isHttpUrl(url: string): boolean {
 }
 
 export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: ProjectVideoProps) {
+  // The p-2 rim is load-bearing, not decoration: an out-of-process iframe covers
+  // its wrapper completely, so without it the only part of the player this
+  // document can hit-test is a 1px border, and the custom cursor cannot tell it
+  // has moved onto the player. See components/ui/Cursor.
   const frameClasses =
-    "relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-black dark:border-slate-800";
+    "relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-black p-3 dark:border-slate-800";
   const title = projectTitle ? `${projectTitle} demo video` : "Demo video";
 
   if (isVideoFile(demoVideoUrl)) {
     return (
-      <div className={`${frameClasses} ${className}`}>
-        <video controls preload="metadata" className="h-full w-full" src={demoVideoUrl} />
+      <div className={`${frameClasses} ${className}`} data-cursor-native>
+        <video
+          controls
+          preload="metadata"
+          className="h-full w-full rounded-lg"
+          src={demoVideoUrl}
+        />
       </div>
     );
   }
@@ -74,12 +83,15 @@ export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: Pro
   const embedUrl = toEmbedUrl(demoVideoUrl) ?? (isHttpUrl(demoVideoUrl) ? demoVideoUrl : null);
 
   if (embedUrl) {
+    // data-cursor-native sits on the wrapper, not the <iframe>: an out-of-process
+    // frame never appears as an event target in this document, so the wrapper is
+    // the deepest element the custom cursor can actually detect.
     return (
-      <div className={`${frameClasses} ${className}`}>
+      <div className={`${frameClasses} ${className}`} data-cursor-native>
         <iframe
           src={embedUrl}
           title={title}
-          className="h-full w-full"
+          className="h-full w-full rounded-lg"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
