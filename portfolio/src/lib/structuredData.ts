@@ -66,7 +66,7 @@ export function homeJsonLd({ roleTag, skills, socialLinks }: HomeInput): Record<
         "@type": "ProfilePage",
         "@id": `${siteUrl}/#webpage`,
         url: HOME_URL,
-        name: `${siteSettings.name} — ${siteSettings.role}`,
+        name: `${siteSettings.name} - ${siteSettings.role}`,
         isPartOf: { "@id": WEBSITE_ID },
         mainEntity: { "@id": PERSON_ID },
         about: { "@id": PERSON_ID },

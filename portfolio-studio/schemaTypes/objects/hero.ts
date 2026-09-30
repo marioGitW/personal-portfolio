@@ -11,7 +11,7 @@ export default defineType({
       title: 'Role Tag',
       type: 'string',
       description:
-        'Small label sitting above the main title. Example: "ASPIRING SOFTWARE ENGINEER".',
+        'Small label sitting above the main title. Example: "SOFTWARE ENGINEER · STUDENT @ FINKI".',
     }),
     defineField({
       name: 'mainTitle',

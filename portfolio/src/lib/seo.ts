@@ -16,7 +16,7 @@ export const shareImage = {
   url: "/opengraph-image.png",
   width: 1200,
   height: 630,
-  alt: "Mario Spasovski — Aspiring Software Engineer. Curious about technology. Passionate about building things that make sense.",
+  alt: "Mario Spasovski — Software Engineer. Curious about technology. Passionate about building things that make sense.",
 } as const;
 
 // Search results truncate around 160 characters; longer copy is wasted.

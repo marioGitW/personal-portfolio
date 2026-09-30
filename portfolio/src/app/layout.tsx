@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   // JSON-LD URLs cannot drift onto different domains.
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${site.name} — ${site.role}`,
+    default: `${site.name} - ${site.role}`,
     // Sub-pages set a bare title; the name is appended here rather than in
     // every generateMetadata.
     template: `%s | ${site.name}`,
@@ -75,14 +75,14 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     siteName: site.name,
-    title: `${site.name} — ${site.role}`,
+    title: `${site.name} - ${site.role}`,
     description: site.description,
     locale: "en_US",
     images: [shareImage],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${site.name} — ${site.role}`,
+    title: `${site.name} - ${site.role}`,
     description: site.description,
     images: [shareImage.url],
   },

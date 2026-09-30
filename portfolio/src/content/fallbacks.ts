@@ -6,7 +6,7 @@ import type { About, Experience, Hero, Project, Skills } from "@/types/sanity";
 // Site-level values with no CMS equivalent (layout metadata + footer).
 export const siteSettings = {
   name: "Mario Spasovski",
-  role: "Aspiring Software Engineer",
+  role: "Software Engineer",
   description:
     "Portfolio of Mario Spasovski — a final-year Computer Science and Engineering student at FINKI building web applications with React, Next.js, .NET and Spring Boot.",
   tagline: "Curious about technology. Passionate about building things that make sense.",
