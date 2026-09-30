@@ -6,3 +6,12 @@ CLAUDE.md
 
 # Superseded planning docs. README.md and PRD.md are the only tracked docs.
 PRD-addendum-*.md
+
+# OS junk, anywhere in the repo.
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local env files, anywhere in the repo. Templates stay tracked.
+.env*
+!.env.example
