@@ -101,7 +101,41 @@ export function Projects({ projects }: ProjectsProps) {
         }),
       });
 
-      return () => st.kill();
+      let lastWidth = document.documentElement.clientWidth;
+      let refreshTimeout = 0;
+      const scheduleRefresh = () => {
+        window.clearTimeout(refreshTimeout);
+        refreshTimeout = window.setTimeout(() => ScrollTrigger.refresh(), 150);
+      };
+
+      const resizeObserver = new ResizeObserver(() => {
+        const width = document.documentElement.clientWidth;
+        if (width !== lastWidth) {
+          lastWidth = width;
+          scheduleRefresh();
+        }
+      });
+      resizeObserver.observe(document.documentElement);
+
+      let disposed = false;
+      document.fonts.ready.then(() => {
+        if (!disposed) {
+          ScrollTrigger.refresh();
+        }
+      });
+
+      const handleLoad = () => ScrollTrigger.refresh();
+      if (document.readyState !== "complete") {
+        window.addEventListener("load", handleLoad, { once: true });
+      }
+
+      return () => {
+        disposed = true;
+        resizeObserver.disconnect();
+        window.clearTimeout(refreshTimeout);
+        window.removeEventListener("load", handleLoad);
+        st.kill();
+      };
     });
 
     return () => mm.revert();
