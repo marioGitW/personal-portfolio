@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpRight, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import gsap from "gsap";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
@@ -226,7 +226,7 @@ export function Header({
                 }}
                 href={navHref(contactNavItem.href)}
                 aria-current={isHome && activeId === contactNavItem.sectionId ? "true" : undefined}
-                className="group relative z-10 inline-flex items-center gap-1 rounded-full px-4 py-2 text-base font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="relative z-10 inline-flex items-center rounded-full px-4 py-2 text-base font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <span
                   className={
@@ -237,13 +237,6 @@ export function Header({
                 >
                   {contactNavItem.label}
                 </span>
-                <ArrowUpRight
-                  className={`size-4 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
-                    activeId === contactNavItem.sectionId
-                      ? "text-white"
-                      : "text-indigo-500 dark:text-cyan-400"
-                  }`}
-                />
               </a>
             </li>
           </ul>
@@ -306,11 +299,10 @@ export function Header({
               <a
                 data-mobile-link
                 href={navHref(contactNavItem.href)}
-                className="group inline-flex items-center gap-1.5 font-heading text-xl font-semibold tracking-wide text-accent-gradient uppercase"
+                className="inline-flex items-center font-heading text-xl font-semibold tracking-wide text-accent-gradient uppercase"
                 onClick={closeMenu}
               >
                 {contactNavItem.label}
-                <ArrowUpRight className="size-5 shrink-0 text-indigo-500 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 dark:text-cyan-400" />
               </a>
             </li>
           </ul>

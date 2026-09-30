@@ -22,10 +22,6 @@
 }
 
 @theme inline {
-  /* 1700px, in rem to match the built-in scale. Tailwind orders px-valued
-     breakpoints ahead of the rem ones, which let `lg:` win the cascade above
-     1700px and silently killed the wide-screen hero overrides. */
-  --breakpoint-3xl: 106.25rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-love: #ff6978;
@@ -257,8 +253,7 @@ h6,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .count-pop,
-  .hero-portrait-img {
+  .count-pop {
     animation: none !important;
     transform: none !important;
   }
@@ -322,6 +317,64 @@ h6,
   }
 }
 
+/* Outline duplicate of line two, drawn in Hero's ghost layer above the portrait.
+   Masked with the portrait's own alpha (placed by Hero.tsx through the
+   --ghost-mask-* properties), so it shows only where the photo covers the name.
+   The 0px default hides it until that first placement. inline-block because
+   Chrome places an inline box's mask off its getBoundingClientRect(); the
+   glyphs still sit on the same baseline as the real line.
+   Hidden until the name is hovered (below). The wipe's insets bleed past the
+   box on the other three sides, so neither state trims the stroke or the caps,
+   which rise above the tight line box. */
+.hero-name-ghost {
+  opacity: 0;
+  clip-path: inset(-0.25em calc(100% + 0.1em) -0.25em -0.1em);
+  display: inline-block;
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--color-accent-to) 55%, transparent);
+  -webkit-mask-image: url("/mario-portrait-navy.webp");
+  mask-image: url("/mario-portrait-navy.webp");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: var(--ghost-mask-w, 0px) auto;
+  mask-size: var(--ghost-mask-w, 0px) auto;
+  -webkit-mask-position: var(--ghost-mask-x, 0px) var(--ghost-mask-y, 0px);
+  mask-position: var(--ghost-mask-x, 0px) var(--ghost-mask-y, 0px);
+  pointer-events: none;
+  user-select: none;
+  /* Durations here are the hide; the reveal sets its own below. */
+  transition:
+    opacity 0.3s ease-out,
+    clip-path 0.3s ease-out,
+    -webkit-text-stroke-color 0.3s ease-out;
+}
+
+@media (hover: hover) {
+  .hero:hover .hero-name-ghost {
+    -webkit-text-stroke-color: color-mix(in srgb, var(--color-accent-to) 85%, transparent);
+  }
+}
+
+/* Fades and wipes in left to right while the real name is hovered. Driven from
+   the h1 through :has() because the ghost is in another layer and never gets
+   the pointer. Touch devices never match, so it stays hidden there. */
+@media (hover: hover) and (pointer: fine) {
+  .hero:has(.hero-name:hover) .hero-name-ghost {
+    opacity: 1;
+    clip-path: inset(-0.25em -0.1em -0.25em -0.1em);
+    transition-duration: 0.45s, 0.45s, 0.3s;
+  }
+}
+
+/* No wipe: a plain, quick opacity fade. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-name-ghost,
+  .hero:has(.hero-name:hover) .hero-name-ghost {
+    clip-path: none;
+    transition: opacity 0.15s ease-out;
+  }
+}
+
 /* Each line gets its own overflow window so GSAP can slide it into place. The
    padding/margin pair keeps the tight leading from clipping the caps. */
 .hero-line-mask {
@@ -370,15 +423,72 @@ h6,
   opacity: 0.08;
 }
 
-/* An alpha mask, not an opaque overlay. This used to paint --background over
-   the base of the photo, which was invisible while nothing sat behind it. The
-   cursor-smoke canvas now does, so that block read as a box around the portrait.
-   Fading the photo's own alpha lets the background and the smoke through alike.
-   The stops mirror the overlay it replaces: it covered the bottom 16% and was
-   solid across the first 18% of that band, so 0.18 x 16% = 2.9%. */
-.hero-portrait-img {
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, transparent 2.9%, #000 16%);
-  mask-image: linear-gradient(to top, transparent 0%, transparent 2.9%, #000 16%);
+/* From lg up the portrait breaks out of the grid, so the glow grows (Hero.tsx
+   widens its box) and runs indigo into cyan to ground it. Still low opacity. */
+@media (min-width: 64rem) {
+  .hero-portrait-glow {
+    background: radial-gradient(
+      closest-side at 50% 50%,
+      var(--color-accent-from) 0%,
+      color-mix(in srgb, var(--color-accent-from) 55%, var(--color-accent-to)) 45%,
+      color-mix(in srgb, var(--color-accent-to) 50%, transparent) 72%,
+      transparent 100%
+    );
+    filter: blur(64px);
+    opacity: 0.14;
+  }
+
+  .dark .hero-portrait-glow {
+    opacity: 0.2;
+  }
+}
+
+/* Keeps the portrait glows off the lower body: where the photo fades out,
+   only the plain page background may show through. The mask also trims the
+   blur's tail, which would otherwise reach down past the box. A mask clips to
+   the element's box, so the other three edges are ramped in too; otherwise
+   the blur spilling past them would end in a visible hard line. */
+.hero-glow-fade {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent, #000 20%, #000 55%, transparent 80%),
+    linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 20%, #000 55%, transparent 80%),
+    linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
+  mask-composite: intersect;
+}
+
+/* The portrait's bottom fade: an alpha mask, never a coloured overlay, so only
+   the page background shows through. Solid until 86% of the image, transparent
+   at its bottom edge (the hero's bottom edge).
+   It sits on the halo wrapper rather than the image, so the cyan drop-shadow is
+   computed from the unfaded silhouette: behind the opaque shirt it is hidden,
+   and it fades out with the shirt instead of glowing through the fade. From lg
+   up (where the halo is) the wrapper reaches --bleed past the image on every
+   side, padding offset by an equal negative margin so the image does not move,
+   and the stops are restated in image terms so the mask never clips the halo. */
+.hero-portrait-fade {
+  --bleed: 0px;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 calc(var(--bleed) + (100% - 2 * var(--bleed)) * 0.86),
+    transparent calc(100% - var(--bleed))
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(var(--bleed) + (100% - 2 * var(--bleed)) * 0.86),
+    transparent calc(100% - var(--bleed))
+  );
+}
+
+@media (min-width: 64rem) {
+  .hero-portrait-fade {
+    --bleed: 80px;
+    margin: calc(-1 * var(--bleed));
+    padding: var(--bleed);
+    height: calc(100% + 2 * var(--bleed));
+  }
 }
 
 /* Jumps and takes the accent colour while its input is focused. */

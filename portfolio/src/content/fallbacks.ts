@@ -14,7 +14,7 @@ export const siteSettings = {
 } as const;
 
 export const heroFallback: Hero = {
-  roleTag: "Aspiring Software Engineer",
+  roleTag: "Software Engineer · Student @ FINKI",
   mainTitle: "Mario Spasovski",
   subtitle: "Curious about technology. Passionate about building things that make sense.",
   // No fallback path on purpose: the CV lives in the CMS only, so a hardcoded
