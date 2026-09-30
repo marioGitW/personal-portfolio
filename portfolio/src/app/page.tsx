@@ -30,7 +30,7 @@ export default async function Home() {
   return (
     <>
       <Header name={site.name} socialLinks={socialLinks} />
-      <main id="main" tabIndex={-1} className="flex-1">
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
         <Hero hero={content.hero} />
         <About about={content.about} />
         <Experience experience={content.experience} />

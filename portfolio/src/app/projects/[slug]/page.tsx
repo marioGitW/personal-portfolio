@@ -50,7 +50,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   return (
     <>
       <Header name={site.name} socialLinks={socialLinks} variant="sub" />
-      <main id="main" tabIndex={-1} className="flex-1">
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
         <ProjectDetail project={project} />
       </main>
       <Footer links={socialLinks} />

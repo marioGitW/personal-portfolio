@@ -19,7 +19,11 @@ export default async function NotFound() {
   return (
     <>
       <Header name={site.name} socialLinks={socialLinks} variant="sub" />
-      <main id="main" tabIndex={-1} className="flex flex-1 items-center justify-center px-4 py-24">
+      <main
+        id="main"
+        tabIndex={-1}
+        className="flex flex-1 items-center justify-center px-4 py-24 outline-none"
+      >
         <div className="mx-auto w-full max-w-lg text-center">
           <p className="section-eyebrow">404</p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
