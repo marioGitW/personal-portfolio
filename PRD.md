@@ -79,27 +79,27 @@ empty metadata for it. Skill icons resolve as: uploaded file first, else a devic
 
 Rendered in order by `src/app/page.tsx`:
 
-1. **Hero** — two-line masked name lockup animated in by GSAP, cursor-tracked gradient
-   highlight on the name, portrait with cursor and scroll parallax, CTA buttons
+1. **Hero** — two-line masked name lockup animated in by GSAP, portrait with cursor and
+   scroll parallax, CTA buttons
    ("Let's Connect" anchor; "View Resume" opens the resume modal, and renders only when a
    CV is uploaded in the CMS)
-2. **About** — portrait illustration, bio paragraphs, stat tags, language pills, and a
-   rotating accent beam around the panel border
-3. **Experience** — vertical timeline whose progress line scrubs with scroll; per entry:
+2. **About** — portrait illustration, bio paragraphs, stat tags and language pills
+3. **Experience** — vertical timeline; per entry:
    logo, role, place, duration pill, bullet points
 4. **Projects** — on desktop, scrolling **pins the section** and drives a horizontal card
    track; below `lg` it falls back to a vertical stack. Clicking a card opens a modal with
    a screenshot carousel, optional demo video, tech stack, overview, features and links
 5. **Skills** — an SVG "engineering profile" radar (decorative weighting, never shown as
    numbers) beside a paginated tool grid, 12 per page with pagination dots
-6. **Contact** — name / email / message form with inline validation and a rotating beam
-   on the submit button
+6. **Contact** — name / email / message form with inline validation
 7. **Activity counter** — site visits and a one-per-session like button
 8. **Footer** — logo, tagline, social icons, copyright
 
 Persistent chrome: sticky header with an animated active-section pill, a fixed social
-sidebar (`md` and up), a custom cursor (fine pointers only), and a preloader that holds
-the viewport for ~1.9s on first load then hands off to the hero entrance.
+sidebar (`md` and up), a custom cursor (fine pointers only), and a hero intro that plays
+once per session (dot, "!", PORTFOLIO, SPASOVSKI, then a handoff into the real hero, with
+the portrait gathering from particles on desktop). Any input skips it, and later loads
+get a short CSS entrance instead.
 
 **Not built:** certifications, blog, admin panel, database, auth, skills category filtering
 (the tool grid is paginated, not filtered).
@@ -142,15 +142,17 @@ portfolio/
     app/
       api/contact/route.ts
       api/stats/{route.ts, like/route.ts, visit/route.ts}
-      layout.tsx          # fonts, metadata, providers, preloader, cursor, sidebar
+      layout.tsx          # fonts, metadata, providers, intro head script, cursor, sidebar
+      manifest.ts         # web app manifest: name, colours, home-screen icons
+      favicon.ico, icon.svg, icon.png, apple-icon.png   # tab and touch icons
       page.tsx            # composes every section; revalidate = 60
       globals.css         # Tailwind v4 config, theme tokens, custom utilities, keyframes
     components/
-      sections/           # Hero, About, Experience, Projects, Skills, Contact,
-                          # ActivityCounter, SkillCard
+      sections/           # Hero, HeroIntro, ParticlePortrait, About, Experience,
+                          # Projects, Skills, Contact, ActivityCounter, SkillCard
       projects/           # ProjectCard, ProjectModal, ProjectsScroller, ProjectVisual,
                           # ProjectScreenshots, ProjectVideo, ProjectLinks, TechStack
-      ui/                 # Button, Header, Footer, Cursor, Preloader, SmoothScroll,
+      ui/                 # Button, Header, Footer, Logo, Cursor, SmoothScroll,
                           # ThemeToggle, Providers, ResumeModal, AssetIcon,
                           # EngineeringRadar, SectionHeading, PaginationDots,
                           # SocialIcons, SocialLinkList, SocialSidebar
@@ -162,13 +164,15 @@ portfolio/
     content/fallbacks.ts  # every hardcoded content value
     types/sanity.ts       # CMS-shaped types
   scripts/reset-stats.mjs
-  public/                 # hero/about art, logo, fallback project images,
-                          # opengraph-image.png (the share card)
+  public/                 # hero/about art, fallback project images, icons/ (manifest
+                          # icons), opengraph-image.png (the share card)
 
 portfolio-studio/
   schemaTypes/{documents,objects,shared}/
   structure.ts            # singleton wiring
   sanity.config.ts
+
+brand/                    # logo masters (SVG) and large PNG exports; not deployed
 ```
 
 **Conventions.** Components are PascalCase, modules camelCase; everything is a named
@@ -187,14 +191,15 @@ Sanity client to the browser.
 Tailwind v4 with a CSS-first config in `globals.css`. Theme tokens are CSS custom
 properties swapped by a `.dark` class:
 
-- Accent is a **gradient**, not one colour: `--color-accent-from: #6366f1` → `--color-accent-to: #22d3ee`
-- `--background` / `--foreground` flip per theme; `--color-love: #ff6978` for the like button
+- `--background`, `--surface`, `--border`, `--foreground`, `--muted` and `--link` flip per theme
+- `--accent` is one solid pink, for fills only, with `--accent-hover` and `--accent-foreground`. Pink
+  text and focus rings use `--link`, because the fill colour is too light to read as text on the
+  light background
 
 Repeated class combinations are `@utility` definitions rather than copy-paste:
-`section-shell`, `section-eyebrow`, `text-muted`, `surface-card`, `pill-tech`,
-`icon-button`, `pagination-dot`. Effects that Tailwind can't express — the rotating border
-beam, the hero name outline and glow, the portrait bloom, the placeholder grid — are
-hand-written classes in the same file.
+`section-shell`, `section-eyebrow`, `surface-card`, `pill-tech`, `icon-button`,
+`pagination-dot`. Effects that Tailwind can't express — the portrait's bottom fade, the
+placeholder grid — are hand-written classes in the same file.
 
 Every animated component checks `prefers-reduced-motion` (via `prefersReducedMotion()` in
 `lib/animations.ts`) and sets the final state directly instead of tweening.

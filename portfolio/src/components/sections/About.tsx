@@ -30,7 +30,6 @@ export function About({ about }: AboutProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const imageWrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const beamRef = useRef<HTMLSpanElement>(null);
   const eyebrowRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const linesRef = useRef<HTMLDivElement>(null);
@@ -41,7 +40,6 @@ export function About({ about }: AboutProps) {
     const section = sectionRef.current;
     const imageWrap = imageWrapRef.current;
     const panel = panelRef.current;
-    const beam = beamRef.current;
     const eyebrow = eyebrowRef.current;
     const heading = headingRef.current;
     const lines = linesRef.current?.querySelectorAll<HTMLElement>("[data-line]");
@@ -52,7 +50,6 @@ export function About({ about }: AboutProps) {
       !section ||
       !imageWrap ||
       !panel ||
-      !beam ||
       !eyebrow ||
       !heading ||
       !lines ||
@@ -104,17 +101,9 @@ export function About({ about }: AboutProps) {
       .to(statsRow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.2")
       .to(langRow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.3");
 
-    const beamTween = gsap.to(beam, {
-      "--border-angle": "360deg",
-      duration: 7,
-      ease: "none",
-      repeat: -1,
-    });
-
     return () => {
       timeline.scrollTrigger?.kill();
       timeline.kill();
-      beamTween.kill();
     };
   }, []);
 
@@ -142,10 +131,8 @@ export function About({ about }: AboutProps) {
 
         <div
           ref={panelRef}
-          className="about-panel relative w-full rounded-2xl surface-card px-6 py-8 text-center sm:px-10 sm:py-10 lg:max-w-2xl lg:px-10 lg:py-12 lg:text-left"
+          className="relative w-full rounded-2xl surface-card px-6 py-8 text-center sm:px-10 sm:py-10 lg:max-w-2xl lg:px-10 lg:py-12 lg:text-left"
         >
-          <span ref={beamRef} aria-hidden="true" className="about-panel-beam" />
-
           <SectionHeading
             titleId="about-title"
             eyebrow={sectionCopy.about.eyebrow}
@@ -157,7 +144,7 @@ export function About({ about }: AboutProps) {
 
           <div
             ref={linesRef}
-            className="mx-auto mt-6 max-w-md space-y-4 text-base text-slate-600 sm:max-w-xl sm:text-lg md:max-w-none lg:mx-0 dark:text-slate-400"
+            className="mx-auto mt-6 max-w-md space-y-4 text-base text-muted sm:max-w-xl sm:text-lg md:max-w-none lg:mx-0"
           >
             {bioParagraphs.map((paragraph, index) => (
               <p key={index} data-line>
@@ -172,16 +159,16 @@ export function About({ about }: AboutProps) {
             ref={statsRef}
             className={
               tags.length > 0
-                ? "mx-auto mt-10 grid max-w-sm grid-cols-2 gap-x-6 gap-y-8 border-t border-slate-200 pt-8 sm:max-w-lg sm:grid-cols-4 lg:mx-0 lg:max-w-none lg:gap-x-4 lg:gap-y-6 dark:border-slate-800"
+                ? "mx-auto mt-10 grid max-w-sm grid-cols-2 gap-x-6 gap-y-8 border-t border-border pt-8 sm:max-w-lg sm:grid-cols-4 lg:mx-0 lg:max-w-none lg:gap-x-4 lg:gap-y-6"
                 : undefined
             }
           >
             {tags.map((tag) => (
               <div key={tag._key}>
-                <p className="font-heading text-2xl font-bold text-accent-gradient sm:text-3xl">
+                <p className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
                   {tag.highlightedText}
                 </p>
-                <p className="mt-1 text-xs tracking-[0.12em] text-slate-500 uppercase">
+                <p className="mt-1 text-xs tracking-[0.12em] text-muted uppercase">
                   {tag.description}
                 </p>
               </div>
@@ -192,7 +179,7 @@ export function About({ about }: AboutProps) {
             {languages.map((language) => (
               <span
                 key={language.label}
-                className="inline-flex items-center gap-2 rounded-full surface-card px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400"
+                className="inline-flex items-center gap-2 rounded-full surface-card px-3 py-1.5 text-sm text-muted"
               >
                 <language.flag title={language.label} className="h-3 w-4.5 rounded-[2px]" />
                 {language.label}

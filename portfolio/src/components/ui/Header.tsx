@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import gsap from "gsap";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { navItems } from "@/lib/nav";
+import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SocialLinkList } from "@/components/ui/SocialLinkList";
 import type { SocialLinkItem } from "@/types/sanity";
@@ -33,6 +33,9 @@ export function Header({
   // browser resolve the hash itself, instead of racing Lenis and Next's scroll
   // restoration after a client transition. Still a real, crawlable link.
   const navHref = (hash: string) => (isHome ? hash : `/${hash}`);
+
+  // Only the homepage has the accent pill behind the active item.
+  const activeTextClass = isHome ? "text-accent-foreground" : "text-foreground";
 
   const [activeId, setActiveId] = useState<string>(navItems[0].sectionId);
   const [open, setOpen] = useState(false);
@@ -169,22 +172,13 @@ export function Header({
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-background dark:border-slate-800/80">
+    <header data-intro-chrome className="sticky top-0 z-50 border-b border-border bg-surface">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
         <a href={isHome ? "#home" : "/"} aria-label={name} className="shrink-0">
-          {/* alt="" because the link already carries aria-label={name}; both
-              would read the name twice. eager rather than priority: it is
-              above the fold, but a preload here competes with the hero image,
-              which is the actual LCP element. */}
-          <Image
-            src="/ms-logo.png"
-            alt=""
-            width={613}
-            height={415}
-            sizes="48px"
-            className="h-8 w-auto"
-            loading="eager"
-          />
+          {/* No title: the link already carries aria-label={name}, and both
+              would read the name twice. Inline SVG, so nothing is fetched and
+              nothing competes with the hero image for LCP. */}
+          <Logo className="h-8 w-16 text-foreground" />
         </a>
 
         <nav className="hidden md:block" aria-label="Primary">
@@ -197,7 +191,7 @@ export function Header({
               <li aria-hidden="true" className="contents">
                 <span
                   ref={indicatorRef}
-                  className="bg-accent-gradient absolute top-1 bottom-1 left-0 rounded-full opacity-90"
+                  className="bg-accent absolute top-1 bottom-1 left-0 rounded-full"
                 />
               </li>
             )}
@@ -209,10 +203,10 @@ export function Header({
                   }}
                   href={navHref(item.href)}
                   aria-current={isHome && activeId === item.sectionId ? "true" : undefined}
-                  className={`relative z-10 rounded-full px-4 py-2 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  className={`relative z-10 rounded-full px-4 py-2 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
                     activeId === item.sectionId
-                      ? "font-semibold text-white"
-                      : "text-slate-500 hover:text-foreground dark:text-slate-400"
+                      ? `font-semibold ${activeTextClass}`
+                      : "text-muted hover:text-foreground"
                   }`}
                 >
                   {item.label}
@@ -226,13 +220,11 @@ export function Header({
                 }}
                 href={navHref(contactNavItem.href)}
                 aria-current={isHome && activeId === contactNavItem.sectionId ? "true" : undefined}
-                className="relative z-10 inline-flex items-center rounded-full px-4 py-2 text-base font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="relative z-10 inline-flex items-center rounded-full px-4 py-2 text-base font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
               >
                 <span
                   className={
-                    activeId === contactNavItem.sectionId
-                      ? "text-white"
-                      : "bg-[linear-gradient(to_right,var(--color-accent-from),var(--color-accent-to))] bg-clip-text text-transparent"
+                    activeId === contactNavItem.sectionId ? activeTextClass : "text-foreground"
                   }
                 >
                   {contactNavItem.label}
@@ -262,7 +254,7 @@ export function Header({
       <div
         ref={backdropRef}
         hidden={!menuMounted}
-        className="fixed inset-0 z-40 bg-black/50 md:hidden"
+        className="fixed inset-0 z-40 bg-background/80 md:hidden"
         onClick={closeMenu}
         aria-hidden="true"
       />
@@ -273,7 +265,7 @@ export function Header({
         role="dialog"
         aria-modal="true"
         aria-label="Site menu"
-        className="fixed inset-y-0 right-0 z-50 flex w-[85%] max-w-sm flex-col bg-background px-6 pt-6 pb-8 shadow-2xl md:hidden"
+        className="fixed inset-y-0 right-0 z-50 flex w-[85%] max-w-sm flex-col border-l border-border bg-surface px-6 pt-6 pb-8 md:hidden"
       >
         <div className="flex items-center justify-end">
           <button type="button" className="icon-button" aria-label="Close menu" onClick={closeMenu}>
@@ -299,7 +291,7 @@ export function Header({
               <a
                 data-mobile-link
                 href={navHref(contactNavItem.href)}
-                className="inline-flex items-center font-heading text-xl font-semibold tracking-wide text-accent-gradient uppercase"
+                className="inline-flex items-center font-heading text-xl font-semibold tracking-wide uppercase"
                 onClick={closeMenu}
               >
                 {contactNavItem.label}
@@ -309,12 +301,12 @@ export function Header({
         </nav>
 
         {socialLinks.length > 0 && (
-          <div className="mt-10 border-t border-slate-200 pt-6 dark:border-slate-800">
+          <div className="mt-10 border-t border-border pt-6">
             <SocialLinkList
               links={socialLinks}
               className="flex flex-wrap items-center gap-5"
-              linkClassName="group inline-flex text-slate-500 transition-all duration-[250ms] ease-out hover:text-[color:var(--color-accent-from)] focus-visible:text-[color:var(--color-accent-from)] dark:text-slate-400"
-              iconClassName="size-5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]"
+              linkClassName="group inline-flex text-muted transition-all duration-[250ms] ease-out hover:text-link focus-visible:text-link"
+              iconClassName="size-5 shrink-0"
             />
           </div>
         )}

@@ -24,7 +24,7 @@ export function PaginationDots({
   itemLabel,
   className = "",
   buttonClassName = "",
-  inactiveClassName = "w-1.5 bg-slate-300 dark:bg-slate-700",
+  inactiveClassName = "w-1.5 bg-muted",
 }: PaginationDotsProps) {
   const isTab = variant === "tab";
 
@@ -43,9 +43,7 @@ export function PaginationDots({
         >
           <span
             aria-hidden="true"
-            className={`pagination-dot ${
-              i === active ? "w-6 bg-accent-gradient" : inactiveClassName
-            }`}
+            className={`pagination-dot ${i === active ? "w-6 bg-foreground" : inactiveClassName}`}
           />
         </button>
       ))}

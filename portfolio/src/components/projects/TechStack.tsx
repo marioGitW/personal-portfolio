@@ -18,7 +18,7 @@ export function TechStack({ technologies, limit, className = "" }: TechStackProp
         </span>
       ))}
       {remaining > 0 && (
-        <span className="rounded-full border border-slate-200 px-2.5 py-0.5 text-[0.7rem] font-medium text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <span className="rounded-full border border-border px-2.5 py-0.5 text-[0.7rem] font-medium text-muted">
           +{remaining}
         </span>
       )}

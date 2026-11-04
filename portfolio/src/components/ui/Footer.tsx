@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Image from "next/image";
 import gsap from "gsap";
+import { Logo } from "@/components/ui/Logo";
 import { SocialLinkList } from "@/components/ui/SocialLinkList";
 import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 import { getSiteSettings } from "@/lib/content";
 import type { SocialLinkItem } from "@/types/sanity";
 
 const iconLinkClass =
-  "group inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-[250ms] ease-out hover:-translate-y-0.5 hover:border-[color:var(--color-accent-from)] hover:text-[color:var(--color-accent-from)] focus-visible:-translate-y-0.5 focus-visible:border-[color:var(--color-accent-from)] focus-visible:text-[color:var(--color-accent-from)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:border-slate-800";
+  "group inline-flex size-10 items-center justify-center rounded-full border border-border text-muted transition-all duration-[250ms] ease-out hover:-translate-y-0.5 hover:border-link hover:text-link focus-visible:-translate-y-0.5 focus-visible:border-link focus-visible:text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 type FooterProps = {
   links: SocialLinkItem[];
@@ -61,24 +61,12 @@ export function Footer({ links }: FooterProps) {
   }, []);
 
   return (
-    <footer
-      ref={sectionRef}
-      className="border-t border-slate-200 px-4 py-14 sm:px-6 dark:border-slate-800"
-    >
+    <footer ref={sectionRef} className="border-t border-border px-4 py-14 sm:px-6">
       <div ref={contentRef} className="mx-auto flex w-full max-w-[1400px] flex-col gap-10">
         <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
           <div data-footer-item>
-            <Image
-              src="/ms-logo.png"
-              alt={site.name}
-              width={613}
-              height={415}
-              sizes="54px"
-              className="h-9 w-auto"
-            />
-            <p className="mt-3 max-w-sm text-sm text-slate-500 dark:text-slate-400">
-              {site.tagline}
-            </p>
+            <Logo title={site.name} className="h-9 w-18 text-foreground" />
+            <p className="mt-3 max-w-sm text-sm text-muted">{site.tagline}</p>
           </div>
 
           {links.length > 0 && (
@@ -87,7 +75,7 @@ export function Footer({ links }: FooterProps) {
                 links={links}
                 className="flex items-center gap-3"
                 linkClassName={iconLinkClass}
-                iconClassName="size-4.5 shrink-0 transition-[filter] duration-[250ms] ease-out group-hover:drop-shadow-[0_0_6px_var(--color-accent-from)]"
+                iconClassName="size-4.5 shrink-0"
               />
             </div>
           )}
@@ -95,14 +83,12 @@ export function Footer({ links }: FooterProps) {
 
         <div
           data-footer-item
-          className="flex flex-col gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:text-slate-400"
+          className="flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between"
         >
           <p>
             © {year} {site.name}. All rights reserved.
           </p>
-          <p className="text-slate-400 dark:text-slate-500">
-            Built with Next.js, GSAP &amp; Tailwind CSS.
-          </p>
+          <p className="text-muted">Built with Next.js, GSAP &amp; Tailwind CSS.</p>
         </div>
       </div>
     </footer>

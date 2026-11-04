@@ -37,7 +37,7 @@ export function ProjectScreenshots({
 
   return (
     <div className={className}>
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900">
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface">
         <div
           className="flex h-full transition-transform duration-300 ease-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
@@ -64,7 +64,7 @@ export function ProjectScreenshots({
               type="button"
               onClick={() => goTo(index - 1)}
               aria-label="Previous screenshot"
-              className="absolute top-1/2 left-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-background/80 backdrop-blur-sm transition hover:border-indigo-500 dark:border-slate-700"
+              className="absolute top-1/2 left-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur-sm transition hover:border-foreground"
             >
               <ChevronLeft className="size-4" />
             </button>
@@ -72,7 +72,7 @@ export function ProjectScreenshots({
               type="button"
               onClick={() => goTo(index + 1)}
               aria-label="Next screenshot"
-              className="absolute top-1/2 right-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-background/80 backdrop-blur-sm transition hover:border-indigo-500 dark:border-slate-700"
+              className="absolute top-1/2 right-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur-sm transition hover:border-foreground"
             >
               <ChevronRight className="size-4" />
             </button>

@@ -32,13 +32,13 @@ export default function Error({
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center rounded-full bg-accent-gradient px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+            className="inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
           >
             Try again
           </button>
           <Link
             href="/"
-            className="surface-card inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold transition hover:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+            className="surface-card inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold transition hover:border-foreground focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
           >
             Back to home
           </Link>

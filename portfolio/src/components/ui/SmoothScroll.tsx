@@ -6,7 +6,7 @@ import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
-import { SCROLL_LOCK_OFF, SCROLL_LOCK_ON } from "@/lib/scrollLock";
+import { isScrollLocked, SCROLL_LOCK_OFF, SCROLL_LOCK_ON } from "@/lib/scrollLock";
 
 // Caps the blur during a link-triggered scroll so it reads as a motion cue
 // rather than a smear.
@@ -139,6 +139,11 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
 
     window.addEventListener(SCROLL_LOCK_ON, handleScrollLock);
     window.addEventListener(SCROLL_LOCK_OFF, handleScrollUnlock);
+
+    // The hero intro locks in a child's effect, which runs before this one.
+    if (isScrollLocked()) {
+      lenis.stop();
+    }
 
     return () => {
       document.removeEventListener("click", handleClick);

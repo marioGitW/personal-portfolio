@@ -2,13 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Inter, Space_Grotesk } from "next/font/google";
-import { CursorSmoke } from "@/components/effects/CursorSmoke";
-import { Preloader } from "@/components/ui/Preloader";
 import { Providers } from "@/components/ui/Providers";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
 import { SocialSidebar } from "@/components/ui/SocialSidebar";
 import { getSocialLinks } from "@/lib/cms";
 import { getSiteSettings } from "@/lib/content";
+import { introHeadScript } from "@/lib/intro";
 import { shareImage } from "@/lib/seo";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
@@ -29,9 +28,10 @@ const inter = Inter({
 
 const site = getSiteSettings();
 
-// Icons and the apple-touch icon come from the file conventions in this
-// directory (icon.png, apple-icon.png, favicon.ico). The share card does not:
-// see the note on shareImage in @/lib/seo.
+// Icons, the apple-touch icon and the web app manifest come from the file
+// conventions in this directory (favicon.ico, icon.svg, icon.png,
+// apple-icon.png, manifest.ts). The share card does not: see the note on
+// shareImage in @/lib/seo.
 export const metadata: Metadata = {
   // Absolute origin, required or Open Graph image URLs stay relative and the
   // scrapers ignore them. Resolved in @/lib/site so canonical, sitemap and
@@ -91,7 +91,7 @@ export const metadata: Metadata = {
 // One value, not a light/dark pair: Providers pins the theme to dark with
 // enableSystem={false}, so the browser chrome should match that.
 export const viewport: Viewport = {
-  themeColor: "#030712",
+  themeColor: "#061D3A",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -104,6 +104,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
     >
+      <head>
+        {/* Decides before first paint whether the hero intro plays, so the finished
+            hero never flashes ahead of it. suppressHydrationWarning above covers
+            the attribute it sets on <html>. */}
+        <script dangerouslySetInnerHTML={{ __html: introHeadScript }} />
+      </head>
       <body className="flex min-h-full flex-col bg-background text-foreground">
         {/* data-skip-link opts this out of the Lenis anchor handler: the native
             hash jump is what moves keyboard focus into <main>, and a smooth
@@ -111,18 +117,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <a
           href="#main"
           data-skip-link
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-background focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-foreground focus:shadow-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-full focus:bg-background focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-foreground focus:ring-2 focus:ring-link focus:outline-none"
         >
           Skip to content
         </a>
         <Providers>
-          <Preloader />
           {/* The custom cursor (@/components/ui/Cursor) is intentionally not
               mounted: replacing the native cursor meant every browser-owned
               surface — scrollbars, media controls, embedded frames — needed its
               own opt-out. The component and its CSS are kept so it can be
-              dropped back in here, but CursorSmoke is what ships. */}
-          <CursorSmoke />
+              dropped back in here. */}
           <SocialSidebar links={socialLinks} />
           <SmoothScroll>{children}</SmoothScroll>
         </Providers>

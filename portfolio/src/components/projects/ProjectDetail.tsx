@@ -21,7 +21,7 @@ import type { Project } from "@/types/sanity";
 // and threading that through would mean editing a working animation timeline.
 
 const SECTION_HEADING = "text-sm font-semibold tracking-wide uppercase";
-const PROSE = "text-sm text-slate-600 sm:text-base dark:text-slate-400";
+const PROSE = "text-sm text-muted sm:text-base";
 
 export function ProjectDetail({ project }: { project: Project }) {
   const title = projectTitle(project);
@@ -37,15 +37,18 @@ export function ProjectDetail({ project }: { project: Project }) {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
       <nav aria-label="Breadcrumb">
-        <ol className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <ol className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <li>
-            <Link href="/" className="transition hover:text-foreground">
+            <Link href="/" className="text-link underline-offset-4 transition hover:underline">
               Home
             </Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
-            <Link href="/#projects" className="transition hover:text-foreground">
+            <Link
+              href="/#projects"
+              className="text-link underline-offset-4 transition hover:underline"
+            >
               Projects
             </Link>
           </li>
@@ -60,9 +63,7 @@ export function ProjectDetail({ project }: { project: Project }) {
         {project.thumbnailTag && <p className="section-eyebrow">{project.thumbnailTag}</p>}
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-5xl">{title}</h1>
         {project.thumbnailDescription && (
-          <p className="mt-4 text-base text-slate-600 sm:text-lg dark:text-slate-400">
-            {project.thumbnailDescription}
-          </p>
+          <p className="mt-4 text-base text-muted sm:text-lg">{project.thumbnailDescription}</p>
         )}
       </header>
 
@@ -123,10 +124,7 @@ export function ProjectDetail({ project }: { project: Project }) {
             {keyFeatures.map((feature, index) => (
               // Index-keyed: feature text is free-form and may repeat.
               <li key={index} className={`flex items-start gap-2.5 ${PROSE}`}>
-                <span
-                  aria-hidden="true"
-                  className="mt-2 size-1.5 shrink-0 rounded-full bg-accent-gradient"
-                />
+                <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-muted" />
                 {feature}
               </li>
             ))}
@@ -138,7 +136,7 @@ export function ProjectDetail({ project }: { project: Project }) {
 
       <Link
         href="/#projects"
-        className="mt-12 inline-flex items-center gap-2 rounded-full text-sm font-semibold text-slate-500 transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none dark:text-slate-400"
+        className="mt-12 inline-flex items-center gap-2 rounded-full text-sm font-semibold text-link underline-offset-4 transition hover:underline focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
       >
         <ArrowLeft className="size-4" />
         Back to all projects

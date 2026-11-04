@@ -9,10 +9,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants: Record<ButtonVariant, string> = {
-  primary:
-    "bg-accent-gradient text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-cyan-400/30",
-  secondary:
-    "border border-slate-300 bg-transparent text-foreground hover:border-indigo-500 dark:border-slate-700",
+  primary: "bg-accent text-accent-foreground hover:bg-accent-hover",
+  secondary: "border border-border bg-transparent text-foreground hover:border-foreground",
 };
 
 // Shared so ProjectLinks can style its own anchors, which need target/rel that

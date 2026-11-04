@@ -4,7 +4,7 @@ import { AssetIcon } from "@/components/ui/AssetIcon";
 import type { SocialLinkItem, SocialPlatform } from "@/types/sanity";
 
 // Inline SVGs, not uploads: fill="currentColor" lets them inherit the link's
-// colour, which drives the hover accent and glow. To add a platform, extend
+// colour, which drives the hover colour. To add a platform, extend
 // SocialPlatform, the Studio's socialLink schema, and the map below.
 
 export function GitHubIcon(props: SVGProps<SVGSVGElement>) {

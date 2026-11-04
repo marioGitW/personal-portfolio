@@ -28,11 +28,10 @@ export function ProjectVisual({
 }: ProjectVisualProps) {
   if (imageUrl) {
     return (
-      // Dark placeholder in both themes, not bg-slate-100: the card always
-      // renders this behind a photo under a near-black gradient, so a light
-      // backdrop can only ever show up as a pale seam if the scaled image and
-      // its container disagree by a sub-pixel at the rounded edge.
-      <div className={`relative overflow-hidden bg-slate-900 ${className}`}>
+      // Surface, not a fixed tone: inside ProjectCard's dark token scope this is
+      // navy like the fade over it, so the scaled image and its container
+      // disagreeing by a sub-pixel at the rounded edge cannot show a pale seam.
+      <div className={`relative overflow-hidden bg-surface ${className}`}>
         <Image
           src={imageUrl}
           alt=""
@@ -47,17 +46,9 @@ export function ProjectVisual({
 
   // No thumbnail set, so fall back to the initials placeholder.
   return (
-    <div className={`relative isolate overflow-hidden bg-slate-100 dark:bg-slate-900 ${className}`}>
+    <div className={`relative isolate overflow-hidden bg-surface ${className}`}>
       <span aria-hidden="true" className="project-visual-grid absolute inset-0" />
-      <span
-        aria-hidden="true"
-        className="absolute -top-10 -right-10 size-40 rounded-full bg-accent-gradient opacity-20 blur-3xl"
-      />
-      <span
-        aria-hidden="true"
-        className="absolute -bottom-10 -left-10 size-40 rounded-full bg-accent-gradient opacity-10 blur-3xl"
-      />
-      <span className="relative flex h-full items-center justify-center font-heading text-5xl font-bold text-accent-gradient opacity-70 sm:text-6xl">
+      <span className="relative flex h-full items-center justify-center font-heading text-5xl font-bold text-muted sm:text-6xl">
         {getInitials(title)}
       </span>
     </div>

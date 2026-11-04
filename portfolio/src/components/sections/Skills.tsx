@@ -137,7 +137,7 @@ export function Skills({ skills }: SkillsProps) {
               itemLabel={(i) => `Show tools page ${i + 1} of ${pages.length}`}
               className="mt-6 flex items-center justify-center gap-1 lg:justify-start"
               buttonClassName="group"
-              inactiveClassName="w-1.5 bg-slate-300 group-hover:bg-slate-400 dark:bg-slate-700"
+              inactiveClassName="w-1.5 bg-muted group-hover:bg-foreground"
             />
           )}
         </div>

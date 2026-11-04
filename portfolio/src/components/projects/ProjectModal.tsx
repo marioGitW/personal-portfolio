@@ -135,7 +135,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
   return createPortal(
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 p-0 backdrop-blur-sm sm:p-6"
       onClick={onRequestClose}
     >
       <div
@@ -144,14 +144,14 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
         aria-modal="true"
         aria-labelledby="project-modal-title"
         onClick={(event) => event.stopPropagation()}
-        className="relative flex h-full w-full max-w-4xl flex-col overflow-hidden surface-card shadow-2xl shadow-indigo-500/20 sm:h-auto sm:max-h-[90vh] sm:rounded-2xl"
+        className="relative flex h-full w-full max-w-4xl flex-col overflow-hidden surface-card sm:h-auto sm:max-h-[90vh] sm:rounded-2xl"
       >
         <button
           ref={closeButtonRef}
           type="button"
           onClick={onRequestClose}
           aria-label="Close project details"
-          className="absolute top-4 right-4 z-10 icon-button bg-background/80 backdrop-blur-sm transition hover:border-indigo-500"
+          className="absolute top-4 right-4 z-10 icon-button bg-background/80 backdrop-blur-sm transition hover:border-foreground"
         >
           <X className="size-4" />
         </button>
@@ -167,7 +167,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
                 {title}
               </h2>
               {project.thumbnailDescription && (
-                <p className="mt-3 text-base text-slate-600 sm:text-lg dark:text-slate-400">
+                <p className="mt-3 text-base text-muted sm:text-lg">
                   {project.thumbnailDescription}
                 </p>
               )}
@@ -214,7 +214,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
             {overviewParagraphs.length > 0 && (
               <div data-modal-item className="mt-8">
                 <h3 className="text-sm font-semibold tracking-wide uppercase">Project Overview</h3>
-                <div className="mt-3 space-y-3 text-sm text-slate-600 sm:text-base dark:text-slate-400">
+                <div className="mt-3 space-y-3 text-sm text-muted sm:text-base">
                   {overviewParagraphs.map((paragraph, index) => (
                     <p key={index}>{paragraph}</p>
                   ))}
@@ -230,11 +230,11 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
                     // Index-keyed: feature text is free-form and may repeat.
                     <li
                       key={index}
-                      className="flex items-start gap-2.5 text-sm text-slate-600 sm:text-base dark:text-slate-400"
+                      className="flex items-start gap-2.5 text-sm text-muted sm:text-base"
                     >
                       <span
                         aria-hidden="true"
-                        className="mt-2 size-1.5 shrink-0 rounded-full bg-accent-gradient"
+                        className="mt-2 size-1.5 shrink-0 rounded-full bg-muted"
                       />
                       {feature}
                     </li>

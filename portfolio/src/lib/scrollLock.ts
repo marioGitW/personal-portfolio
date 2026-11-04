@@ -17,3 +17,8 @@ export function unlockScroll(): void {
   document.body.classList.remove("overflow-hidden");
   window.dispatchEvent(new Event(SCROLL_LOCK_OFF));
 }
+
+// For a lock taken before SmoothScroll had subscribed to the events above.
+export function isScrollLocked(): boolean {
+  return document.body.classList.contains("overflow-hidden");
+}

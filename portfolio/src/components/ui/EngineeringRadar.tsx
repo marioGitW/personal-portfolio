@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
 
@@ -55,7 +55,6 @@ function labelAnchor(index: number): "start" | "middle" | "end" {
 }
 
 export function EngineeringRadar({ className = "" }: { className?: string }) {
-  const gradientId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<SVGGElement>(null);
   const polygonRef = useRef<SVGPolygonElement>(null);
@@ -119,20 +118,13 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
         role="img"
         aria-label={`Engineering profile across ${DIMENSIONS.map((d) => d.label).join(", ")}`}
       >
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: "var(--color-accent-from)" }} />
-            <stop offset="100%" style={{ stopColor: "var(--color-accent-to)" }} />
-          </linearGradient>
-        </defs>
-
         <g ref={gridRef}>
           {RINGS.map((ring) => (
             <polygon
               key={ring}
               points={ringPoints(ring)}
               fill="none"
-              className={ring === 1 ? "stroke-foreground/15" : "stroke-foreground/8"}
+              className="stroke-border"
               strokeWidth={1}
             />
           ))}
@@ -145,7 +137,7 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
                 y1={CENTER}
                 x2={x}
                 y2={y}
-                className="stroke-foreground/10"
+                className="stroke-border"
                 strokeWidth={1}
               />
             );
@@ -155,9 +147,8 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
         <polygon
           ref={polygonRef}
           points={profilePoints()}
-          fill={`url(#${gradientId})`}
-          fillOpacity={0.16}
-          stroke={`url(#${gradientId})`}
+          className="fill-accent stroke-accent"
+          fillOpacity={0.15}
           strokeWidth={1.75}
           strokeLinejoin="round"
         />
@@ -165,16 +156,7 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
         <g ref={pointsRef}>
           {DIMENSIONS.map((dimension, i) => {
             const { x, y } = pointAt(i, dimension.value);
-            return (
-              <circle
-                key={dimension.label}
-                cx={x}
-                cy={y}
-                r={4.5}
-                fill={`url(#${gradientId})`}
-                className="drop-shadow-[0_0_6px_var(--color-accent-to)]"
-              />
-            );
+            return <circle key={dimension.label} cx={x} cy={y} r={4.5} className="fill-accent" />;
           })}
         </g>
 
@@ -190,7 +172,7 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
                 x={x}
                 y={y}
                 textAnchor={anchor}
-                className="fill-foreground/75 text-[11px] font-semibold tracking-[0.06em] uppercase"
+                className="fill-muted text-[11px] font-semibold tracking-[0.06em] uppercase"
               >
                 {words.map((word, wordIndex) => (
                   <tspan key={word} x={x} dy={wordIndex === 0 ? (words.length > 1 ? -6 : 4) : 13}>

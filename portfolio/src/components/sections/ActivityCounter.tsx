@@ -141,11 +141,6 @@ export function ActivityCounter() {
       className="mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-6 max-[431px]:py-10"
     >
       <div className="relative overflow-hidden rounded-3xl surface-card px-6 py-12 sm:px-12 sm:py-14">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-accent-gradient opacity-[0.07] blur-3xl"
-        />
-
         <div className="relative flex flex-col items-center gap-10 text-center lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:text-left">
           <div className="max-w-md">
             <p ref={eyebrowRef} className="section-eyebrow">
@@ -153,7 +148,7 @@ export function ActivityCounter() {
             </p>
             <div ref={headingRef}>
               <h2 id="activity-title" className="mt-3 text-3xl sm:text-4xl">
-                Enjoyed the <span className="text-accent-gradient">journey?</span>
+                Enjoyed the journey?
               </h2>
               <p className="mt-3 text-muted">
                 A single click, nothing tracked — just a quiet way to say it landed.
@@ -167,17 +162,19 @@ export function ActivityCounter() {
               onClick={() => void onLike()}
               disabled={isLiked || pending}
               aria-pressed={isLiked}
-              className="group inline-flex items-center gap-2.5 rounded-full border border-slate-300 bg-background px-5 py-2.5 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-love active:scale-95 disabled:cursor-default disabled:hover:translate-y-0 dark:border-slate-700"
+              className="group inline-flex items-center gap-2.5 rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-foreground active:scale-95 disabled:cursor-default disabled:hover:translate-y-0"
             >
               <Heart
                 className={`size-4 transition-all duration-300 ${
-                  isLiked ? "scale-110 fill-love text-love" : "text-slate-400 group-hover:text-love"
+                  isLiked
+                    ? "scale-110 fill-foreground text-foreground"
+                    : "text-muted group-hover:text-foreground"
                 }`}
               />
               <span>{isLiked ? "Liked" : "Leave a like"}</span>
             </button>
 
-            <p className="font-body flex items-center gap-2 text-xs text-slate-400">
+            <p className="font-body flex items-center gap-2 text-xs text-muted">
               {stats ? (
                 <>
                   <span className="flex items-center gap-1.5">
@@ -193,7 +190,7 @@ export function ActivityCounter() {
                   </span>
                 </>
               ) : (
-                <span className="inline-flex h-4 w-32 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+                <span className="inline-flex h-4 w-32 animate-pulse rounded-full bg-border" />
               )}
             </p>
           </div>

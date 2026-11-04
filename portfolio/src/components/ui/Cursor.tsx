@@ -128,12 +128,19 @@ export function Cursor() {
       yRing(event.clientY);
     };
 
+    // Read per hover rather than once, so the fill follows a theme switch.
+    const hoverFill = () => {
+      const [r, g, b] = gsap.utils.splitColor(
+        getComputedStyle(root).getPropertyValue("--foreground").trim(),
+      );
+      return `rgba(${r},${g},${b},0.18)`;
+    };
+
     // Ring expands while the dot shrinks inside it.
     const hoverIn = () => {
       gsap.to(ring, {
         scale: 1.3,
-        backgroundColor: "rgba(99,102,241,0.18)",
-        borderColor: "#22D3EE",
+        backgroundColor: hoverFill(),
         duration: 0.2,
       });
       gsap.to(dot, { scale: 0.4, duration: 0.2 });
@@ -143,7 +150,6 @@ export function Cursor() {
       gsap.to(ring, {
         scale: 1,
         backgroundColor: "transparent",
-        borderColor: "#6366F1",
         duration: 0.2,
       });
       gsap.to(dot, { scale: 1, duration: 0.2 });
@@ -245,11 +251,11 @@ export function Cursor() {
     <>
       <div
         ref={dotRef}
-        className="custom-cursor pointer-events-none fixed top-0 left-0 z-[90] size-2 rounded-full bg-accent-gradient"
+        className="custom-cursor pointer-events-none fixed top-0 left-0 z-[90] size-2 rounded-full bg-foreground"
       />
       <div
         ref={ringRef}
-        className="custom-cursor pointer-events-none fixed top-0 left-0 z-[90] size-8 rounded-full border border-indigo-500"
+        className="custom-cursor pointer-events-none fixed top-0 left-0 z-[90] size-8 rounded-full border border-foreground"
       />
     </>
   );

@@ -64,7 +64,7 @@ export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: Pro
   // document can hit-test is a 1px border, and the custom cursor cannot tell it
   // has moved onto the player. See components/ui/Cursor.
   const frameClasses =
-    "relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-black p-3 dark:border-slate-800";
+    "relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface p-3";
   const title = projectTitle ? `${projectTitle} demo video` : "Demo video";
 
   if (isVideoFile(demoVideoUrl)) {
@@ -105,17 +105,13 @@ export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: Pro
   // Not a usable source, so show a placeholder rather than a broken player.
   return (
     <div
-      className={`project-visual-grid relative isolate flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900 ${className}`}
+      className={`project-visual-grid relative isolate flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-surface ${className}`}
     >
-      <span
-        aria-hidden="true"
-        className="absolute inset-0 rounded-xl bg-accent-gradient opacity-10 blur-3xl"
-      />
       <div className="relative flex flex-col items-center gap-3">
-        <span className="grid size-14 place-items-center rounded-full bg-accent-gradient shadow-lg shadow-indigo-500/30">
-          <Play className="size-5 translate-x-0.5 fill-white text-white" />
+        <span className="grid size-14 place-items-center rounded-full border border-border bg-background">
+          <Play className="size-5 translate-x-0.5 fill-muted text-muted" />
         </span>
-        <p className="text-xs font-medium tracking-[0.15em] text-slate-500 uppercase">
+        <p className="text-xs font-medium tracking-[0.15em] text-muted uppercase">
           Demo video coming soon
         </p>
       </div>
