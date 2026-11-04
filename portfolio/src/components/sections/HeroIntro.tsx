@@ -2,30 +2,29 @@
 
 import { useRef, type RefObject } from "react";
 import gsap from "gsap";
-import { Flip } from "gsap/Flip";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
-import type { ParticlePortraitHandle } from "@/components/sections/ParticlePortrait";
-import { markIntroPlayed } from "@/lib/intro";
+import type { MosaicPortraitHandle } from "@/components/sections/MosaicPortrait";
+import { HERO_NAME_CLASSES, markIntroPlayed } from "@/lib/intro";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(useGSAP, Flip, SplitText);
+  gsap.registerPlugin(useGSAP, SplitText);
 }
 
 // Every duration and easing of the intro. Times are seconds, and each "at" is an
-// offset from the start of its phase. Particle timing lives in ParticlePortrait.
+// offset from the start of its phase. The portrait's timing lives in MosaicPortrait.
 const INTRO = {
   word: "PORTFOLIO",
-  // Phase A: the wait for assets, before the timeline below starts.
-  wait: { minMs: 400, maxMs: 2500 },
+  // Phase A: the wait for assets, before the timeline below starts. The word is measured
+  // in the real font, so past fontsMaxMs the intro is dropped rather than built on the
+  // fallback's metrics. The image can arrive later, as the mosaic waits for it.
+  wait: { minMs: 400, maxMs: 2500, fontsMaxMs: 8000 },
   breathe: { scaleX: 1.3, scaleY: 0.62, duration: 0.8, ease: "sine.inOut" },
   // Where each phase starts on the master timeline.
   phases: { bang: 0, letters: 0.4, swap: 1.2, handoff: 1.8, reveal: 2.2 },
-  // Sizes relative to the hero name's font size, clamped for small screens.
-  size: { dotBase: 14, ballPerFont: 0.11, ballMin: 11, ballMax: 26, barPerBall: 0.85 },
-  // The word sits slightly small in the centre and grows into the hero line.
-  wordScale: 0.86,
+  // The dot's size in the stylesheet, which it is scaled from.
+  size: { dotBase: 14 },
   bang: {
     anticipate: { at: 0, duration: 0.07, ease: "power2.out", scaleX: 1.7, scaleY: 0.4 },
     travel: { at: 0.07, duration: 0.3, ease: "none" },
@@ -56,8 +55,6 @@ const INTRO = {
   },
   handoff: {
     word: { at: 0, duration: 0.5, ease: "power3.inOut" },
-    // Fill goes from the metallic gradient to line two's own solid colour.
-    fill: { at: 0, duration: 0.5, ease: "power1.inOut" },
     lineOne: { at: 0.1, duration: 0.6, ease: "power4.out" },
     dot: { at: 0, duration: 0.55, ease: "power3.inOut", arcPerViewport: 0.18 },
     eyebrowText: { at: 0.25, duration: 0.4, ease: "power3.out", y: 16 },
@@ -67,26 +64,98 @@ const INTRO = {
   },
   reveal: {
     copy: { at: 0, y: 16, duration: 0.5, stagger: 0.06, ease: "power3.out" },
-    // Without particles (touch, narrow screens) the portrait simply fades in.
-    portraitFade: { at: 0, duration: 0.6, ease: "power1.out" },
   },
 } as const;
 
 const SKIP_EVENTS = ["click", "keydown", "wheel", "touchstart"] as const;
 
+// Everything that decides how the name's glyphs look, read off the real line so the word
+// cannot drift from it.
+const WORD_STYLES = [
+  "font-family",
+  "font-weight",
+  "font-size",
+  "line-height",
+  "letter-spacing",
+  "text-transform",
+  "font-feature-settings",
+  "font-variation-settings",
+  "font-kerning",
+  "color",
+  "-webkit-text-stroke-width",
+  "-webkit-text-stroke-color",
+  "text-shadow",
+  "background-image",
+  "background-clip",
+] as const;
+
+// Not inherited, and a clipped background has to be on the box the glyphs are in.
+const LETTER_STYLES = ["background-image", "background-clip"] as const;
+
+function copyStyles(
+  from: HTMLElement,
+  to: HTMLElement,
+  properties: readonly string[] = WORD_STYLES,
+) {
+  const styles = getComputedStyle(from);
+  properties.forEach((property) => {
+    to.style.setProperty(property, styles.getPropertyValue(property));
+  });
+}
+
+function fontOf(element: HTMLElement) {
+  const { fontWeight, fontSize, fontFamily } = getComputedStyle(element);
+  return `${fontWeight} ${fontSize} ${fontFamily}`;
+}
+
+// Dev only. Runs on the last frame before the swap, when any difference would show.
+function warnIfWordDiffersFromLine(
+  word: HTMLElement,
+  letters: HTMLElement[],
+  line: HTMLElement,
+  text: Text,
+) {
+  const wordStyles = getComputedStyle(word);
+  const lineStyles = getComputedStyle(line);
+  const differing = WORD_STYLES.filter(
+    (property) => wordStyles.getPropertyValue(property) !== lineStyles.getPropertyValue(property),
+  ).map(
+    (property) =>
+      `${property}: ${wordStyles.getPropertyValue(property)} vs ${lineStyles.getPropertyValue(property)}`,
+  );
+
+  const range = document.createRange();
+  const lineTop = line.getBoundingClientRect().top;
+  const displaced = letters.slice(0, text.length).flatMap((letter, index) => {
+    range.setStart(text, index);
+    range.setEnd(text, index + 1);
+    const box = letter.getBoundingClientRect();
+    const dx = box.left - range.getBoundingClientRect().left;
+    const dy = box.top - lineTop;
+    return Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5
+      ? [`${text.data[index]} off by ${dx.toFixed(2)}, ${dy.toFixed(2)}`]
+      : [];
+  });
+
+  if (differing.length || displaced.length) {
+    console.warn("[HeroIntro] The word does not match the line it lands on.", {
+      differing,
+      displaced,
+    });
+  }
+}
+
 type HeroIntroProps = {
-  particlesRef: RefObject<ParticlePortraitHandle | null>;
+  mosaicRef: RefObject<MosaicPortraitHandle | null>;
 };
 
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-export function HeroIntro({ particlesRef }: HeroIntroProps) {
+export function HeroIntro({ mosaicRef }: HeroIntroProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const floorRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const spotlightRef = useRef<HTMLDivElement>(null);
-  const landingRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
   const dotRef = useRef<HTMLSpanElement>(null);
@@ -108,7 +177,6 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
       const floor = floorRef.current;
       const backdrop = backdropRef.current;
       const spotlight = spotlightRef.current;
-      const landing = landingRef.current;
       const word = wordRef.current;
       const bar = barRef.current;
       const dot = dotRef.current;
@@ -145,6 +213,9 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
         removeListeners();
         markIntroPlayed();
         unlockScroll();
+        // Only does anything if the timeline never got to assemble the portrait: a skip
+        // during the wait, or an image that had not loaded by the time it was built.
+        mosaicRef.current?.enter();
         // The attribute first, so the CSS hide never outlives GSAP's inline values.
         // Everything is at its final value by now and the revert only takes those
         // inline styles away. That is not just tidiness: a transform left on the
@@ -168,6 +239,9 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
       // The landing spots were measured for this width, so don't play on past it.
       const startWidth = window.innerWidth;
       const handleResize = () => {
+        if (word && lineTwo) {
+          copyStyles(lineTwo, word);
+        }
         if (window.innerWidth !== startWidth) {
           skip();
         }
@@ -178,7 +252,6 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
         !floor ||
         !backdrop ||
         !spotlight ||
-        !landing ||
         !word ||
         !bar ||
         !dot ||
@@ -231,25 +304,19 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
             (_, index) => boundsOf(node, index, index + 1).left - origin,
           );
 
-        // Line two's text box and its kerned letter positions. A split word loses
-        // kerning, and the "PA" and "OV" pairs would visibly jump at the swap, so
-        // the letters are placed from these rather than left to flow.
+        // Line two's box, its text box and its kerned letter positions, all read-only. A
+        // split word loses kerning, and the "PA" and "OV" pairs would visibly jump at the
+        // swap, so the letters are placed from these rather than left to flow.
+        const lineRect = lineTwo.getBoundingClientRect();
         const lineBox = boundsOf(lineTwoText);
         const lineStyles = getComputedStyle(lineTwo);
-        const fontSize = parseFloat(lineStyles.fontSize);
         const toWord = lineTwoText.data.toUpperCase();
         const toLefts = lettersOf(lineTwoText, lineBox.left);
 
-        // autoRound off here and on the landing box: GSAP snaps px values to whole
-        // pixels by default, and a 58.5px font rendered at 59px lands visibly wrong.
-        gsap.set(word, {
-          autoRound: false,
-          width: lineBox.width,
-          height: lineBox.height,
-          fontSize,
-          letterSpacing: lineStyles.letterSpacing,
-          lineHeight: `${lineBox.height}px`,
-        });
+        copyStyles(lineTwo, word);
+        // autoRound off: GSAP snaps px values to whole pixels by default, and a line box
+        // of 154.8px rendered at 155px would land visibly wrong.
+        gsap.set(word, { autoRound: false, width: lineBox.width, height: lineRect.height });
 
         word.textContent = INTRO.word;
         const introText = word.firstChild as Text;
@@ -263,41 +330,36 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
           type: "chars",
           tag: "span",
           aria: "none",
-          charsClass: "hero-intro-char",
         }).chars as HTMLElement[];
         chars.forEach((char, index) => {
           char.textContent = INTRO.word[index] ?? "";
+          copyStyles(lineTwo, char, LETTER_STYLES);
         });
 
         const measuring = document.createElement("canvas").getContext("2d");
         if (!measuring) {
           return null;
         }
-        measuring.font = `${lineStyles.fontWeight} ${lineStyles.fontSize} ${lineStyles.fontFamily}`;
-        const metrics = measuring.measureText("H");
-        const ascent = metrics.fontBoundingBoxAscent;
-        const capHeight = metrics.actualBoundingBoxAscent;
+        measuring.font = fontOf(lineTwo);
+        const capMetrics = measuring.measureText("H");
+        const ascent = capMetrics.fontBoundingBoxAscent;
+        const capHeight = capMetrics.actualBoundingBoxAscent;
+        const stemMetrics = measuring.measureText("I");
+        const stemWidth = stemMetrics.actualBoundingBoxLeft + stemMetrics.actualBoundingBoxRight;
 
         const viewportWidth = root.clientWidth;
         const viewportHeight = root.clientHeight;
         const centerX = viewportWidth / 2;
         const centerY = viewportHeight / 2;
-        const { wordScale, size } = INTRO;
+        const { size } = INTRO;
 
-        // The caps, rather than the taller line box, are what sit dead centre.
-        const baselineY = centerY + (capHeight / 2) * wordScale;
-        const wordY =
-          centerY - lineBox.height / 2 - (ascent - capHeight / 2 - lineBox.height / 2) * wordScale;
-        const screenX = (localX: number) => centerX + (localX - lineBox.width / 2) * wordScale;
+        // The caps, rather than the taller line box, are what sit dead centre. The word has
+        // the line's box and line-height, so its baseline is as far down as the line's is.
+        const baselineY = centerY + capHeight / 2;
+        const wordY = baselineY - (lineBox.top - lineRect.top + ascent);
+        const screenX = (localX: number) => centerX + localX - lineBox.width / 2;
 
-        gsap.set(word, { x: centerX - lineBox.width / 2, y: wordY, scale: wordScale });
-        gsap.set(landing, {
-          autoRound: false,
-          x: lineBox.left,
-          y: lineBox.top,
-          width: lineBox.width,
-          height: lineBox.height,
-        });
+        gsap.set(word, { x: centerX - lineBox.width / 2, y: wordY });
         gsap.set(chars, {
           position: "absolute",
           left: 0,
@@ -310,11 +372,12 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
           transformPerspective: INTRO.letters.perspective,
         });
 
-        // The "!": a ball on the word's left edge with the bar standing over it.
-        const ball = clamp(fontSize * size.ballPerFont, size.ballMin, size.ballMax);
+        // The "!", in the font's own proportions: an "I" stem as tall as the caps, standing
+        // over a ball as wide as the stem, on the word's left edge.
+        const ball = stemWidth;
         const ballScale = ball / size.dotBase;
-        const barWidth = ball * size.barPerBall;
-        const barHeight = capHeight * wordScale;
+        const barWidth = stemWidth;
+        const barHeight = capHeight;
         const wordLeft = screenX(fromLefts[0] ?? 0);
         const wordRight = screenX(inset + introBox.width);
         const finalRight = screenX(lineBox.width);
@@ -332,6 +395,7 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
           y: pivotY - barHeight,
           scaleY: 0,
           transformOrigin: "50% 100%",
+          backgroundColor: lineStyles.color,
         });
 
         // The dot's stylesheet position is the viewport centre, so x/y are offsets.
@@ -348,7 +412,7 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
         const at = (label: keyof typeof phases, offset: number) => phases[label] + offset;
 
         // Phase B: the dot hops onto the word's left edge and the bar shoots up.
-        const hop = capHeight * wordScale * bang.hopPerCapHeight;
+        const hop = capHeight * bang.hopPerCapHeight;
         tl.to(
           dot,
           {
@@ -409,8 +473,7 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
         )
           .to(
             bar,
-            // Its real length, with y following to pin the base: scaling this far
-            // would stretch the rounded caps into points.
+            // Its real length, with y following to pin the base.
             {
               height: barLength,
               y: pivotY - barLength,
@@ -495,22 +558,32 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
           at("swap", swap.reflow.at),
         );
 
-        // Phase E: everything goes to its place in the real hero.
-        tl.add(
-          Flip.fit(word, landing, {
-            scale: true,
+        // Phase E: everything goes to its place in the real hero. The letters already sit
+        // on the line's kerned positions and the word is the line's size, so a translation
+        // is all that is left. No perspective either, which would keep them on a soft layer.
+        // Rounded because that is where the line paints: Chrome puts a text box's top on a
+        // whole pixel, and a transform would otherwise honour the fraction and land the
+        // glyphs a pixel off it on a 2x screen.
+        tl.set(chars, { transformPerspective: 0 }, at("handoff", handoff.word.at)).to(
+          word,
+          {
+            x: lineBox.left,
+            y: Math.round(lineRect.top),
             duration: handoff.word.duration,
             ease: handoff.word.ease,
-          }) as gsap.core.Tween,
+          },
           at("handoff", handoff.word.at),
-        ).to(
-          word,
-          { "--intro-fill": 0, duration: handoff.fill.duration, ease: handoff.fill.ease },
-          at("handoff", handoff.fill.at),
         );
-        // The seam: same glyphs, colour and position to within 0.1px. In one frame on
-        // purpose, as fading the word off the line doubles up the glyph edges.
+        // The seam: same glyphs, paint and position. In one frame on purpose, as fading the
+        // word off the line doubles up the glyph edges.
         const wordLanded = at("handoff", handoff.word.at + handoff.word.duration);
+        if (process.env.NODE_ENV !== "production") {
+          tl.call(
+            () => warnIfWordDiffersFromLine(word, chars, lineTwo, lineTwoText),
+            undefined,
+            wordLanded,
+          );
+        }
         tl.set(lineTwo, { opacity: 1 }, wordLanded).set(word, { opacity: 0 }, wordLanded);
 
         tl.fromTo(
@@ -607,30 +680,17 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
             at("handoff", handoff.backdrop.at),
           );
 
-        // The photo paints under the opaque backdrop from the start, which is what
-        // keeps it the page's LCP. It only has to be hidden once the backdrop lifts.
-        tl.set(portrait, { opacity: 0 }, at("handoff", 0));
         // Below the hero's z-10 content, all still at opacity 0. From here the
         // spotlight really is behind the name and the portrait, so the name doesn't
         // change tone when the word above the spotlight swaps for the line under it.
         tl.set(floor, { zIndex: 5 }, at("handoff", 0));
 
-        // Phase F: the portrait gathers while the rest of the page staggers in.
-        const assembly = particlesRef.current?.assemble() ?? null;
+        // Phase F: the portrait gathers while the rest of the page staggers in. Not before
+        // the word has become the real name: the word is above the tiles and the name is
+        // behind them, so swapping one for the other under tiles in the air would show.
+        const assembly = mosaicRef.current?.assemble() ?? null;
         if (assembly) {
-          tl.add(assembly, at("reveal", 0));
-        } else {
-          tl.fromTo(
-            portrait,
-            { opacity: 0 },
-            {
-              opacity: 1,
-              duration: reveal.portraitFade.duration,
-              ease: reveal.portraitFade.ease,
-              immediateRender: false,
-            },
-            at("reveal", reveal.portraitFade.at),
-          );
+          tl.add(assembly, wordLanded);
         }
 
         tl.fromTo(
@@ -658,7 +718,8 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
 
         breathing.kill();
         // A session that has somehow already scrolled has no hero in view to land on.
-        timeline = window.scrollY > 0 ? null : buildTimeline();
+        timeline =
+          window.scrollY > 0 || !document.fonts.check(fontOf(lineTwo)) ? null : buildTimeline();
         if (timeline) {
           markIntroPlayed();
         } else {
@@ -666,10 +727,14 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
         }
       });
 
-      const assets = Promise.allSettled([document.fonts?.ready, portrait.decode()]);
+      const fonts = Promise.allSettled([
+        document.fonts.load(fontOf(lineTwo), lineTwo.textContent ?? ""),
+        document.fonts.ready,
+      ]);
       void Promise.all([
         wait(INTRO.wait.minMs),
-        Promise.race([assets, wait(INTRO.wait.maxMs)]),
+        Promise.race([fonts, wait(INTRO.wait.fontsMaxMs)]),
+        Promise.race([Promise.allSettled([portrait.decode()]), wait(INTRO.wait.maxMs)]),
       ]).then(play);
 
       return () => {
@@ -694,9 +759,8 @@ export function HeroIntro({ particlesRef }: HeroIntroProps) {
         <div ref={spotlightRef} className="hero-intro-spotlight" />
       </div>
       <div ref={rootRef} aria-hidden="true" className="hero-intro">
-        <div ref={landingRef} className="absolute top-0 left-0" />
-        <div ref={wordRef} className="hero-intro-word" />
-        <span ref={barRef} className="absolute top-0 left-0 rounded-full bg-foreground" />
+        <div ref={wordRef} className={`hero-intro-word ${HERO_NAME_CLASSES}`} />
+        <span ref={barRef} className="absolute top-0 left-0" />
         <span ref={dotRef} className="hero-intro-dot" />
       </div>
     </>

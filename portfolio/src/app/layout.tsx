@@ -122,11 +122,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <Providers>
-          {/* The custom cursor (@/components/ui/Cursor) is intentionally not
-              mounted: replacing the native cursor meant every browser-owned
-              surface — scrollbars, media controls, embedded frames — needed its
-              own opt-out. The component and its CSS are kept so it can be
-              dropped back in here. */}
           <SocialSidebar links={socialLinks} />
           <SmoothScroll>{children}</SmoothScroll>
         </Providers>

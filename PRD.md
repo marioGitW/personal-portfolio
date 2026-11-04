@@ -79,8 +79,8 @@ empty metadata for it. Skill icons resolve as: uploaded file first, else a devic
 
 Rendered in order by `src/app/page.tsx`:
 
-1. **Hero** — two-line masked name lockup animated in by GSAP, portrait with cursor and
-   scroll parallax, CTA buttons
+1. **Hero** — two-line masked name lockup animated in by GSAP, portrait with scroll
+   parallax, CTA buttons
    ("Let's Connect" anchor; "View Resume" opens the resume modal, and renders only when a
    CV is uploaded in the CMS)
 2. **About** — portrait illustration, bio paragraphs, stat tags and language pills
@@ -96,10 +96,21 @@ Rendered in order by `src/app/page.tsx`:
 8. **Footer** — logo, tagline, social icons, copyright
 
 Persistent chrome: sticky header with an animated active-section pill, a fixed social
-sidebar (`md` and up), a custom cursor (fine pointers only), and a hero intro that plays
-once per session (dot, "!", PORTFOLIO, SPASOVSKI, then a handoff into the real hero, with
-the portrait gathering from particles on desktop). Any input skips it, and later loads
-get a short CSS entrance instead.
+sidebar (`md` and up), and a hero intro that plays once per session (dot, "!", PORTFOLIO,
+SPASOVSKI, then a handoff into the real hero). Any input skips it, and later loads get a
+short entrance instead. The native cursor stays everywhere, and nothing follows it.
+
+The portrait is never shown as a photo. It is always a fine mosaic of square tiles,
+sampled from the image, which stays in the DOM at opacity 0 for its alt text. Tiles
+assemble outward from the face during the intro (0.6s on later loads, 0.8s on touch),
+drawn with WebGL2 while they fly, and then stay on a cached 2D canvas. Desktop adds an
+idle twinkle, and near the pointer single tiles now and then step off their cells and back;
+touch and reduced motion stay static. Tile colours come from the theme tokens, and the
+accent marks fine detail on the T-shirt only.
+
+The name sits behind the portrait, which covers the end of it. Hovering the name parts the
+tiles over its letters so it shows through, entirely in the canvas (desktop only, and
+instant under reduced motion).
 
 **Not built:** certifications, blog, admin panel, database, auth, skills category filtering
 (the tool grid is paginated, not filtered).
@@ -142,17 +153,17 @@ portfolio/
     app/
       api/contact/route.ts
       api/stats/{route.ts, like/route.ts, visit/route.ts}
-      layout.tsx          # fonts, metadata, providers, intro head script, cursor, sidebar
+      layout.tsx          # fonts, metadata, providers, intro head script, sidebar
       manifest.ts         # web app manifest: name, colours, home-screen icons
       favicon.ico, icon.svg, icon.png, apple-icon.png   # tab and touch icons
       page.tsx            # composes every section; revalidate = 60
       globals.css         # Tailwind v4 config, theme tokens, custom utilities, keyframes
     components/
-      sections/           # Hero, HeroIntro, ParticlePortrait, About, Experience,
+      sections/           # Hero, HeroIntro, MosaicPortrait, About, Experience,
                           # Projects, Skills, Contact, ActivityCounter, SkillCard
       projects/           # ProjectCard, ProjectModal, ProjectsScroller, ProjectVisual,
                           # ProjectScreenshots, ProjectVideo, ProjectLinks, TechStack
-      ui/                 # Button, Header, Footer, Logo, Cursor, SmoothScroll,
+      ui/                 # Button, Header, Footer, Logo, SmoothScroll,
                           # ThemeToggle, Providers, ResumeModal, AssetIcon,
                           # EngineeringRadar, SectionHeading, PaginationDots,
                           # SocialIcons, SocialLinkList, SocialSidebar

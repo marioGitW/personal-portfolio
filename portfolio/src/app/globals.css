@@ -84,6 +84,15 @@
 html {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  /* The viewport is the same width whether or not the page overflows yet. */
+  scrollbar-gutter: stable;
+}
+
+/* lenis.css clips <html> while stopped, which takes the scrollbar away and shifts the whole
+   page by its width. @/lib/scrollLock holds the page still without it. */
+html.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 html,
@@ -145,39 +154,6 @@ h6,
     font-size: 1.0625rem;
     font-weight: 500;
     line-height: 1.25;
-  }
-}
-
-.has-custom-cursor,
-.has-custom-cursor * {
-  cursor: none !important;
-}
-
-/* `cursor: none` cannot reach native scrollbars, the shadow DOM behind
-   <video controls>, or a cross-origin iframe — and over any of those the page
-   stops receiving mousemove, so the custom cursor would freeze mid-screen.
-   Cursor.tsx flags those regions and we hand control back to the real pointer. */
-.custom-cursor {
-  transition: opacity 0.15s ease-out;
-}
-
-.has-custom-cursor.cursor-native,
-.has-custom-cursor.cursor-native * {
-  cursor: auto !important;
-}
-
-.cursor-native .custom-cursor {
-  opacity: 0;
-}
-
-@media (pointer: coarse) {
-  .has-custom-cursor,
-  .has-custom-cursor * {
-    cursor: auto !important;
-  }
-
-  .custom-cursor {
-    display: none !important;
   }
 }
 
@@ -323,30 +299,11 @@ html[data-intro="pending"] .hero-intro {
   transform: scale(1.5, 0.5);
 }
 
+/* Its type comes from HERO_NAME_CLASSES and the line it lands on. */
 .hero-intro-word {
-  --intro-fill: 1;
   position: absolute;
   top: 0;
   left: 0;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-/* The metallic fill. --intro-fill runs the top stop down to --muted during the
-   handoff, leaving the solid colour of the hero line it lands on. The padding and
-   margin pair gives the clipped background room for any glyph's overhang. */
-.hero-intro-char {
-  margin-inline: -0.05em;
-  padding-inline: 0.05em;
-  background-image: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--foreground) calc(var(--intro-fill) * 100%), var(--muted)),
-    var(--muted)
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 /* An identity transform on purpose. On a 1x Windows display Chrome gives this text
@@ -362,8 +319,7 @@ html[data-intro="pending"] .hero-intro {
 
 /* The entrance on every load without the intro. In CSS rather than GSAP because
    it has to hold from first paint: nothing else hides the hero before hydration
-   now. The portrait starts at once, not after the name, so it is still the LCP
-   the moment it paints. */
+   now. The portrait has its own, in MosaicPortrait. */
 @media (prefers-reduced-motion: no-preference) {
   html:not([data-intro]) .hero-enter-eyebrow {
     animation: hero-enter-eyebrow 0.7s cubic-bezier(0.215, 0.61, 0.355, 1) backwards;
@@ -375,10 +331,6 @@ html[data-intro="pending"] .hero-intro {
 
   html:not([data-intro]) .hero-enter-line-two {
     animation: hero-enter-line 1.05s cubic-bezier(0.165, 0.84, 0.44, 1) 0.67s backwards;
-  }
-
-  html:not([data-intro]) .hero-enter-portrait {
-    animation: hero-enter-portrait 1.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
   }
 
   html:not([data-intro]) .hero-enter-tagline {
@@ -405,33 +357,10 @@ html[data-intro="pending"] .hero-intro {
   }
 }
 
-@keyframes hero-enter-portrait {
-  from {
-    /* Not 0: Chrome ignores a fully transparent element for LCP, and this fade runs
-       on the compositor, so the paint would only count once the animation ended. */
-    opacity: 0.01;
-    transform: translateY(48px) scale(0.965);
-  }
-}
-
 @keyframes hero-enter-rise {
   from {
     opacity: 0;
     transform: translateY(18px);
-  }
-}
-
-/* The portrait's bottom fade: an alpha mask, never a coloured overlay, so only
-   the page background shows through. Solid until 86% of the image, transparent
-   at its bottom edge (the hero's bottom edge). */
-.hero-portrait-fade {
-  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
-}
-
-@media (min-width: 64rem) {
-  .hero-portrait-fade {
-    height: 100%;
   }
 }
 
