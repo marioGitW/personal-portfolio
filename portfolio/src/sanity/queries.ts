@@ -3,8 +3,7 @@
 
 const IMAGE_FIELDS = `
   "url": asset->url,
-  "lqip": asset->metadata.lqip,
-  "aspectRatio": asset->metadata.dimensions.aspectRatio
+  "lqip": asset->metadata.lqip
 `;
 
 export const portfolioQuery = /* groq */ `
@@ -36,8 +35,7 @@ export const portfolioQuery = /* groq */ `
       keyFeatures,
       durationMonths,
       durationLabel,
-      "iconUrl": icon.asset->url,
-      "iconMimeType": icon.asset->mimeType
+      "iconUrl": icon.asset->url
     }
   },
   skills{
@@ -45,8 +43,7 @@ export const portfolioQuery = /* groq */ `
       _key,
       title,
       deviconPath,
-      "iconUrl": icon.asset->url,
-      "iconMimeType": icon.asset->mimeType
+      "iconUrl": icon.asset->url
     }
   },
   social{
@@ -56,8 +53,7 @@ export const portfolioQuery = /* groq */ `
       linkType,
       value,
       label,
-      "iconUrl": icon.asset->url,
-      "iconMimeType": icon.asset->mimeType
+      "iconUrl": icon.asset->url
     }
   }
 }
@@ -68,10 +64,8 @@ export const portfolioQuery = /* groq */ `
 export const projectsQuery = /* groq */ `
 *[_type == "project"] | order(coalesce(order, 9999) asc, _createdAt asc){
   _id,
-  order,
   title,
   "slug": slug.current,
-  featured,
   thumbnailTag,
   thumbnailTitle,
   thumbnailDescription,

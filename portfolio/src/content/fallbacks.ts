@@ -51,7 +51,6 @@ export const experienceFallback: Experience = {
       durationMonths: 2,
       durationLabel: null,
       iconUrl: "/fallback-logo-endava.svg",
-      iconMimeType: "image/svg+xml",
       keyFeatures: [
         "Developed an internal application for tracking employee activities and learning progress.",
         "Developed features using .NET 10, React, MSSQL, and Tailwind CSS.",
@@ -68,7 +67,6 @@ export const experienceFallback: Experience = {
       durationMonths: 1,
       durationLabel: null,
       iconUrl: "/fallback-logo-motion-source.png",
-      iconMimeType: "image/png",
       keyFeatures: [
         "Collaborated with interns and developers in a remote, English-speaking team.",
         "Developed features using Next.js, React, Keystone.js, and GraphQL.",
@@ -86,7 +84,6 @@ export const experienceFallback: Experience = {
       durationMonths: null,
       durationLabel: "2022 — Present",
       iconUrl: null,
-      iconMimeType: null,
       keyFeatures: [
         "Repaired and upgraded computers, developing strong PC hardware and troubleshooting skills.",
         "Advised customers on technical solutions and computer components based on their needs and budget.",
@@ -102,7 +99,6 @@ const fallbackSkill = (title: string, path: string) => ({
   title,
   deviconPath: devicon(path),
   iconUrl: null,
-  iconMimeType: null,
 });
 
 export const skillsFallback: Skills = {
@@ -125,15 +121,13 @@ export const skillsFallback: Skills = {
   ],
 };
 
-const localImage = (url: string) => ({ url, lqip: null, aspectRatio: null });
+const localImage = (url: string) => ({ url, lqip: null });
 
 export const projectsFallback: Project[] = [
   {
     _id: "fallback-phone-price-aggregator",
-    order: 1,
     title: "Phone Price Aggregator",
     slug: "phone-price-aggregator",
-    featured: true,
     thumbnailTag: "Full-Stack Application",
     thumbnailTitle: "Phone Price Aggregator",
     thumbnailDescription:
@@ -159,10 +153,8 @@ export const projectsFallback: Project[] = [
   },
   {
     _id: "fallback-personal-portfolio",
-    order: 2,
     title: "Personal Portfolio",
     slug: "personal-portfolio",
-    featured: false,
     thumbnailTag: "Frontend",
     thumbnailTitle: "Personal Portfolio",
     thumbnailDescription: "This site — a fast, animated portfolio built with Next.js and GSAP.",
@@ -187,10 +179,8 @@ export const projectsFallback: Project[] = [
   },
   {
     _id: "fallback-team-activity-tracker",
-    order: 3,
     title: "Team Activity Tracker",
     slug: "team-activity-tracker",
-    featured: false,
     thumbnailTag: "Internal Tool",
     thumbnailTitle: "Team Activity Tracker",
     thumbnailDescription: "An internal app for tracking employee activity and learning progress.",

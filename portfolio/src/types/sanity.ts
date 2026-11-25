@@ -5,7 +5,6 @@
 type SanityImage = {
   url: string | null;
   lqip: string | null;
-  aspectRatio: number | null;
 };
 
 // An image plus the array _key React needs for a stable key.
@@ -47,7 +46,6 @@ export type ExperienceItem = {
   durationLabel: string | null;
   /** Resolved file-asset URL. May be an SVG. */
   iconUrl: string | null;
-  iconMimeType: string | null;
 };
 
 export type Experience = {
@@ -62,7 +60,6 @@ export type SkillItem = {
   deviconPath: string | null;
   /** Resolved file-asset URL for an uploaded override icon. */
   iconUrl: string | null;
-  iconMimeType: string | null;
 };
 
 export type Skills = {
@@ -85,7 +82,6 @@ export type SocialLinkItem = {
   label: string | null;
   /** Resolved file-asset URL for an uploaded override icon. */
   iconUrl: string | null;
-  iconMimeType: string | null;
 };
 
 type Social = {
@@ -102,12 +98,9 @@ export type Portfolio = {
 
 export type Project = {
   _id: string;
-  order: number | null;
   title: string | null;
   /** Drives /projects/[slug]. Projects without one render card-and-modal only. */
   slug: string | null;
-  /** Fetched and typed for future use; no UI depends on it yet. */
-  featured: boolean | null;
   thumbnailTag: string | null;
   thumbnailTitle: string | null;
   thumbnailDescription: string | null;

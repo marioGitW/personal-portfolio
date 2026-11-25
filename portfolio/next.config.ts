@@ -15,11 +15,6 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "cdn.jsdelivr.net",
-        pathname: "/gh/devicons/devicon/**",
-      },
-      {
         // Sanity image assets. Icons are file assets (often SVG) and skip
         // next/image entirely — see `components/ui/AssetIcon`.
         protocol: "https",
