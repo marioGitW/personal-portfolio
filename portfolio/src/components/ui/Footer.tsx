@@ -9,7 +9,7 @@ import { getSiteSettings } from "@/lib/content";
 import type { SocialLinkItem } from "@/types/sanity";
 
 const iconLinkClass =
-  "hud-hollow inline-flex size-11 items-center justify-center text-muted focus-visible:text-foreground md:size-10 pointer-fine:hover:text-foreground";
+  "hud-hollow inline-flex size-11 items-center justify-center text-muted focus-visible:text-foreground lg:pointer-fine:size-10 pointer-fine:hover:text-foreground";
 
 type FooterProps = {
   links: SocialLinkItem[];
@@ -61,7 +61,10 @@ export function Footer({ links }: FooterProps) {
   }, []);
 
   return (
-    <footer ref={sectionRef} className="border-t border-border px-4 py-14 sm:px-6">
+    <footer
+      ref={sectionRef}
+      className="border-t border-border px-4 pt-14 pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] sm:px-6"
+    >
       <div ref={contentRef} className="mx-auto flex w-full max-w-[1400px] flex-col gap-10">
         <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
           <div data-footer-item>

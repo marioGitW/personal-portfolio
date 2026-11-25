@@ -32,7 +32,7 @@ export function Button<T extends ElementType = "button">({
       as={Tag}
       size="sm"
       interactive
-      className={`inline-flex items-center justify-center py-2.75 text-sm font-medium ${variants[variant]} ${className}`.trim()}
+      className={`inline-flex items-center justify-center py-2.75 text-sm pointer-coarse:min-h-11 font-medium ${variants[variant]} ${className}`.trim()}
       {...(Tag === "button" ? { type: "button" } : {})}
       {...props}
     />

@@ -7,14 +7,20 @@ import { Button } from "@/components/ui/Button";
 import { HudFrame, HudLabel } from "@/components/ui/hud-frame";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useHudReveal } from "@/hooks/useHudReveal";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { contactFormResolver, type ContactFormValues } from "@/lib/contact";
 
 type SubmitStatus = "idle" | "success" | "error";
 type FieldName = keyof ContactFormValues;
 
+const ERROR_CLASSES = "mt-1.5 block text-sm font-medium text-red-800 dark:text-red-300";
+
 export function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
   useHudReveal(sectionRef);
+
+  const formRef = useRef<HTMLFormElement>(null);
+  useKeyboardInset(formRef);
 
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [focusedField, setFocusedField] = useState<FieldName | null>(null);
@@ -69,6 +75,7 @@ export function Contact() {
 
       <HudFrame
         as="form"
+        ref={formRef}
         size="lg"
         reveal
         noValidate
@@ -90,7 +97,10 @@ export function Contact() {
             <span className="hud-field mt-1 block">
               <input
                 type="text"
+                inputMode="text"
                 autoComplete="name"
+                autoCapitalize="words"
+                enterKeyHint="next"
                 aria-invalid={Boolean(errors.name)}
                 aria-describedby={errors.name ? "name-error" : undefined}
                 className="block w-full py-2 pr-9 pl-3 text-foreground"
@@ -104,11 +114,7 @@ export function Contact() {
               <User className={fieldIconClass("name")} />
             </span>
             {errors.name && (
-              <span
-                id="name-error"
-                role="alert"
-                className="mt-1 block text-xs text-red-800 dark:text-red-300"
-              >
+              <span id="name-error" role="alert" className={ERROR_CLASSES}>
                 {errors.name.message}
               </span>
             )}
@@ -119,7 +125,11 @@ export function Contact() {
             <span className="hud-field mt-1 block">
               <input
                 type="email"
+                inputMode="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                enterKeyHint="next"
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "email-error" : undefined}
                 className="block w-full py-2 pr-9 pl-3 text-foreground"
@@ -134,11 +144,7 @@ export function Contact() {
               <Mail className={fieldIconClass("email")} />
             </span>
             {errors.email && (
-              <span
-                id="email-error"
-                role="alert"
-                className="mt-1 block text-xs text-red-800 dark:text-red-300"
-              >
+              <span id="email-error" role="alert" className={ERROR_CLASSES}>
                 {errors.email.message}
               </span>
             )}
@@ -149,6 +155,9 @@ export function Contact() {
             <span className="hud-field mt-1 block">
               <textarea
                 rows={4}
+                inputMode="text"
+                autoComplete="off"
+                autoCapitalize="sentences"
                 aria-invalid={Boolean(errors.message)}
                 aria-describedby={errors.message ? "message-error" : undefined}
                 className="block w-full resize-none py-2 pr-9 pl-3 text-foreground"
@@ -163,18 +172,14 @@ export function Contact() {
               <MessageSquare className={fieldIconClass("message")} />
             </span>
             {errors.message && (
-              <span
-                id="message-error"
-                role="alert"
-                className="mt-1 block text-xs text-red-800 dark:text-red-300"
-              >
+              <span id="message-error" role="alert" className={ERROR_CLASSES}>
                 {errors.message.message}
               </span>
             )}
           </label>
         </div>
 
-        <div data-hud-item className="mt-8">
+        <div data-hud-item className="contact-submit mt-8">
           <Button
             type="submit"
             disabled={isSubmitting}

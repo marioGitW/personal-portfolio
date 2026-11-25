@@ -50,7 +50,7 @@ export function ResumeModal({ open, onClose, triggerRef, url, filename }: Resume
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm [animation:resume-modal-backdrop_0.25s_ease-out]"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 safe-p-4 backdrop-blur-sm [animation:resume-modal-backdrop_0.25s_ease-out]"
       onClick={onClose}
     >
       <HudFrame
@@ -60,7 +60,7 @@ export function ResumeModal({ open, onClose, triggerRef, url, filename }: Resume
         aria-modal="true"
         aria-label="Resume preview"
         onClick={(event) => event.stopPropagation()}
-        className="flex h-[min(94vh,64rem)] w-full max-w-5xl flex-col [animation:resume-modal-pop_0.25s_ease-out]"
+        className="flex h-[min(94dvh,64rem)] max-h-full w-full max-w-5xl flex-col [animation:resume-modal-pop_0.25s_ease-out]"
       >
         <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
           <h2 className="font-heading text-sm font-semibold tracking-tight">Resume</h2>
@@ -70,7 +70,7 @@ export function ResumeModal({ open, onClose, triggerRef, url, filename }: Resume
               size="sm"
               interactive
               href={downloadHref(url, filename)}
-              className="hud-hollow inline-flex h-9 items-center gap-1.5 px-3.5 text-xs font-medium"
+              className="hud-hollow inline-flex h-11 items-center gap-1.5 px-3.5 text-xs font-medium lg:pointer-fine:h-10"
             >
               <Download className="size-3.5" />
               Download

@@ -137,7 +137,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
   return createPortal(
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 p-0 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 safe-p-0 backdrop-blur-sm sm:safe-p-6"
       onClick={onRequestClose}
     >
       {/* Full screen on a phone, where there are no corners to cut. */}
@@ -148,7 +148,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
         aria-modal="true"
         aria-labelledby="project-modal-title"
         onClick={(event) => event.stopPropagation()}
-        className="flex h-full w-full max-w-4xl flex-col max-sm:[--hud-cut:var(--hud-trim)] sm:h-auto sm:max-h-[90vh]"
+        className="flex h-full w-full max-w-4xl flex-col max-sm:[--hud-cut:var(--hud-trim)] sm:h-auto sm:max-h-[min(90dvh,100%)]"
       >
         <IconButton
           ref={closeButtonRef}

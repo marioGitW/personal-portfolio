@@ -54,6 +54,14 @@ function labelAnchor(index: number): "start" | "middle" | "end" {
   return index === 1 || index === 2 ? "start" : "end";
 }
 
+// On a phone the drawing is shrunk to two thirds, so its labels are made as much bigger. That
+// takes the ones at the sides past its edges unless they are nearer the middle.
+const LABEL_SHIFT = {
+  start: "max-sm:-translate-x-[22px]",
+  middle: "",
+  end: "max-sm:translate-x-[22px]",
+};
+
 export function EngineeringRadar({ className = "" }: { className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<SVGGElement>(null);
@@ -172,10 +180,14 @@ export function EngineeringRadar({ className = "" }: { className?: string }) {
                 x={x}
                 y={y}
                 textAnchor={anchor}
-                className="fill-muted text-[11px] font-semibold tracking-[0.06em] uppercase"
+                className={`fill-muted text-[15px] font-semibold tracking-[0.06em] uppercase sm:text-[11px] ${LABEL_SHIFT[anchor]}`}
               >
                 {words.map((word, wordIndex) => (
-                  <tspan key={word} x={x} dy={wordIndex === 0 ? (words.length > 1 ? -6 : 4) : 13}>
+                  <tspan
+                    key={word}
+                    x={x}
+                    dy={wordIndex === 0 ? (words.length > 1 ? "-0.55em" : "0.36em") : "1.18em"}
+                  >
                     {word}
                   </tspan>
                 ))}

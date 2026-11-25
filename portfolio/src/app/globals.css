@@ -24,7 +24,8 @@
   --scrollbar-track: var(--background);
   --scrollbar-thumb: var(--muted);
   /* Viewport edge to the content edge of the centred container. The full-bleed
-     projects track uses it to line its first card up with the rest of the page. */
+     projects track uses it to line its first card up with the rest of the page, and
+     the social rail to stay inside it. */
   --page-gutter: max(1.5rem, calc(50vw - 700px + 1.5rem));
   /* The sticky header and its hairline. */
   --header-height: calc(4rem + 1px + env(safe-area-inset-top, 0px));
@@ -66,7 +67,20 @@
    `not all and (min-width: Npx)`, which is strictly below N. 431 is what
    actually covers "430px and narrower". */
 @utility section-shell {
-  @apply mx-auto w-full max-w-[1400px] px-4 py-28 sm:px-6 max-[431px]:py-10;
+  @apply section-space mx-auto w-full max-w-[1400px] px-4 sm:px-6;
+}
+
+/* Less of it where there is less screen, whichever way round a phone is. */
+@utility section-space {
+  @apply py-28 max-[431px]:py-10 [@media(max-height:31.25rem)]:py-12;
+}
+
+/* Padding for whatever is fixed to the viewport, clear of a notch and a home bar. */
+@utility safe-p-* {
+  padding: max(--spacing(--value(integer)), env(safe-area-inset-top, 0px))
+    max(--spacing(--value(integer)), env(safe-area-inset-right, 0px))
+    max(--spacing(--value(integer)), env(safe-area-inset-bottom, 0px))
+    max(--spacing(--value(integer)), env(safe-area-inset-left, 0px));
 }
 
 @utility section-eyebrow {
@@ -833,6 +847,17 @@ html[data-intro="pending"] .hero-intro {
     border-color: var(--link);
     outline: 2px solid var(--link);
     outline-offset: 2px;
+  }
+
+  /* Over the keyboard, where its own place is behind it. */
+  [data-keyboard] .contact-submit {
+    position: sticky;
+    bottom: calc(var(--keyboard) + 0.75rem);
+    z-index: 1;
+  }
+
+  [data-keyboard] .hud-field > :is(input, textarea) {
+    scroll-margin-bottom: calc(var(--keyboard) + 5rem);
   }
 
   .hud-field-corner {

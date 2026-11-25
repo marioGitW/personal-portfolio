@@ -89,9 +89,11 @@ export const metadata: Metadata = {
 };
 
 // One value, not a light/dark pair: Providers pins the theme to dark with
-// enableSystem={false}, so the browser chrome should match that.
+// enableSystem={false}, so the browser chrome should match that. Cover is what
+// gives the safe area insets their values: without it they are all 0.
 export const viewport: Viewport = {
   themeColor: "#061D3A",
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -117,7 +119,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <a
           href="#main"
           data-skip-link
-          className="hud hud-sm hud-hollow sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-foreground focus:outline-2"
+          className="hud hud-sm hud-hollow sr-only focus:not-sr-only focus:fixed focus:top-[max(1rem,env(safe-area-inset-top,0px))] focus:left-[max(1rem,env(safe-area-inset-left,0px))] focus:z-[100] focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-foreground focus:outline-2"
         >
           Skip to content
         </a>

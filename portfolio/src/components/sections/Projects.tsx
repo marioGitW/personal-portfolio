@@ -185,7 +185,7 @@ export function Projects({ projects }: ProjectsProps) {
       id="projects"
       aria-labelledby="projects-title"
       ref={sectionRef}
-      className="relative w-full py-28 max-[431px]:py-10"
+      className="section-space relative w-full"
     >
       <div ref={introRef} className="mx-auto max-w-2xl px-4 text-center sm:px-6">
         <SectionHeading

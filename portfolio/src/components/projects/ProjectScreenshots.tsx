@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { HudFrame } from "@/components/ui/hud-frame";
 import { IconButton } from "@/components/ui/IconButton";
 import { PaginationDots } from "@/components/ui/PaginationDots";
+import { useSwipe } from "@/hooks/useSwipe";
 import type { SanityScreenshot } from "@/types/sanity";
 
 /** A screenshot the caller has already confirmed has a resolved URL. */
@@ -23,6 +24,7 @@ export function ProjectScreenshots({
   className = "",
 }: ProjectScreenshotsProps) {
   const [index, setIndex] = useState(0);
+  const swipe = useSwipe({ count: screenshots.length, index, onSelect: setIndex });
 
   if (screenshots.length === 0) {
     return null;
@@ -39,11 +41,15 @@ export function ProjectScreenshots({
 
   return (
     <div className={className}>
-      <HudFrame size="md" className="hud-picture aspect-video w-full">
+      <HudFrame
+        size="md"
+        className="hud-picture aspect-video w-full touch-pan-y touch-pinch-zoom"
+        {...swipe}
+      >
         <div className="hud-media">
           <div
-            className="flex h-full transition-transform duration-300 ease-out"
-            style={{ transform: `translateX(-${index * 100}%)` }}
+            className="flex h-full transition-transform duration-300 ease-out in-data-dragging:transition-none"
+            style={{ transform: `translateX(calc(${index * -100}% + var(--drag, 0px)))` }}
           >
             {screenshots.map((screenshot, i) => (
               <div key={screenshot._key} className="relative h-full w-full shrink-0">

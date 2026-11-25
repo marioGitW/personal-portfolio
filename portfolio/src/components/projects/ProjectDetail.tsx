@@ -23,6 +23,9 @@ import type { Project } from "@/types/sanity";
 
 const SECTION_HEADING = "text-sm font-semibold tracking-wide uppercase";
 const PROSE = "text-sm text-muted sm:text-base";
+// Text that is a thumb's target too.
+const CRUMB =
+  "text-link underline-offset-4 transition hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:items-center";
 
 export function ProjectDetail({ project }: { project: Project }) {
   const title = projectTitle(project);
@@ -40,16 +43,13 @@ export function ProjectDetail({ project }: { project: Project }) {
       <nav aria-label="Breadcrumb">
         <ol className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <li>
-            <Link href="/" className="text-link underline-offset-4 transition hover:underline">
+            <Link href="/" className={CRUMB}>
               Home
             </Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
-            <Link
-              href="/#projects"
-              className="text-link underline-offset-4 transition hover:underline"
-            >
+            <Link href="/#projects" className={CRUMB}>
               Projects
             </Link>
           </li>
@@ -141,7 +141,7 @@ export function ProjectDetail({ project }: { project: Project }) {
 
       <Link
         href="/#projects"
-        className="mt-12 inline-flex items-center gap-2 text-sm font-semibold text-link underline-offset-4 hover:underline focus-visible:outline-2"
+        className="mt-12 inline-flex items-center gap-2 text-sm font-semibold text-link underline-offset-4 hover:underline focus-visible:outline-2 pointer-coarse:min-h-11"
       >
         <ArrowLeft className="size-4" />
         Back to all projects

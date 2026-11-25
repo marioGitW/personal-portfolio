@@ -96,8 +96,8 @@ Rendered in order by `src/app/page.tsx`:
 7. **Activity counter** — site visits and a one-per-session like button
 8. **Footer** — logo, tagline, social icons, copyright
 
-Persistent chrome: sticky header with an animated active-section pill, a fixed social
-sidebar (`md` and up), and a hero intro that plays once per session (dot, "!", PORTFOLIO,
+Persistent chrome: sticky header with a sliding indicator under the active section, a full-width menu panel on phones, a fixed social
+sidebar (`xl` and a mouse), and a hero intro that plays once per session (dot, "!", PORTFOLIO,
 SPASOVSKI, then a handoff into the real hero). Any input skips it, and later loads get a
 short entrance instead. The native cursor stays everywhere, and nothing follows it.
 
@@ -119,17 +119,19 @@ is rendered once per theme and size; only the portal, the particles and the comp
 and only while the section is in view. Its resting dots are always `--foreground`. Light sizes
 them by darkness and dark by brightness, so neither theme reads as a negative.
 
-He comes up out of the portal as the section scrolls in, on one 2s timeline (`REVEAL` in
-`components/about/hologram.ts`): the portal boots, a line climbs from the feet with the dots
-forming under it, and the panel's frame and the connector draw in with it. Scrolling back above
-the start runs it backwards at 1.6x. Hovering the hologram or the panel re-scans it once he is
-standing; touch gets the scan once after the reveal and on tap, and reduced motion gets a still
-figure with a 300ms fade.
+He comes up out of the portal once, on one 2s timeline (`REVEAL` in
+`components/about/hologram.ts`), 0.3s after the middle of his stage reaches 70% of the viewport,
+or 0.4s after a load that is already past it. It never runs again or backwards until the page is
+reloaded. Below 1024px the panel is above him and comes in on its own. Hovering the hologram or
+the panel sets one target that the canvas loop eases to; entering the hologram also starts a
+sweep, which fades out if the pointer leaves. Touch gets the sweep once after the reveal and on
+tap, and reduced motion gets a still figure with a 300ms fade.
 
 Every box on the site is a `HudFrame` (`components/ui/hud-frame.tsx`): chamfered top left and
 bottom right, bracketed at the other two corners. `lg` is the drawn one (About, the contact
 form, the activity card), and the only one with pink, texture and ticks at rest. `md` is the
-cards, dialogs and pictures, where pink is for hover and focus. `sm` is buttons, tiles, tags and
+cards, dialogs and pictures, where pink is for hover and focus (project cards have their segment
+at rest, and growing it is their only hover). `sm` is buttons, tiles, tags and
 icon squares. `md` and `sm` are CSS alone, with the clip-path on their pseudo-elements so a focus
 ring is never cut. Hover needs a fine pointer, keyboard focus gets the same state, and only
 transform and opacity animate. `useHudReveal` brings the frames of a section in once as they
@@ -193,7 +195,7 @@ portfolio/
                           # ThemeToggle, Providers, ResumeModal, AssetIcon,
                           # EngineeringRadar, SectionHeading, PaginationDots,
                           # SocialIcons, SocialLinkList, SocialSidebar
-    hooks/                # useFocusTrap, useHudReveal
+    hooks/                # useFocusTrap, useHudReveal, useSwipe, useKeyboardInset
     lib/                  # cms, content, format, animations, redis, rateLimit,
                           # resend, contact, visit, nav, types, site, seo,
                           # structuredData
