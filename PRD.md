@@ -83,7 +83,8 @@ Rendered in order by `src/app/page.tsx`:
    parallax, CTA buttons
    ("Let's Connect" anchor; "View Resume" opens the resume modal, and renders only when a
    CV is uploaded in the CMS)
-2. **About** — portrait illustration, bio paragraphs, stat tags and language pills
+2. **About** — a halftone hologram of Mario on a portal, linked to a HUD panel with the bio
+   paragraphs, stat tags and language tags
 3. **Experience** — vertical timeline; per entry:
    logo, role, place, duration pill, bullet points
 4. **Projects** — on desktop, scrolling **pins the section** and drives a horizontal card
@@ -111,6 +112,29 @@ accent marks fine detail on the T-shirt only.
 The name sits behind the portrait, which covers the end of it. Hovering the name parts the
 tiles over its letters so it shows through, entirely in the canvas (desktop only, and
 instant under reduced motion).
+
+The About figure is a canvas too, drawn from `public/about/character-cutout.png`, which
+`scripts/build-character-cutout.mjs` makes from `scripts/assets/character-v2.png`. Its halftone
+is rendered once per theme and size; only the portal, the particles and the composite animate,
+and only while the section is in view. Its resting dots are always `--foreground`. Light sizes
+them by darkness and dark by brightness, so neither theme reads as a negative.
+
+He comes up out of the portal as the section scrolls in, on one 2s timeline (`REVEAL` in
+`components/about/hologram.ts`): the portal boots, a line climbs from the feet with the dots
+forming under it, and the panel's frame and the connector draw in with it. Scrolling back above
+the start runs it backwards at 1.6x. Hovering the hologram or the panel re-scans it once he is
+standing; touch gets the scan once after the reveal and on tap, and reduced motion gets a still
+figure with a 300ms fade.
+
+Every box on the site is a `HudFrame` (`components/ui/hud-frame.tsx`): chamfered top left and
+bottom right, bracketed at the other two corners. `lg` is the drawn one (About, the contact
+form, the activity card), and the only one with pink, texture and ticks at rest. `md` is the
+cards, dialogs and pictures, where pink is for hover and focus. `sm` is buttons, tiles, tags and
+icon squares. `md` and `sm` are CSS alone, with the clip-path on their pseudo-elements so a focus
+ring is never cut. Hover needs a fine pointer, keyboard focus gets the same state, and only
+transform and opacity animate. `useHudReveal` brings the frames of a section in once as they
+scroll into view. It sets itself up when the page is idle and leaves whatever is already on
+screen alone, so without JS nothing is ever hidden.
 
 **Not built:** certifications, blog, admin panel, database, auth, skills category filtering
 (the tool grid is paginated, not filtered).
@@ -161,20 +185,22 @@ portfolio/
     components/
       sections/           # Hero, HeroIntro, MosaicPortrait, About, Experience,
                           # Projects, Skills, Contact, ActivityCounter, SkillCard
+      about/              # HologramCharacter, hologram (its renderer), HudConnector
       projects/           # ProjectCard, ProjectModal, ProjectsScroller, ProjectVisual,
                           # ProjectScreenshots, ProjectVideo, ProjectLinks, TechStack
-      ui/                 # Button, Header, Footer, Logo, SmoothScroll,
+      ui/                 # hud-frame (HudFrame, HudTag, HudLabel), Button, IconButton,
+                          # Header, Footer, Logo, SmoothScroll,
                           # ThemeToggle, Providers, ResumeModal, AssetIcon,
                           # EngineeringRadar, SectionHeading, PaginationDots,
                           # SocialIcons, SocialLinkList, SocialSidebar
-    hooks/useFocusTrap.ts
+    hooks/                # useFocusTrap, useHudReveal
     lib/                  # cms, content, format, animations, redis, rateLimit,
                           # resend, contact, visit, nav, types, site, seo,
                           # structuredData
     sanity/               # client, fetch, queries, devicon
     content/fallbacks.ts  # every hardcoded content value
     types/sanity.ts       # CMS-shaped types
-  scripts/reset-stats.mjs
+  scripts/                # reset-stats, build-character-cutout and its source render
   public/                 # hero/about art, fallback project images, icons/ (manifest
                           # icons), opengraph-image.png (the share card)
 

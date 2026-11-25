@@ -1,192 +1,300 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import Image from "next/image";
+import { useCallback, useEffect, useRef, type MouseEvent, type PointerEvent } from "react";
 import gsap from "gsap";
-import { GB, MK, RS } from "country-flag-icons/react/3x2";
-import { SectionHeading } from "@/components/ui/SectionHeading";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { HologramCharacter, type HologramHandle } from "@/components/about/HologramCharacter";
+import { HudConnector } from "@/components/about/HudConnector";
+import { REVEAL } from "@/components/about/hologram";
+import { HudFrame, HudLabel, HudTag, HudTagRule } from "@/components/ui/hud-frame";
 import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
-import { getSiteSettings } from "@/lib/content";
 import { toParagraphs } from "@/lib/format";
 import { aboutLanguages, sectionCopy } from "@/content/fallbacks";
 import type { About as AboutContent } from "@/types/sanity";
-
-const FLAGS = { MK, GB, RS } as const;
-
-const languages = aboutLanguages.map((language) => ({
-  flag: FLAGS[language.code],
-  label: language.label,
-}));
 
 type AboutProps = {
   about: AboutContent;
 };
 
+// Where the top of the section is when he starts to come up.
+const REVEAL_START = { desktop: "top 65%", stacked: "top 75%" };
+const DESKTOP = "(min-width: 64rem)";
+
+// The line from the portal, shut at the portal's end. Percentages on the right, since a clip
+// only tweens between like units, and enough of one to clear the node past the line's end.
+const CONNECTOR_CLIP = {
+  closed: "inset(-20px 100% -20px -10px)",
+  open: "inset(-20px -15% -20px -10px)",
+};
+
 export function About({ about }: AboutProps) {
-  const site = getSiteSettings();
   const bioParagraphs = toParagraphs(about.description);
   const tags = about.tags ?? [];
+  const { eyebrow, titleLead, titleAccent } = sectionCopy.about;
 
   const sectionRef = useRef<HTMLElement>(null);
-  const imageWrapRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const eyebrowRef = useRef<HTMLParagraphElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const linesRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const langRef = useRef<HTMLDivElement>(null);
+  const hologramRef = useRef<HologramHandle>(null);
+  const lastPointer = useRef<string>("mouse");
+
+  // The hologram owns the hover state, since a sweep outlasts the pointer. The panel and the
+  // connector follow it in CSS, from this attribute.
+  const handleActiveChange = useCallback((active: boolean) => {
+    rowRef.current?.toggleAttribute("data-active", active);
+  }, []);
+
+  // On the row rather than its two halves, so crossing from one to the other, over the
+  // connector, doesn't leave and start over.
+  const handlePointerEnter = (event: PointerEvent) => {
+    if (event.pointerType !== "touch") {
+      hologramRef.current?.enter();
+    }
+  };
+
+  const handlePointerLeave = (event: PointerEvent) => {
+    if (event.pointerType !== "touch") {
+      hologramRef.current?.leave();
+    }
+  };
+
+  const handlePointerDown = (event: PointerEvent) => {
+    lastPointer.current = event.pointerType;
+  };
+
+  // A click rather than pointerup, which a scroll that starts here would also end in.
+  const handleClick = (event: MouseEvent) => {
+    if (lastPointer.current === "touch" && !event.defaultPrevented) {
+      hologramRef.current?.scan();
+    }
+  };
 
   useEffect(() => {
     const section = sectionRef.current;
-    const imageWrap = imageWrapRef.current;
+    const row = rowRef.current;
     const panel = panelRef.current;
-    const eyebrow = eyebrowRef.current;
-    const heading = headingRef.current;
-    const lines = linesRef.current?.querySelectorAll<HTMLElement>("[data-line]");
-    const statsRow = statsRef.current;
-    const langRow = langRef.current;
-
-    if (
-      !section ||
-      !imageWrap ||
-      !panel ||
-      !eyebrow ||
-      !heading ||
-      !lines ||
-      !statsRow ||
-      !langRow
-    ) {
-      return;
-    }
-
-    const reducedMotion = prefersReducedMotion();
-    const revealTargets = [
-      imageWrap,
-      panel,
-      eyebrow,
-      heading,
-      ...Array.from(lines),
-      statsRow,
-      langRow,
-    ];
-
-    if (reducedMotion) {
-      gsap.set(revealTargets, { opacity: 1, y: 0, filter: "blur(0px)" });
+    const stage = stageRef.current;
+    const hologram = hologramRef.current;
+    if (!section || !row || !panel || !stage || !hologram) {
       return;
     }
 
     registerGsapPlugins();
 
-    gsap.set(revealTargets, { opacity: 0, y: 26, filter: "blur(10px)" });
+    let cancelled = false;
+    const context = gsap.context(() => undefined);
+    // Asked again on every refresh, as the layout it goes by changes at the same width.
+    const start = () =>
+      window.matchMedia(DESKTOP).matches ? REVEAL_START.desktop : REVEAL_START.stacked;
 
-    const timeline = gsap.timeline({
-      defaults: { ease: "power3.out" },
-      scrollTrigger: {
-        trigger: section,
-        start: "top 75%",
-        toggleActions: "play none none none",
-      },
-    });
+    if (prefersReducedMotion()) {
+      void hologram.ready().then(() => {
+        if (!cancelled) {
+          context.add(() => {
+            ScrollTrigger.create({ trigger: section, start, once: true, onEnter: hologram.appear });
+          });
+        }
+      });
+    } else {
+      const strokes = row.querySelectorAll("[data-hud-stroke]");
+      const details = row.querySelectorAll("[data-hud-detail]");
+      const items = panel.querySelectorAll("[data-about-item]");
+      const shape = panel.querySelector("[data-hud-shape]");
+      const connector = row.querySelector("[data-hud-connector]");
 
-    timeline
-      .to(imageWrap, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8 })
-      .to(panel, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8 }, "<")
-      .to(eyebrow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.5")
-      .to(heading, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7 }, "-=0.3")
-      .to(
-        Array.from(lines),
-        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, stagger: 0.16 },
-        "-=0.35",
-      )
-      .to(statsRow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.2")
-      .to(langRow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5 }, "-=0.3");
+      context.add(() => {
+        // Every stroke's pathLength is 1. The gap is longer, so none of them shows a dot of its
+        // dash at rest.
+        gsap.set(strokes, { strokeDasharray: "1 2", strokeDashoffset: 1 });
+        gsap.set(details, { opacity: 0 });
+        // One level off nothing, so that its gradients are painted, and their shaders compiled,
+        // before the reveal rather than in it.
+        gsap.set(shape, { opacity: 0.004 });
+        gsap.set(items, { opacity: 0, y: 12 });
+        gsap.set(connector, { clipPath: CONNECTOR_CLIP.closed, "--hud-pulse": 0 });
+      });
+
+      void hologram.ready().then(() => {
+        if (cancelled) {
+          return;
+        }
+
+        context.add(() => {
+          let standing = false;
+          let scanOwed = false;
+
+          // On its own timeline rather than the reveal's, so that going back, its longer tail
+          // doesn't have to run out before he starts to sink.
+          const opening = gsap
+            .timeline({ paused: true })
+            .to(
+              strokes,
+              // Rounded to whole pixels otherwise, and there is only one to go through.
+              { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut", autoRound: false },
+              0,
+            )
+            .to(shape, { opacity: 1, duration: 0.8, ease: "power2.out" }, 0)
+            .to(details, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0.6)
+            .to(items, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", stagger: 0.06 }, 0.8);
+
+          const reveal = gsap.timeline({
+            scrollTrigger: {
+              trigger: section,
+              start,
+              toggleActions: "play none none reverse",
+              onEnter: () => {
+                reveal.timeScale(1);
+                hologram.setPhase("building");
+                if (reveal.time() >= REVEAL.panelAt) {
+                  opening.timeScale(1).play();
+                }
+              },
+              onLeaveBack: () => {
+                standing = false;
+                // Negative, as a timeline that runs backwards has its sign turned.
+                reveal.timeScale(-REVEAL.reverse);
+                opening.timeScale(-REVEAL.reverse).paused(false);
+                hologram.setPhase("sinking");
+              },
+            },
+            onComplete: () => {
+              standing = true;
+              hologram.setPhase("standing");
+              if (scanOwed) {
+                scanOwed = false;
+                hologram.scan();
+              }
+            },
+            onReverseComplete: () => hologram.setPhase("waiting"),
+          });
+
+          hologram.reveal(reveal);
+
+          const locking = REVEAL.duration - REVEAL.lockAt;
+          reveal
+            .call(
+              () => {
+                if (!reveal.reversed()) {
+                  opening.timeScale(1).play();
+                }
+              },
+              undefined,
+              REVEAL.panelAt,
+            )
+            .to(
+              connector,
+              { clipPath: CONNECTOR_CLIP.open, duration: locking, ease: "power1.inOut" },
+              REVEAL.lockAt,
+            )
+            .to(
+              connector,
+              { "--hud-pulse": 1, duration: locking, ease: "power1.inOut" },
+              REVEAL.lockAt,
+            );
+
+          // Nothing to hover with, so the sweep shows itself once, when there is all of him
+          // to sweep.
+          if (window.matchMedia("(hover: none)").matches) {
+            ScrollTrigger.create({
+              trigger: stage,
+              start: "top 55%",
+              once: true,
+              onEnter: () => {
+                if (standing) {
+                  hologram.scan();
+                } else {
+                  scanOwed = true;
+                }
+              },
+            });
+          }
+        });
+      });
+    }
 
     return () => {
-      timeline.scrollTrigger?.kill();
-      timeline.kill();
+      cancelled = true;
+      context.revert();
     };
   }, []);
 
   return (
     <section id="about" aria-labelledby="about-title" ref={sectionRef} className="section-shell">
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-center lg:gap-3">
-        {/* Scales with the viewport rather than sitting at a fixed cap, with a
-            floor so it stops shrinking once the row runs out of room at lg. */}
-        <div
-          ref={imageWrapRef}
-          className="hidden shrink-0 lg:flex lg:w-[clamp(285px,24vw,360px)] lg:-mr-4"
-        >
-          <Image
-            src="/about-me-character.png"
-            alt={`3D illustration of ${site.name} holding a laptop, with an arm extended toward the About Me content`}
-            width={768}
-            height={1365}
-            loading="lazy"
-            // Mirrors the width above: browsers also fall back to sizes for
-            // layout when the element's own width is auto.
-            sizes="(min-width: 1500px) 360px, (max-width: 1187px) 285px, 24vw"
-            className="h-auto w-full object-contain select-none"
-          />
-        </div>
+      <div
+        ref={rowRef}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
+        onPointerDown={handlePointerDown}
+        onClick={handleClick}
+        className="about-row relative flex flex-col lg:flex-row lg:items-end lg:justify-center"
+      >
+        <HologramCharacter
+          ref={hologramRef}
+          stageRef={stageRef}
+          onActiveChange={handleActiveChange}
+        />
 
-        <div
+        <HudFrame
           ref={panelRef}
-          className="relative w-full rounded-2xl surface-card px-6 py-8 text-center sm:px-10 sm:py-10 lg:max-w-2xl lg:px-10 lg:py-12 lg:text-left"
+          size="lg"
+          wideFrom="lg"
+          className="about-panel z-10 w-full lg:shrink-0"
         >
-          <SectionHeading
-            titleId="about-title"
-            eyebrow={sectionCopy.about.eyebrow}
-            title={sectionCopy.about.titleLead}
-            accent={sectionCopy.about.titleAccent}
-            eyebrowRef={eyebrowRef}
-            headingRef={headingRef}
-          />
+          <div className="relative px-6 py-8 text-center sm:px-10 sm:py-10 lg:px-[42px] lg:pt-8 lg:pb-[34px] lg:text-left">
+            <div data-about-item className="flex items-center justify-between">
+              <HudLabel>{eyebrow}</HudLabel>
+            </div>
 
-          <div
-            ref={linesRef}
-            className="mx-auto mt-6 max-w-md space-y-4 text-base text-muted sm:max-w-xl sm:text-lg md:max-w-none lg:mx-0"
-          >
-            {bioParagraphs.map((paragraph, index) => (
-              <p key={index} data-line>
-                {paragraph}
-              </p>
-            ))}
-          </div>
+            <h2
+              id="about-title"
+              data-about-item
+              className="mt-3.5 text-foreground lg:text-[clamp(2.25rem,3vw,3rem)]"
+            >
+              {titleLead} {titleAccent}
+            </h2>
 
-          {/* Always rendered so the GSAP ref resolves; with no tags it
-              collapses rather than leaving a stray divider. */}
-          <div
-            ref={statsRef}
-            className={
-              tags.length > 0
-                ? "mx-auto mt-10 grid max-w-sm grid-cols-2 gap-x-6 gap-y-8 border-t border-border pt-8 sm:max-w-lg sm:grid-cols-4 lg:mx-0 lg:max-w-none lg:gap-x-4 lg:gap-y-6"
-                : undefined
-            }
-          >
-            {tags.map((tag) => (
-              <div key={tag._key}>
-                <p className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
-                  {tag.highlightedText}
+            <div className="mx-auto mt-6 max-w-md space-y-4 text-base text-foreground sm:max-w-xl sm:text-lg md:max-w-none lg:mx-0 lg:mt-[1.1em] lg:space-y-[0.8em] lg:text-[clamp(0.9375rem,1.172vw,1.125rem)] lg:leading-[1.6]">
+              {bioParagraphs.map((paragraph, index) => (
+                <p key={index} data-about-item>
+                  {paragraph}
                 </p>
-                <p className="mt-1 text-xs tracking-[0.12em] text-muted uppercase">
-                  {tag.description}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div ref={langRef} className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
-            {languages.map((language) => (
-              <span
-                key={language.label}
-                className="inline-flex items-center gap-2 rounded-full surface-card px-3 py-1.5 text-sm text-muted"
-              >
-                <language.flag title={language.label} className="h-3 w-4.5 rounded-[2px]" />
-                {language.label}
-              </span>
-            ))}
+            {tags.length > 0 && (
+              <>
+                <div data-about-item aria-hidden="true" className="hud-divider mt-10 lg:mt-5" />
+                <div className="mx-auto mt-8 grid max-w-sm grid-cols-2 gap-x-6 gap-y-8 text-left sm:max-w-lg sm:grid-cols-4 sm:gap-x-0 lg:mx-0 lg:mt-5 lg:max-w-none">
+                  {tags.map((tag) => (
+                    <div key={tag._key} data-about-item className="hud-stat">
+                      <p className="font-heading text-2xl leading-[1.25] font-semibold text-foreground sm:text-[1.75rem]">
+                        {tag.highlightedText}
+                      </p>
+                      <p className="font-heading text-[10px] leading-[1.5] tracking-[0.18em] text-muted uppercase">
+                        {tag.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <ul className="mt-6 flex flex-wrap justify-center gap-2.5 lg:mt-5 lg:justify-start">
+              {aboutLanguages.map((language) => (
+                <HudTag as="li" key={language.code} data-about-item>
+                  <span className="font-heading text-[11px] font-semibold tracking-[0.06em]">
+                    {language.code}
+                  </span>
+                  <HudTagRule />
+                  <span className="text-[13px]">{language.label}</span>
+                </HudTag>
+              ))}
+            </ul>
           </div>
-        </div>
+        </HudFrame>
+
+        <HudConnector rowRef={rowRef} stageRef={stageRef} panelRef={panelRef} />
       </div>
     </section>
   );

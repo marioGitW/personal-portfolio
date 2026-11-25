@@ -3,12 +3,9 @@
  *
  *   node scripts/build-character-cutout.mjs [path/to/character.png]
  *
- * Reads scripts/assets/character.png (a full figure on plain white) and writes
- * public/about/character-cutout.png, cropped to the figure:
- *
- *   R  luminance, 0-255
- *   G  255 where the pixel is the shirt's red graphic, else 0
- *   A  the figure's silhouette
+ * Reads scripts/assets/character-v2.png (a full figure on plain white) and writes
+ * public/about/character-cutout.png, cropped to the figure: its luminance, with its
+ * silhouette as the alpha.
  *
  * Run it again whenever the render changes.
  */
@@ -18,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const source = process.argv[2] ?? join(root, "scripts", "assets", "character.png");
+const source = process.argv[2] ?? join(root, "scripts", "assets", "character-v2.png");
 const target = join(root, "public", "about", "character-cutout.png");
 
 // The hologram draws about 190 rows of dots at most, so this is plenty to average from.
@@ -146,26 +143,18 @@ if (!figure) {
 
 const luminance = new Float32Array(count);
 const solid = new Float32Array(count);
-const graphic = new Uint8Array(count);
 let left = width;
 let right = 0;
 let top = height;
 let bottom = 0;
-let flagged = 0;
 for (let pixel = 0; pixel < count; pixel++) {
   if (label[pixel] !== figure) {
     continue;
   }
   const at = pixel * channels;
   const [r, g, b] = [data[at], data[at + 1], data[at + 2]];
-  // Skin passes the first two tests as easily as the print does (its red is well above its
-  // green and blue too), so the print also has to be a red that is twice its green. The dark
-  // line between the lips is that red as well, but nowhere near as bright.
-  const isGraphic = r - b > 12 && r - g > 28 && r > 2 * g && r > 120;
   luminance[pixel] = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   solid[pixel] = 1;
-  graphic[pixel] = isGraphic ? 255 : 0;
-  flagged += isGraphic ? 1 : 0;
 
   const x = pixel % width;
   const y = (pixel - x) / width;
@@ -210,26 +199,25 @@ const radius = Math.max(Math.round((bottom - top + 1) * CLARITY.radius), 1);
 const around = blur(luminance, radius);
 const weight = blur(solid, radius);
 
-const planes = Buffer.alloc(count * 4);
+const planes = Buffer.alloc(count * 2);
 for (let pixel = 0; pixel < count; pixel++) {
   if (!solid[pixel]) {
     continue;
   }
   const detail = luminance[pixel] - around[pixel] / weight[pixel];
   const sharpened = luminance[pixel] + detail * CLARITY.amount;
-  planes[pixel * 4] = Math.min(Math.max(Math.round(sharpened), 0), 255);
-  planes[pixel * 4 + 1] = graphic[pixel];
-  planes[pixel * 4 + 3] = 255;
+  planes[pixel * 2] = Math.min(Math.max(Math.round(sharpened), 0), 255);
+  planes[pixel * 2 + 1] = 255;
 }
 
 await mkdir(dirname(target), { recursive: true });
-const output = await sharp(planes, { raw: { width, height, channels: 4 } })
+const output = await sharp(planes, { raw: { width, height, channels: 2 } })
   .extract({ left, top, width: right - left + 1, height: bottom - top + 1 })
   .resize({ height: OUTPUT_HEIGHT, kernel: "lanczos3" })
   .png({ compressionLevel: 9 })
   .toFile(target);
 
 console.log(
-  `${target}\n  ${output.width}x${output.height}, ${Math.round(output.size / 1024)} KB, ` +
-    `${((flagged / figureSize) * 100).toFixed(1)}% of the figure is graphic`,
+  `${target}
+  ${output.width}x${output.height}, ${Math.round(output.size / 1024)} KB`,
 );

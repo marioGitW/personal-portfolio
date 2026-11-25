@@ -219,8 +219,8 @@ export const projectsFallback: Project[] = [
 // Languages shown in the About panel. No CMS field exists for these.
 export const aboutLanguages = [
   { code: "MK", label: "Macedonian" },
-  { code: "GB", label: "English" },
-  { code: "RS", label: "Serbian" },
+  { code: "EN", label: "English" },
+  { code: "SR", label: "Serbian" },
 ] as const;
 
 // Section headings and eyebrows that are not editable from the CMS.

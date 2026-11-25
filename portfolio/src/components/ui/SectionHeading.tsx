@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from "react";
+import type { ReactNode } from "react";
 
 type SectionHeadingProps = {
   eyebrow: string;
@@ -10,9 +10,6 @@ type SectionHeadingProps = {
   descriptionClassName?: string;
   /** Target for the section's aria-labelledby, so it is a named region. */
   titleId?: string;
-  /** About animates the eyebrow and heading separately, so it needs both refs. */
-  eyebrowRef?: Ref<HTMLParagraphElement>;
-  headingRef?: Ref<HTMLHeadingElement>;
 };
 
 export function SectionHeading({
@@ -22,15 +19,11 @@ export function SectionHeading({
   description,
   descriptionClassName = "",
   titleId,
-  eyebrowRef,
-  headingRef,
 }: SectionHeadingProps) {
   return (
     <>
-      <p ref={eyebrowRef} className="section-eyebrow">
-        {eyebrow}
-      </p>
-      <h2 id={titleId} ref={headingRef} className="mt-3">
+      <p className="section-eyebrow">{eyebrow}</p>
+      <h2 id={titleId} className="mt-3">
         {title}
         {accent ? ` ${accent}` : null}
       </h2>
