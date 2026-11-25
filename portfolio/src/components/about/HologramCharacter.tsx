@@ -54,7 +54,7 @@ export function HologramCharacter({
   );
 
   return (
-    <div ref={stageRef} data-about-stage className={`about-stage ${className}`.trim()}>
+    <div ref={stageRef} className={`about-stage ${className}`.trim()}>
       <canvas
         ref={canvasRef}
         role="img"

@@ -23,10 +23,10 @@ export function SocialSidebar({ links }: SocialSidebarProps) {
       <SocialLinkList
         links={links}
         className="flex flex-col items-center gap-6"
-        linkClassName="group inline-flex text-muted transition-all duration-[250ms] ease-out hover:text-link focus-visible:text-link focus-visible:outline-offset-0 motion-safe:hover:-translate-y-[3px] motion-safe:hover:scale-[1.08]"
+        linkClassName="inline-flex text-muted transition-all duration-[250ms] ease-out hover:text-link focus-visible:text-link focus-visible:outline-offset-0 motion-safe:hover:-translate-y-[3px] motion-safe:hover:scale-[1.08]"
         iconClassName="size-5 shrink-0"
       />
-      <span aria-hidden="true" className="h-16 w-px bg-[var(--ghost-stroke)] lg:h-24" />
+      <span aria-hidden="true" className="h-16 w-px bg-border lg:h-24" />
     </aside>
   );
 }

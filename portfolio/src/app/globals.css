@@ -20,7 +20,6 @@
   --accent-hover: #f7607c;
   --accent-foreground: #072d59;
   --link: #c42d52;
-  --ghost-stroke: var(--border);
   --scrollbar-track: var(--background);
   --scrollbar-thumb: var(--muted);
   /* Viewport edge to the content edge of the centred container. The full-bleed
