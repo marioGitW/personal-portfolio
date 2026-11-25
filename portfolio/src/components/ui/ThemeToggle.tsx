@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
-import { IconButton } from "@/components/ui/IconButton";
+import { ICON_BUTTON_SIZE, IconButton } from "@/components/ui/IconButton";
 
 const emptySubscribe = () => () => undefined;
 
@@ -16,7 +16,7 @@ export function ThemeToggle() {
   );
 
   if (!mounted) {
-    return <span className="inline-block size-9" />;
+    return <span className={`inline-block ${ICON_BUTTON_SIZE}`} />;
   }
 
   const isDark = resolvedTheme === "dark";

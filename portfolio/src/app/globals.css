@@ -26,6 +26,8 @@
   /* Viewport edge to the content edge of the centred container. The full-bleed
      projects track uses it to line its first card up with the rest of the page. */
   --page-gutter: max(1.5rem, calc(50vw - 700px + 1.5rem));
+  /* The sticky header and its hairline. */
+  --header-height: calc(4rem + 1px + env(safe-area-inset-top, 0px));
 }
 
 .dark {
@@ -99,6 +101,14 @@ body {
   font-size: 1.0625rem;
   font-weight: 400;
   line-height: 1.6;
+  /* The page runs under the notch in landscape, and what is on it doesn't. */
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+/* An anchor lands under the header rather than behind it. SmoothScroll goes by this too. */
+main section[id] {
+  scroll-margin-top: var(--header-height);
 }
 
 /* Native outlines match the focus-visible rings. The offset keeps them visible
@@ -353,6 +363,96 @@ html[data-intro="pending"] .hero-intro {
   from {
     opacity: 0;
     transform: translateY(18px);
+  }
+}
+
+/* The header (components/ui/Header.tsx). Nothing at all at the top of the page, and the page's
+   own colour once it is over something. */
+.site-header:is([data-scrolled], [data-open]) {
+  border-color: var(--border);
+  background-color: color-mix(in srgb, var(--background) 92%, transparent);
+}
+
+/* Placed and scaled from the link it is under, which its width is only a unit for. */
+.nav-indicator {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  width: 100px;
+  height: 2px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
+  pointer-events: none;
+}
+
+/* Behind the bar and in front of the page. */
+.site-menu-backdrop {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: -1;
+  /* From inside the hairline. Any taller, and it would have the page scroll at its end. */
+  height: calc(100dvh - var(--header-height) + 1px);
+  background-color: color-mix(in srgb, var(--background) 80%, transparent);
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease-out,
+    visibility 0s linear 0.2s;
+}
+
+.site-menu {
+  /* Edge to edge, so the brackets are inside the corners rather than half off the screen. */
+  --hud-gap: -1px;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out,
+    visibility 0s linear 0.2s;
+}
+
+.site-menu-item {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+[data-open] > :is(.site-menu, .site-menu-backdrop) {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+
+[data-open] .site-menu-item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out;
+  transition-delay: calc(var(--index) * 40ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header,
+  .nav-indicator,
+  .site-menu,
+  .site-menu-backdrop,
+  [data-open] .site-menu-item {
+    transition: none;
+  }
+
+  .site-menu,
+  .site-menu-item {
+    transform: none;
   }
 }
 
@@ -655,22 +755,15 @@ html[data-intro="pending"] .hero-intro {
     pointer-events: none;
   }
 
-  /* 44px for a thumb, without the 36px square in the header being any bigger. */
-  .hud-reach {
-    position: absolute;
-    inset: -4px;
-  }
-
-  @media (width >= 48rem) {
-    .hud-reach {
-      display: none;
-    }
-  }
-
   .hud-live {
     transition: translate var(--hud-time) ease-out;
     /* Clear of the header and of the viewport's edges, focus ring and all, when it is tabbed to. */
-    scroll-margin: 5.5rem 1rem 1rem;
+    scroll-margin: calc(var(--header-height) + 1.5rem) 1rem 1rem;
+  }
+
+  /* Which is never going to be clear of itself, and had the page scroll to try. */
+  .site-header .hud-live {
+    scroll-margin: 0;
   }
 
   .hud-live:focus-visible {

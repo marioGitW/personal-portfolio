@@ -33,8 +33,8 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
 
     // No `anchors` option on purpose: Lenis's handler skips preventDefault and
     // races the browser's own hash jump, which snaps back. Anchor clicks are
-    // handled explicitly below instead.
-    const lenis = new Lenis({ autoRaf: false });
+    // handled explicitly below instead. A finger scrolls the page natively.
+    const lenis = new Lenis({ autoRaf: false, syncTouch: false });
 
     lenis.on("scroll", ScrollTrigger.update);
 
@@ -121,7 +121,13 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       navScrolling = true;
       navTimeout = window.setTimeout(endNavScroll, NAV_SCROLL_DURATION * 1000 + 200);
 
-      lenis.scrollTo(target, {
+      // Below a section that pins itself, it is where its pin ended. Its spacer is still where
+      // it starts, and has to be given the section's own margin, which Lenis reads off a target.
+      const spacer = target.closest<HTMLElement>(".pin-spacer");
+      const margin = spacer ? parseFloat(getComputedStyle(target).scrollMarginTop) || 0 : 0;
+
+      lenis.scrollTo(spacer ?? target, {
+        offset: -margin,
         duration: NAV_SCROLL_DURATION,
         easing: navScrollEasing,
         onComplete: endNavScroll,

@@ -1,6 +1,9 @@
 import type { ComponentPropsWithRef } from "react";
 import { HudFrame } from "@/components/ui/hud-frame";
 
+/** 44px for a thumb, and 40 for a mouse. */
+export const ICON_BUTTON_SIZE = "size-11 lg:pointer-fine:size-10";
+
 /** A square around one icon. Needs an aria-label. */
 export function IconButton({
   className = "",
@@ -13,10 +16,9 @@ export function IconButton({
       type="button"
       size="sm"
       interactive
-      className={`hud-hollow inline-flex size-9 items-center justify-center text-foreground ${className}`.trim()}
+      className={`hud-hollow inline-flex ${ICON_BUTTON_SIZE} items-center justify-center text-foreground ${className}`.trim()}
       {...props}
     >
-      <span aria-hidden="true" className="hud-reach" />
       {children}
     </HudFrame>
   );

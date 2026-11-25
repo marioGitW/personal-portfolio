@@ -218,8 +218,7 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         mosaicRef.current?.enter();
         // The attribute first, so the CSS hide never outlives GSAP's inline values.
         // Everything is at its final value by now and the revert only takes those
-        // inline styles away. That is not just tidiness: a transform left on the
-        // header would become the containing block for its fixed mobile menu.
+        // inline styles away.
         html.setAttribute("data-intro", "done");
         revertFrame = window.requestAnimationFrame(() => {
           context.revert();

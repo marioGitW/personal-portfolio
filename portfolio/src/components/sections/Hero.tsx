@@ -90,7 +90,7 @@ export function Hero({ hero }: HeroProps) {
       id="home"
       aria-labelledby="hero-title"
       ref={sectionRef}
-      className="relative w-full overflow-clip pb-10 sm:pb-14 lg:h-[calc(100svh-65px)] lg:min-h-[600px] lg:pb-0"
+      className="relative w-full overflow-clip pb-10 sm:pb-14 lg:h-[calc(100svh-var(--header-height))] lg:min-h-[600px] lg:pb-0"
     >
       {/* First in the DOM so its opaque backdrop is parsed ahead of the portrait. */}
       <HeroIntro mosaicRef={mosaicRef} />
@@ -99,7 +99,7 @@ export function Hero({ hero }: HeroProps) {
           portrait bleeding behind it. */}
       <div ref={copyRef} className={COPY_CLASSES}>
         <div className={COPY_FRONT_CLASSES}>
-          <p className="hero-enter-eyebrow flex items-center justify-center gap-2 font-heading text-[0.6875rem] font-semibold tracking-[0.3em] text-copy uppercase sm:gap-2.5 lg:justify-start lg:text-[0.8125rem]">
+          <p className="hero-enter-eyebrow flex items-center justify-center gap-2 font-heading text-[0.6875rem] font-semibold tracking-[0.3em] text-copy uppercase max-[431px]:text-[clamp(0.625rem,2.85vw,0.6875rem)] max-[431px]:tracking-[0.18em] sm:gap-2.5 lg:justify-start lg:text-[0.8125rem]">
             <span data-intro-hide="eyebrow-dot" className="hero-eyebrow-dot" aria-hidden="true" />
             <span data-intro-hide="eyebrow-text">{hero.roleTag}</span>
           </p>
