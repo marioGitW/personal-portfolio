@@ -486,6 +486,7 @@ html[data-intro="pending"] .hero-intro {
   .about-stage {
     --figure: clamp(440px, 39.5vw, 580px);
     flex: 1 1 0;
+    width: auto;
     max-width: clamp(380px, 39.5vw, 560px);
     height: calc(var(--figure) * 1.22);
     /* All but 12px of the room over his head and 48px of what is under the portal's middle is
@@ -722,41 +723,14 @@ html[data-intro="pending"] .hero-intro {
     scale: var(--hud-on) 1;
   }
 
-  /* Parts of a frame's content that answer to its hover. */
-  .hud-lift,
-  .hud-nudge {
-    transition: translate var(--hud-time) ease-out;
-  }
-
+  /* The part of a frame's content that answers to its hover. */
   .hud-lift {
     translate: 0 calc(var(--hud-on) * var(--hud-move) * -2px);
-  }
-
-  .hud-nudge {
-    translate: calc(var(--hud-on) * var(--hud-move) * 2px) 0;
-  }
-
-  .hud-zoom {
-    scale: calc(1 + 0.03 * var(--hud-on) * var(--hud-move));
-    transition: scale 0.25s ease-out;
-  }
-
-  .hud-shade {
-    opacity: var(--hud-on);
-    transition: opacity var(--hud-time) ease-out;
-  }
-
-  /* As tall as the picture, and its bottom edge is the line. */
-  .hud-scan {
-    position: absolute;
-    inset: 0;
-    border-bottom: 1px solid var(--accent);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .hud-live {
     transition: translate var(--hud-time) ease-out;
+  }
+
+  .hud-live,
+  .hud-quiet {
     /* Clear of the header and of the viewport's edges, focus ring and all, when it is tabbed to. */
     scroll-margin: calc(var(--header-height) + 1.5rem) 1rem 1rem;
   }
@@ -766,10 +740,35 @@ html[data-intro="pending"] .hero-intro {
     scroll-margin: 0;
   }
 
-  .hud-live:focus-visible {
-    --hud-on: 1;
+  .hud-live {
+    transition: translate var(--hud-time) ease-out;
+  }
+
+  .hud-live:focus-visible,
+  .hud-quiet:focus-visible {
     outline: 2px solid var(--link);
     outline-offset: 2px;
+  }
+
+  .hud-live:focus-visible {
+    --hud-on: 1;
+  }
+
+  /* Its accent is there at rest, and growing is all it does. */
+  .hud-quiet .hud-accent {
+    width: 28px;
+    scale: none;
+    transition: transform 0.25s ease-out;
+  }
+
+  .hud-quiet:focus-visible .hud-accent {
+    transform: scaleX(3);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .hud-quiet:hover .hud-accent {
+      transform: scaleX(3);
+    }
   }
 
   .hud-solid:focus-visible {
@@ -802,17 +801,9 @@ html[data-intro="pending"] .hero-intro {
       translate: 0 -2px;
     }
 
-    .hud-live:focus-visible .hud-scan {
-      animation: hud-scan 0.6s linear;
-    }
-
     @media (hover: hover) and (pointer: fine) {
       .hud-live:hover:not(:disabled) {
         translate: 0 -2px;
-      }
-
-      .hud-live:hover .hud-scan {
-        animation: hud-scan 0.6s linear;
       }
     }
   }
@@ -821,6 +812,10 @@ html[data-intro="pending"] .hero-intro {
     .hud {
       --hud-move: 0;
       --hud-time: 0s;
+    }
+
+    .hud-quiet .hud-accent {
+      transition: none;
     }
   }
 
@@ -917,18 +912,6 @@ html[data-intro="pending"] .hero-intro {
     button:hover > .hud-dot::before {
       background-color: var(--foreground);
     }
-  }
-}
-
-@keyframes hud-scan {
-  from {
-    transform: translateY(-100%);
-    opacity: 1;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
   }
 }
 

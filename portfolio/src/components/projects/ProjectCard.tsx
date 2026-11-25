@@ -35,25 +35,18 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
           title={title}
           imageUrl={project.thumbnail?.url ?? null}
           lqip={project.thumbnail?.lqip}
-          className="hud-zoom h-full w-full"
+          className="h-full w-full"
         />
 
         {/* Near-opaque at the bottom so the text sits on solid ground, fading
-            out before the top so the image still reads. In sRGB, which looks
-            the same for one colour and has a far cheaper shader than oklab. */}
+            out before the top so the image still reads. The cards are at their
+            smallest just past lg, where the text fills them, and so does this.
+            In sRGB, which looks the same for one colour and has a far cheaper
+            shader than oklab. */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-linear-to-t/srgb from-background/95 via-background/80 via-45% to-background/10"
+          className="pointer-events-none absolute inset-0 bg-linear-to-t/srgb from-background/95 via-background/80 via-45% to-background/10 lg:max-xl:via-70% lg:max-xl:to-background/60"
         />
-
-        {/* Flat dark layer on hover, distinct from the default bright state. */}
-        <span
-          aria-hidden="true"
-          className="hud-shade pointer-events-none absolute inset-0 bg-background/60"
-        />
-
-        {/* In here rather than over the card, so it passes under the text. */}
-        <span aria-hidden="true" className="hud-scan" />
       </div>
 
       <div data-hud-item className="relative p-6 sm:p-8 lg:max-xl:p-6">
@@ -80,7 +73,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
         className="absolute top-3 right-3 text-[11px] font-semibold tracking-[0.06em] sm:top-4 sm:right-4"
       >
         View Details
-        <ArrowRight aria-hidden="true" className="hud-nudge size-3.5" />
+        <ArrowRight aria-hidden="true" className="size-3.5" />
       </HudTag>
     </div>
   );
@@ -94,7 +87,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       <HudFrame
         as={Link}
         size="md"
-        interactive
+        interactive="segment"
         reveal
         href={projectPath(slug)}
         prefetch={false}
@@ -116,7 +109,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       as="button"
       type="button"
       size="md"
-      interactive
+      interactive="segment"
       reveal
       onClick={() => onOpen(project)}
       className={cardClasses}

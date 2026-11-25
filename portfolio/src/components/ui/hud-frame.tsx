@@ -5,8 +5,11 @@ type HudSize = "lg" | "md" | "sm";
 type OwnProps<T extends ElementType> = {
   as?: T;
   size: HudSize;
-  /** Reacts to the pointer and to keyboard focus. md and sm only. */
-  interactive?: boolean;
+  /**
+   * Reacts to the pointer and to keyboard focus. md and sm only. "segment" is an md with its
+   * accent there at rest, which growing it is all it does.
+   */
+  interactive?: boolean | "segment";
   /** Comes in with useHudReveal, from the section it is in. */
   reveal?: boolean;
   /** lg only: where its chamfer goes from 16px to 24px. Must match --hud-cut. */
@@ -54,10 +57,12 @@ export function HudFrame<T extends ElementType = "div">({
   ...props
 }: HudFrameProps<T>) {
   const Tag: ElementType = as ?? "div";
+  const live = interactive === true;
+  const reaction = live ? "hud-live " : interactive ? "hud-quiet " : "";
 
   return (
     <Tag
-      className={`hud hud-${size} ${interactive ? "hud-live " : ""}${className}`.trim()}
+      className={`hud hud-${size} ${reaction}${className}`.trim()}
       data-hud-frame={reveal ? size : undefined}
       {...props}
     >
@@ -70,7 +75,7 @@ export function HudFrame<T extends ElementType = "div">({
           <HudLines cut={CUT.wide} className={WIDE_FROM[wideFrom].wide} />
         </>
       )}
-      {interactive && <span aria-hidden="true" className="hud-hot" />}
+      {live && <span aria-hidden="true" className="hud-hot" />}
       {size === "md" && (
         <>
           <span aria-hidden="true" data-hud-corner className="hud-corner hud-corner-tr" />
