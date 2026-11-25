@@ -38,9 +38,6 @@
   --muted: #93b4cc;
   --copy: var(--muted);
   --dust: var(--foreground);
-  --accent: #fd6e88;
-  --accent-hover: #f7607c;
-  --accent-foreground: #072d59;
   --link: #fd6e88;
 }
 
@@ -52,11 +49,9 @@
   --color-muted: var(--muted);
   --color-copy: var(--copy);
   --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
   --color-link: var(--link);
   --font-sans: var(--font-body);
-  --font-mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 /* Repeated composites. Each is exactly the substring that was duplicated across
@@ -139,10 +134,6 @@ h5,
 h6,
 .font-heading {
   font-family: var(--font-heading);
-}
-
-.font-body {
-  font-family: var(--font-body);
 }
 
 @layer base {

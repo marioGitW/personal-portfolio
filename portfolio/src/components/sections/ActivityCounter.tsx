@@ -127,7 +127,7 @@ export function ActivityCounter() {
               <span>{isLiked ? "Liked" : "Leave a like"}</span>
             </Button>
 
-            <p className="font-body flex items-center gap-2 text-xs text-muted">
+            <p className="flex items-center gap-2 text-xs text-muted">
               {stats ? (
                 <>
                   <span className="flex items-center gap-1.5">
