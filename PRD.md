@@ -120,9 +120,10 @@ and only while the section is in view. Its resting dots are always `--foreground
 them by darkness and dark by brightness, so neither theme reads as a negative.
 
 He comes up out of the portal once, on one 2s timeline (`REVEAL` in
-`components/about/hologram.ts`), 0.3s after the middle of his stage reaches 70% of the viewport,
+`components/about/hologram.ts`), 0.1s after the middle of his stage reaches 80% of the viewport,
 or 0.4s after a load that is already past it. It never runs again or backwards until the page is
-reloaded. Below 1024px the panel is above him and comes in on its own. Hovering the hologram or
+reloaded. The panel doesn't wait for him: its frame draws as its top is reached, and each piece
+of text comes in as it is. Below 1024px the panel is above him. Hovering the hologram or
 the panel sets one target that the canvas loop eases to; entering the hologram also starts a
 sweep, which fades out if the pointer leaves. Touch gets the sweep once after the reveal and on
 tap, and reduced motion gets a still figure with a 300ms fade.

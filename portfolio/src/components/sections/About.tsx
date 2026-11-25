@@ -21,13 +21,14 @@ type AboutProps = {
   about: AboutContent;
 };
 
-// He comes up a moment after the middle of his stage is this far down the viewport. On a page
-// that loads with it past that already, it is the page he waits for.
-const TRIGGER = { line: 0.7, delay: 0.3, lateDelay: 0.4 };
+// He comes up a moment after the middle of his stage is this far down the viewport, which is
+// about when the portal he comes out of is on screen. On a page that loads with it past that
+// already, it is the page he waits for.
+const TRIGGER = { line: 0.8, delay: 0.1, lateDelay: 0.4 };
 
-// Where the panel is above him, and comes in on its own.
-const STACKED = "(max-width: 63.99rem)";
-const PANEL_START = "top 85%";
+// The panel doesn't wait for him. Its frame draws as its top is reached, and what is in it comes
+// in a piece at a time as each is, so that none of it has played before it is on screen.
+const PANEL = { start: "top 85%", items: "top 90%", itemsDelay: 0.3 };
 
 // The line from the portal, shut at the portal's end. Percentages on the right, since a clip
 // only tweens between like units, and enough of one to clear the node past the line's end.
@@ -71,7 +72,6 @@ export function About({ about }: AboutProps) {
 
     let cancelled = false;
     const context = gsap.context(() => undefined);
-    const media = gsap.matchMedia();
 
     const stageBox = stage.getBoundingClientRect();
     const late = stageBox.top + stageBox.height / 2 <= window.innerHeight * TRIGGER.line;
@@ -110,13 +110,17 @@ export function About({ about }: AboutProps) {
       }
 
       const connector = row.querySelector("[data-hud-connector]");
-      let opening: gsap.core.Timeline | null = null;
 
-      // Left alone where it is on screen already. Hiding it then would be a flash.
-      if (panel.getBoundingClientRect().top >= window.innerHeight) {
+      // What is on screen already is left alone, as hiding it then would be a flash. On a phone
+      // that is often the top of the frame and nothing that is in it.
+      const unseen = (element: Element) =>
+        element.getBoundingClientRect().top >= window.innerHeight;
+      const frameUnseen = unseen(panel);
+      const items = gsap.utils.toArray<HTMLElement>("[data-about-item]", panel).filter(unseen);
+
+      if (frameUnseen) {
         const strokes = panel.querySelectorAll("[data-hud-stroke]");
         const details = panel.querySelectorAll("[data-hud-detail]");
-        const items = panel.querySelectorAll("[data-about-item]");
         const shape = panel.querySelector("[data-hud-shape]");
 
         context.add(() => {
@@ -127,10 +131,9 @@ export function About({ about }: AboutProps) {
           // One level off nothing, so that its gradients are painted, and their shaders compiled,
           // before the reveal rather than in it.
           gsap.set(shape, { opacity: 0.004 });
-          gsap.set(items, { opacity: 0, y: 12 });
 
-          opening = gsap
-            .timeline({ paused: true })
+          gsap
+            .timeline({ scrollTrigger: { trigger: panel, start: PANEL.start, once: true } })
             .to(
               strokes,
               // Rounded to whole pixels otherwise, and there is only one to go through.
@@ -138,16 +141,32 @@ export function About({ about }: AboutProps) {
               0,
             )
             .to(shape, { opacity: 1, duration: 0.8, ease: "power2.out" }, 0)
-            .to(details, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0.6)
-            .to(items, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", stagger: 0.06 }, 0.8);
+            .to(details, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0.6);
         });
+      }
 
-        media.add(STACKED, () => {
-          ScrollTrigger.create({
-            trigger: panel,
-            start: PANEL_START,
+      if (items.length > 0) {
+        context.add(() => {
+          gsap.set(items, { opacity: 0, y: 12 });
+
+          // The first of them have a frame to wait for.
+          let delay = frameUnseen ? PANEL.itemsDelay : 0;
+          ScrollTrigger.batch(items, {
+            start: PANEL.items,
             once: true,
-            onEnter: () => opening?.play(),
+            onEnter: (batch) => {
+              context.add(() => {
+                gsap.to(batch, {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.5,
+                  ease: "power2.out",
+                  stagger: 0.06,
+                  delay,
+                });
+              });
+              delay = 0;
+            },
           });
         });
       }
@@ -170,7 +189,6 @@ export function About({ about }: AboutProps) {
 
         const locking = REVEAL.duration - REVEAL.lockAt;
         reveal
-          .call(() => opening?.play(), undefined, REVEAL.panelAt)
           .to(
             connector,
             { clipPath: CONNECTOR_CLIP.open, duration: locking, ease: "power1.inOut" },
@@ -199,7 +217,6 @@ export function About({ about }: AboutProps) {
     return () => {
       cancelled = true;
       cancelIdle?.();
-      media.revert();
       context.revert();
     };
   }, []);

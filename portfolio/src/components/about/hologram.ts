@@ -121,11 +121,9 @@ const HOLOGRAM = {
 } as const;
 
 // He comes up out of the portal once, along one timeline of this length. About.tsx puts the
-// panel and the connector on it.
+// connector on it.
 export const REVEAL = {
   duration: 2,
-  // The line is half way up here, as its ease is symmetrical.
-  panelAt: 0.95,
   lockAt: 1.65,
   boot: 0.35,
   build: { from: 0.25, to: 1.65 },
