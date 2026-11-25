@@ -86,7 +86,10 @@ Rendered in order by `src/app/page.tsx`:
 2. **About** — a halftone hologram of Mario on a portal, linked to a HUD panel with the bio
    paragraphs, stat tags and language tags
 3. **Experience** — vertical timeline; per entry:
-   logo, role, place, duration pill, bullet points
+   logo, role, place, duration pill, bullet points. A `--muted` fill runs down the line with the
+   scroll (one scrubbed ScrollTrigger, `scaleY` only), from the first logo's middle to the last's
+   at 60% of the viewport, and each logo's outline turns `--muted` once the fill has passed it.
+   Reduced motion shows it filled
 4. **Projects** — on desktop, scrolling **pins the section** and drives a horizontal card
    track; below `lg` it falls back to a vertical stack. Clicking a card opens a modal with
    a screenshot carousel, optional demo video, tech stack, overview, features and links
@@ -98,20 +101,32 @@ Rendered in order by `src/app/page.tsx`:
 
 Persistent chrome: sticky header with a chamfered line that slides under the active section, a full-width menu panel on phones, a fixed social
 sidebar (`xl` and a mouse), and a hero intro that plays once per session (dot, "!", PORTFOLIO,
-SPASOVSKI, then a handoff into the real hero). Any input skips it, and later loads get a
-short entrance instead. The native cursor stays everywhere, and nothing follows it.
+SPASOVSKI, then a handoff into the real hero). It is the same timeline at every width, 15% shorter
+below 768px, and under reduced motion a 0.55s fade with nothing moving. A click, a key, the wheel
+or a tap skips it; a finger that only touches or scrolls doesn't. Everything slow, the mosaic
+above all, is built before its clock starts, and the clock is GSAP's wall clock, so it ends on
+time at 30fps too. If it hasn't started 3s after the first paint, or stalls or throws while it
+plays, the hero is simply shown. Later loads get a short entrance instead. The native cursor stays
+everywhere, and nothing follows it; the portrait's tiles alone get a crosshair.
 
 The portrait is never shown as a photo. It is always a fine mosaic of square tiles,
 sampled from the image, which stays in the DOM at opacity 0 for its alt text. Tiles
-assemble outward from the face during the intro (0.6s on later loads, 0.8s on touch),
-drawn with WebGL2 while they fly, and then stay on a cached 2D canvas. Desktop adds an
-idle twinkle, and near the pointer single tiles now and then step off their cells and back;
-touch and reduced motion stay static. Tile colours come from the theme tokens, and the
+assemble outward from the face during the intro (0.6s on later loads), drawn with WebGL2 on a
+second canvas that exists only while they fly, and then stay on a cached 2D canvas. Desktop adds an
+idle twinkle; touch and reduced motion stay static. Nothing on it answers to hover: the pointer
+only turns into a crosshair over the tiles. Tile colours come from the theme tokens, and the
 accent marks fine detail on the T-shirt only.
 
-The name sits behind the portrait, which covers the end of it. Hovering the name parts the
-tiles over its letters so it shows through, entirely in the canvas (desktop only, and
-instant under reduced motion).
+Clicking or tapping the tiles once the intro is over fires a shot at them (`MOSAIC.impact`): the
+tiles within 120px (90px on phones and touch) are knocked out by 24px x (1 - d/R)^2 on a damped
+spring and come back with a little overshoot, those within 16px are shot out and grow back, 8-14
+bits of `--accent` and `--foreground` fly off, and a ring and a two-frame flash mark it, about
+0.8s in all. Hits add up to 32px, three at a time. It runs in the canvas loop on typed arrays,
+over the struck tiles alone, and the loop stops when they are home. A tap is a finger that
+moved under 10px in under 300ms, so a swipe over the portrait still scrolls, and reduced motion
+gets the ring alone.
+
+The name sits behind the portrait, which covers the end of it.
 
 The About figure is a canvas too, drawn from `public/about/character-cutout.png`, which
 `scripts/build-character-cutout.mjs` makes from `scripts/assets/character-v2.png`. Its halftone
@@ -132,7 +147,9 @@ Every box on the site is a `HudFrame` (`components/ui/hud-frame.tsx`): chamfered
 bottom right, bracketed at the other two corners. `lg` is the drawn one (About, the contact
 form, the activity card), and the only one with pink, texture and ticks at rest. `md` is the
 cards, dialogs and pictures, where pink is for hover and focus (a project card has its segment
-at rest; on hover it grows 2%, its brackets open, and the pink answers across the other diagonal). `sm` is buttons, tiles, tags and
+at rest; on hover it grows 2%, its brackets open, and the pink answers across the other diagonal).
+Without hover, the experience and project cards' segment grows as it would on hover while the card
+is in the middle 30% of the screen, or pressed (one IntersectionObserver, `useActiveCards`). `sm` is buttons, tiles, tags and
 icon squares. `md` and `sm` are CSS alone, with the clip-path on their pseudo-elements so a focus
 ring is never cut. Hover needs a fine pointer, keyboard focus gets the same state, and only
 transform and opacity animate. `useHudReveal` brings the frames of a section in once as they
@@ -196,10 +213,10 @@ portfolio/
                           # ThemeToggle, Providers, ResumeModal, AssetIcon,
                           # EngineeringRadar, SectionHeading, PaginationDots,
                           # SocialIcons, SocialLinkList, SocialSidebar
-    hooks/                # useFocusTrap, useHudReveal, useSwipe, useKeyboardInset
-    lib/                  # cms, content, format, animations, redis, rateLimit,
-                          # resend, contact, visit, nav, types, site, seo,
-                          # structuredData
+    hooks/                # useFocusTrap, useHudReveal, useActiveCards, useSwipe, useKeyboardInset
+    lib/                  # cms, content, format, animations, intro, tap, scrollLock,
+                          # redis, rateLimit, resend, contact, visit, nav, types,
+                          # site, seo, structuredData
     sanity/               # client, fetch, queries, devicon
     content/fallbacks.ts  # every hardcoded content value
     types/sanity.ts       # CMS-shaped types

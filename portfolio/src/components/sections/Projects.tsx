@@ -8,6 +8,7 @@ import { ProjectModal } from "@/components/projects/ProjectModal";
 import { ProjectsScroller } from "@/components/projects/ProjectsScroller";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { sectionCopy } from "@/content/fallbacks";
+import { useActiveCards } from "@/hooks/useActiveCards";
 import { useHudReveal } from "@/hooks/useHudReveal";
 import { prefersReducedMotion, refreshWhenLoaded, registerGsapPlugins } from "@/lib/animations";
 import type { Project } from "@/types/sanity";
@@ -34,16 +35,18 @@ export function Projects({ projects }: ProjectsProps) {
   useGSAP(
     () => {
       const section = sectionRef.current;
+      const intro = introRef.current;
+      if (!section || !intro || prefersReducedMotion()) {
+        return;
+      }
       // Already on the page, as after a reload here, it would flash if it were hidden now.
-      const seen =
-        !section || section.getBoundingClientRect().top < window.innerHeight * INTRO_LINE;
-      if (seen || prefersReducedMotion()) {
+      if (section.getBoundingClientRect().top < window.innerHeight * INTRO_LINE) {
         return;
       }
 
       registerGsapPlugins();
 
-      gsap.from(introRef.current, {
+      gsap.from(intro, {
         opacity: 0,
         y: 32,
         duration: 0.6,
@@ -59,6 +62,7 @@ export function Projects({ projects }: ProjectsProps) {
   );
 
   useHudReveal(sectionRef, { dependencies: [projects.length] });
+  useActiveCards(sectionRef, projects.length);
 
   // Desktop: vertical scroll pins the section and drives the track sideways.
   // Card widths are CSS-driven, so only the card count changes the distance;

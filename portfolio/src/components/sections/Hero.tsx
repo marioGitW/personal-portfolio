@@ -31,7 +31,7 @@ const COPY_FRONT_CLASSES = "relative z-30";
 // The negative margin cancels the big caps' left side-bearing, so the letters
 // line up optically with the eyebrow, tagline and buttons. It restates the lg
 // name size because an em here would use the h1's own size, not the lines'. Behind the
-// portrait, which covers the end of the name until MosaicPortrait parts for it on hover.
+// portrait, which covers the end of the name.
 const NAME_CLASSES =
   "relative z-10 mt-5 text-center lg:-ml-[calc(clamp(3.5rem,12.5vw,13rem)*0.055)] lg:text-left";
 
@@ -47,7 +47,6 @@ export function Hero({ hero }: HeroProps) {
 
   const sectionRef = useRef<HTMLElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
-  const lockupRef = useRef<HTMLHeadingElement>(null);
   const portraitRef = useRef<HTMLDivElement>(null);
   const portraitBoxRef = useRef<HTMLDivElement>(null);
   const portraitImageRef = useRef<HTMLImageElement>(null);
@@ -105,7 +104,7 @@ export function Hero({ hero }: HeroProps) {
           </p>
         </div>
 
-        <h1 id="hero-title" ref={lockupRef} aria-label={title} className={NAME_CLASSES}>
+        <h1 id="hero-title" aria-label={title} className={NAME_CLASSES}>
           <span aria-hidden="true" className="block">
             <span className="hero-line-mask block">
               <span
@@ -173,8 +172,14 @@ export function Hero({ hero }: HeroProps) {
                 size. The image itself is never seen: it sets the box, carries the
                 alt text and is what the mosaic samples. opacity-0 rather than
                 hidden, so it still loads. Unoptimized: the file is already a small
-                WebP, and re-encoding it visibly softened the face. */}
-            <div ref={portraitBoxRef} className="relative lg:h-full">
+                WebP, and re-encoding it visibly softened the face.
+
+                The box is what a finger lands on, and the only part that takes one: a
+                swipe up or down scrolls, and a quick pair of taps doesn't zoom. */}
+            <div
+              ref={portraitBoxRef}
+              className="relative touch-pan-y touch-pinch-zoom pointer-coarse:pointer-events-auto lg:h-full"
+            >
               <Image
                 ref={portraitImageRef}
                 data-intro-portrait
@@ -185,14 +190,13 @@ export function Hero({ hero }: HeroProps) {
                 unoptimized
                 priority
                 sizes="(min-width: 1024px) 46vw, (min-width: 640px) 52vw, 68vw"
-                className="aspect-[633/732] h-auto w-[68vw] max-w-[300px] object-cover object-top opacity-0 sm:w-[52vw] sm:max-w-[380px] lg:h-full lg:w-auto lg:max-w-none"
+                className="pointer-events-none aspect-[633/732] h-auto w-[68vw] max-w-[300px] object-cover object-top opacity-0 sm:w-[52vw] sm:max-w-[380px] lg:h-full lg:w-auto lg:max-w-none"
               />
               <MosaicPortrait
                 ref={mosaicRef}
                 imageRef={portraitImageRef}
                 boxRef={portraitBoxRef}
                 sectionRef={sectionRef}
-                nameRef={lockupRef}
               />
             </div>
           </div>

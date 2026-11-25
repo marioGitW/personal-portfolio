@@ -30,7 +30,7 @@ const WIDE_FROM = {
 };
 
 const BRACKET = 30;
-const SEGMENT = { gap: 20, length: 60 };
+const SEGMENT = { gap: 0, length: 60 };
 const TICKS = {
   bottom: { count: 6, spacing: 14, inset: 64 },
   right: { count: 4, spacing: 12, top: 150 },

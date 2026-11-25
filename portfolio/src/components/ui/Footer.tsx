@@ -30,6 +30,9 @@ export function Footer({ links }: FooterProps) {
     }
 
     const targets = content.querySelectorAll<HTMLElement>("[data-footer-item]");
+    if (targets.length === 0) {
+      return;
+    }
     const reducedMotion = prefersReducedMotion();
 
     if (reducedMotion) {

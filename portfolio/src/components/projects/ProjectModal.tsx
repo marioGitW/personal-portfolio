@@ -57,13 +57,17 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
     if (reducedMotion) {
       gsap.set(backdrop, { opacity: 1 });
       gsap.set(dialog, { opacity: 1, scale: 1, y: 0 });
-      gsap.set(items, { opacity: 1, y: 0 });
+      if (items.length) {
+        gsap.set(items, { opacity: 1, y: 0 });
+      }
       return;
     }
 
     gsap.set(backdrop, { opacity: 0 });
     gsap.set(dialog, { opacity: 0, scale: 0.96, y: 16 });
-    gsap.set(items, { opacity: 0, y: 12 });
+    if (items.length) {
+      gsap.set(items, { opacity: 0, y: 12 });
+    }
 
     const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
     timeline.to(backdrop, { opacity: 1, duration: 0.25 });

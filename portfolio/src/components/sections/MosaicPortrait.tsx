@@ -3,6 +3,8 @@
 import { useEffect, useImperativeHandle, useRef, type Ref, type RefObject } from "react";
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/animations";
+import { isScrollLocked } from "@/lib/scrollLock";
+import { listenForTaps } from "@/lib/tap";
 
 // Every number behind the mosaic. Lengths are CSS pixels and times are seconds.
 const MOSAIC = {
@@ -110,18 +112,6 @@ const MOSAIC = {
       ],
     },
   },
-  // The name sits behind the canvas, and hovering it parts the tiles over its letters: they
-  // rest at this opacity and scale. Each takes duration to get there, the last starting
-  // stagger after the first, left to right, and they all close over outDuration.
-  textReveal: {
-    opacity: 0.15,
-    scale: 0.5,
-    duration: 0.25,
-    stagger: 0.15,
-    outDuration: 0.4,
-    // Coverage of a grid cell by the dilated letters that counts as being under them.
-    coverage: 0.35,
-  },
   // The smallest dot worth printing, as a share of its cell, in the light theme.
   minDot: 0.12,
   rebuild: { debounceMs: 150, minChange: 1 },
@@ -137,7 +127,6 @@ const MOSAIC = {
     // the focus and scatter is random. The intro starts this at 2.3s on its master
     // timeline, once its word has become the real name, so the last tile lands at 3.3s.
     intro: { flight: 0.7, stagger: 0.24, scatter: 0.06 },
-    touch: { flight: 0.56, stagger: 0.19, scatter: 0.05 },
     quick: { flight: 0.42, stagger: 0.14, scatter: 0.04 },
   },
   dust: {
@@ -159,18 +148,34 @@ const MOSAIC = {
     // A few accent tiles at a time, breathing by this share of their brightness.
     twinkle: { count: 24, duration: { min: 1.6, max: 3.2 }, strength: 0.15 },
   },
-  hover: {
-    radius: 110,
-    // Near the pointer a tile now and then steps this far off its cell and back, each in its own
-    // direction and time. How often falls with distance, so nothing marks out a shape.
-    maxMove: 1.5,
-    // Roughly the share of the time a tile is off its cell, right at the pointer.
-    busy: 0.2,
-    // Radians per second, so a tile gets a turn about every 2.6s.
-    rate: 2.4,
-    spring: 0.05,
-    friction: 0.86,
-    settledBelow: 0.05,
+  // A shot at the portrait, by click or tap.
+  impact: {
+    // At most this many at a time. The next takes the place of the oldest.
+    max: 3,
+    // Seconds until the last of it is over.
+    duration: 0.8,
+    radius: { wide: 120, compact: 90 },
+    // How far out a tile is knocked: push * (1 - distance / radius)², and up to jitter more either
+    // way. Hits add up, as far as cap.
+    push: 24,
+    jitter: 2,
+    cap: 32,
+    spring: { stiffness: 180, damping: 16 },
+    restsBelow: 0.2,
+    // Tiles this near the middle are gone in shrink, stay gone for hold and grow back in regrow.
+    hole: { radius: 16, shrink: 0.06, hold: 0.14, regrow: 0.5 },
+    debris: {
+      count: { min: 8, max: 14 },
+      from: 10,
+      distance: { min: 40, max: 90 },
+      life: { min: 0.35, max: 0.6 },
+      minSize: 3,
+    },
+    ring: { width: 1.5, duration: 0.35 },
+    // Two frames of it at 60fps, and never fewer.
+    flash: { radius: 12, frames: 2, duration: 2 / 60 },
+    // How near a tile counts as on the mosaic.
+    aim: { mouse: 4, touch: 12 },
   },
 } as const;
 
@@ -184,6 +189,18 @@ const IDLE_FRAME_MS = 1000 / MOSAIC.idle.fps - 2;
 const HEADER_PX = 64;
 const PHYSICS_STEP_MS = 1000 / 60;
 const MAX_STEPS_PER_FRAME = 4;
+
+// What one physics step does to a tile on the impact's spring, worked out rather than added up, so
+// it is as true at 30fps as at 60.
+const STEP_SECONDS = PHYSICS_STEP_MS / 1000;
+const SPRING = springStep(MOSAIC.impact.spring, STEP_SECONDS);
+// What is the matter with a struck tile. It can be both.
+const KNOCKED = 1;
+const SHOT = 2;
+const FULL_CIRCLE = Math.PI * 2;
+const TWINKLE_LEVELS = 64;
+// What a press is for rather than the portrait behind it.
+const PRESSABLE = "a, button, input, textarea, select, [role='dialog']";
 
 const SKIN = 1;
 const SHIRT = 2;
@@ -207,11 +224,18 @@ type Regions = ReturnType<typeof classifyRegions>;
 type Tiles = ReturnType<typeof createTiles>;
 
 export type MosaicPortraitHandle = {
+  // The grid and everything the flight needs, which is the slow part. For the intro to have out
+  // of the way before its clock starts.
+  prepare: () => void;
   // For the intro to place on its timeline. Null when the image has not loaded yet,
-  // in which case the intro's finish falls back on enter().
+  // in which case the intro's end falls back on finish().
   assemble: () => gsap.core.Tween | null;
+  // The finished mosaic fading in over this many seconds, for the intro without motion.
+  appear: (duration: number) => gsap.core.Tween | null;
   // The short assembly, for a load without the intro. A no-op once one has started.
   enter: () => void;
+  // However far it has got: all the way, or enter() if it hasn't begun.
+  finish: () => void;
 };
 
 type Mosaic = MosaicPortraitHandle & {
@@ -225,7 +249,6 @@ type MosaicPortraitProps = {
   imageRef: RefObject<HTMLImageElement | null>;
   boxRef: RefObject<HTMLDivElement | null>;
   sectionRef: RefObject<HTMLElement | null>;
-  nameRef: RefObject<HTMLHeadingElement | null>;
 };
 
 function createTiles(count: number) {
@@ -233,10 +256,6 @@ function createTiles(count: number) {
   const flags = () => new Uint8Array(count);
   return {
     count,
-    x: floats(),
-    y: floats(),
-    vx: floats(),
-    vy: floats(),
     targetX: floats(),
     targetY: floats(),
     startX: floats(),
@@ -252,21 +271,27 @@ function createTiles(count: number) {
     // the light one a dot's, from nothing up to the whole cell.
     shrink: floats(),
     reach: floats(),
-    // Fixed for each tile, 0-1: when and which way it moves under the pointer.
-    seed: floats(),
-    // How far it has parted for the name, 0-1.
-    reveal: floats(),
     // 0 = none, then each step of its mix towards the accent, up to ACCENT_FULL.
     accent: flags(),
-    underName: flags(),
-    // Its cell on the cache is a hole, so the name can show through once it has parted.
-    parted: flags(),
-    // Off its cached image: displaced, parted or both, and drawn every frame.
+    // Off its cached image, struck, and drawn every frame.
     active: flags(),
     colorIndex: flags(),
+    // How far from its cell an impact has it, and how fast it is going: pixels, and pixels a
+    // second.
+    knockX: floats(),
+    knockY: floats(),
+    knockVx: floats(),
+    knockVy: floats(),
+    // Seconds since it was shot out, how big it was then, and how big it is now.
+    holeAge: floats(),
+    holeFrom: floats(),
+    holeScale: floats().fill(1),
+    struck: flags(),
     // Tile indexes grouped by colour, the order they are drawn in.
     order: new Uint16Array(count),
+    // The active ones, grouped the same way, and somewhere to put them while they are sorted.
     activeList: new Uint16Array(count),
+    sorting: new Uint16Array(count),
   };
 }
 
@@ -1216,8 +1241,22 @@ function cellNoise(column: number, row: number) {
   return (hash >>> 0) / 0x100000000;
 }
 
-function easeReveal(progress: number) {
-  return progress * progress * (3 - 2 * progress);
+// A damped spring, as the sums that take a position and a speed one step on, and the speed that
+// sends something at rest exactly 1 out before it comes back.
+function springStep({ stiffness, damping }: { stiffness: number; damping: number }, step: number) {
+  const decay = damping / 2;
+  const swing = Math.sqrt(stiffness - decay * decay);
+  const shrink = Math.exp(-decay * step);
+  const cos = Math.cos(swing * step);
+  const sin = Math.sin(swing * step) / swing;
+  const peak = Math.atan2(swing, decay) / swing;
+  return {
+    stay: shrink * (cos + decay * sin),
+    go: shrink * sin,
+    pull: -shrink * stiffness * sin,
+    keep: shrink * (cos - decay * sin),
+    kick: swing / (Math.exp(-decay * peak) * Math.sin(swing * peak)),
+  };
 }
 
 function toCss([red, green, blue]: Rgb) {
@@ -1312,6 +1351,8 @@ function readPalette() {
     dark: isDark,
     stops,
     accent: read("--accent"),
+    accentStyle: toCss(read("--accent")),
+    inkStyle: toCss(read("--foreground")),
     ground: toCss(ground),
     dust: toCss(read(MOSAIC.dust.token)),
     // Lightness in OKLab of the ink and the page its dots are on, in the theme that prints.
@@ -1529,25 +1570,25 @@ function createFlightRenderer(
       buffers.forEach((buffer) => gl.deleteBuffer(buffer));
       gl.deleteVertexArray(vertexArray);
       gl.deleteProgram(program);
+      // Its memory with it, rather than whenever the canvas is collected.
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
     },
   };
 }
 
 function createMosaic(
   canvas: HTMLCanvasElement,
-  flightCanvas: HTMLCanvasElement,
   image: HTMLImageElement,
   box: HTMLDivElement,
   section: HTMLElement,
-  name: HTMLHeadingElement,
 ): Mosaic {
   const context = canvas.getContext("2d");
   // The mosaic as one image, so a frame only has to draw what differs from it.
   const cache = document.createElement("canvas");
   const cacheContext = cache.getContext("2d");
   const hasHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const isLively = () =>
-    !prefersReducedMotion() && !window.matchMedia("(max-width: 767px), (pointer: coarse)").matches;
+  const isCompact = () => window.matchMedia("(max-width: 767px), (pointer: coarse)").matches;
+  const isLively = () => !prefersReducedMotion() && !isCompact();
   const debugMode =
     process.env.NODE_ENV !== "production"
       ? new URLSearchParams(window.location.search).get("mosaicDebug")
@@ -1571,6 +1612,10 @@ function createMosaic(
   let styles: string[] = [];
   let baseCount = 0;
   let colorEnds: number[] = [];
+  // How many active tiles come before each colour's, while they are sorted.
+  let colorCounts = new Uint32Array(1);
+  // The colours of twinkling tiles, as they come up.
+  let twinkleStyles: string[] = [];
   let built: { box: DOMRect; section: DOMRect; dpr: number } | null = null;
   let dpr = 1;
   let tileSize = 1;
@@ -1579,17 +1624,21 @@ function createMosaic(
   let timing: Timing = MOSAIC.assemble.quick;
   let flight: gsap.core.Tween | null = null;
   let flightRenderer: ReturnType<typeof createFlightRenderer> = null;
+  // Only there for the second the tiles are in the air.
+  let flightCanvas: HTMLCanvasElement | null = null;
+  let prepared = false;
   let entering = false;
   let destroyed = false;
   let onScreen = true;
   let frame = 0;
-  let lastFrame = 0;
-  let stepBudget = 0;
+  // What the loop counts with, in milliseconds. Fields rather than variables, which a closure
+  // boxes a number for every time it writes to one.
+  const clock = { last: 0, budget: 0 };
   let awake = false;
   let stepping = false;
-  let pointer: { x: number; y: number } | null = null;
-  let pointerMoved = false;
   let activeCount = 0;
+  // Tiles have joined the active ones since they were last put in order.
+  let unsorted = false;
   let cacheReady = false;
   // How far the dust and the silhouette under the tiles have faded in.
   let surroundOpacity = 0;
@@ -1605,19 +1654,9 @@ function createMosaic(
   let accentTiles = new Uint16Array(0);
   let debugLayer: HTMLCanvasElement | null = null;
   let resizeTimer = 0;
-  // Seconds of physics so far, which the tiles under the pointer keep time by.
-  let wanderClock = 0;
-  let overName = false;
-  // Seconds of physics since the pointer came on to the name, which the stagger counts from.
-  let revealClock = 0;
-  // Which tiles it covers, and the name's offset from the canvas when that was worked out.
-  let nameSpan = { left: 0, width: 1 };
-  let maskedAt = { x: 0, y: 0 };
   let dustCount: number = MOSAIC.dust.count;
-  let copyBounds: { left: number; top: number; right: number; bottom: number }[] = [];
-  const maskContext = document
-    .createElement("canvas")
-    .getContext("2d", { willReadFrequently: true });
+  // Left, top, right and bottom of each thing the dust keeps off.
+  let copyBounds = new Float32Array(0);
 
   const { dust: dustConfig } = MOSAIC;
   const dustFloats = (make: () => number) => Float32Array.from({ length: dustConfig.count }, make);
@@ -1640,6 +1679,45 @@ function createMosaic(
     start: -1,
     duration: 0,
   }));
+
+  const { impact: impactConfig } = MOSAIC;
+  // The shots, and the bits flying off them. Ages are seconds, and negative when it isn't there.
+  const shots = {
+    x: new Float32Array(impactConfig.max),
+    y: new Float32Array(impactConfig.max),
+    reach: new Float32Array(impactConfig.max),
+    age: new Float32Array(impactConfig.max).fill(-1),
+    life: new Float32Array(impactConfig.max),
+    frames: new Uint8Array(impactConfig.max),
+    next: 0,
+  };
+  const debrisCount = impactConfig.max * impactConfig.debris.count.max;
+  const debris = {
+    x: new Float32Array(debrisCount),
+    y: new Float32Array(debrisCount),
+    travelX: new Float32Array(debrisCount),
+    travelY: new Float32Array(debrisCount),
+    age: new Float32Array(debrisCount).fill(-1),
+    life: new Float32Array(debrisCount),
+    // 1 for the accent, 0 for the ink.
+    pink: new Uint8Array(debrisCount),
+  };
+  // Where a press was, in the canvas's own pixels.
+  const aim = { x: 0, y: 0 };
+  // What the cache's context was last set to. It is told again only when that changes, as a run of
+  // tiles is mostly one colour.
+  const cachePen = { style: "", alpha: -1 };
+  const setCachePen = (style: string, alpha: number) => {
+    if (!cacheContext) {
+      return;
+    }
+    if (cachePen.style !== style) {
+      cacheContext.fillStyle = cachePen.style = style;
+    }
+    if (cachePen.alpha !== alpha) {
+      cacheContext.globalAlpha = cachePen.alpha = alpha;
+    }
+  };
 
   const assignColors = () => {
     if (!tiles) {
@@ -1671,6 +1749,9 @@ function createMosaic(
     );
     colors = [...base, ...mixed.flat(), palette.accent];
     styles = colors.map(toCss);
+    colorCounts = new Uint32Array(colors.length + 1);
+    twinkleStyles = [];
+    unsorted = true;
 
     const sizes = new Array<number>(colors.length).fill(0);
     for (let tile = 0; tile < count; tile++) {
@@ -1834,7 +1915,6 @@ function createMosaic(
         next.cell[tile] = cell;
         next.targetX[tile] = offsetX + column * pitch;
         next.targetY[tile] = offsetY + row * pitch;
-        next.seed[tile] = cellNoise(row, column);
 
         if (inRun) {
           silhouette[silhouette.length - 1] += pitch;
@@ -1859,6 +1939,9 @@ function createMosaic(
     tiles = next;
     cache.width = columns * pitch;
     cache.height = rows * pitch;
+    // Sizing a canvas resets its context.
+    cachePen.style = "";
+    cachePen.alpha = -1;
     figureGrid = { grid, classified };
     looks = {};
     dress();
@@ -1910,55 +1993,53 @@ function createMosaic(
   // when it grows from the corner into the gap and stays on whole pixels.
   const insetOf = (size: number) => Math.max((tileSize - size) / 2, 0);
 
-  // Empties a cell on the cache for a tile that is about to leave it, or to change.
-  const clearHome = (tile: number) => {
-    if (cacheContext && tiles) {
-      const extent = Math.max(tileSize, Math.ceil(tileSize * tiles.shrink[tile]));
-      cacheContext.globalAlpha = 1;
-      cacheContext.fillStyle = palette.ground;
-      cacheContext.fillRect(tileLeft(tile), tileTop(tile), extent, extent);
-    }
-  };
-
   const stampHome = (tile: number) => {
     if (cacheContext && tiles) {
       const color = tiles.colorIndex[tile];
       const size = tileSize * tiles.shrink[tile];
       const inset = insetOf(size);
-      cacheContext.globalAlpha = tiles.fade[tile];
-      cacheContext.fillStyle = styles[color];
+      setCachePen(styles[color], tiles.fade[tile]);
       cacheContext.fillRect(tileLeft(tile) + inset, tileTop(tile) + inset, size, size);
     }
   };
 
-  // Takes the whole cell off the cache, gap and all: the page's colour under the tiles is
-  // what hides the name, so that has to go for it to show.
-  const openHome = (tile: number) => {
-    cacheContext?.clearRect(tileLeft(tile), tileTop(tile), pitch, pitch);
-  };
-
-  const closeHome = (tile: number) => {
-    if (cacheContext) {
-      cacheContext.globalAlpha = 1;
-      cacheContext.fillStyle = palette.ground;
-      cacheContext.fillRect(tileLeft(tile), tileTop(tile), pitch, pitch);
-    }
-  };
-
-  const lift = (tile: number) => {
-    if (tiles && !tiles.active[tile]) {
+  // Its cell on the cache is cleared by whoever calls this, many at a time.
+  const activate = (tile: number) => {
+    if (tiles) {
       tiles.active[tile] = 1;
       tiles.activeList[activeCount++] = tile;
-      clearHome(tile);
+      unsorted = true;
     }
+  };
+
+  // By colour, with a counting sort: no comparisons, and nothing made along the way.
+  const sortActive = () => {
+    if (!tiles || !unsorted) {
+      return;
+    }
+    unsorted = false;
+
+    const { activeList, sorting, colorIndex } = tiles;
+    colorCounts.fill(0);
+    for (let index = 0; index < activeCount; index++) {
+      colorCounts[colorIndex[activeList[index]] + 1]++;
+    }
+    for (let color = 1; color < colorCounts.length; color++) {
+      colorCounts[color] += colorCounts[color - 1];
+    }
+    for (let index = 0; index < activeCount; index++) {
+      const tile = activeList[index];
+      sorting[colorCounts[colorIndex[tile]]++] = tile;
+    }
+    tiles.activeList = sorting;
+    tiles.sorting = activeList;
   };
 
   const paintGround = () => {
     if (!cacheContext) {
       return;
     }
-    cacheContext.globalAlpha = 1;
-    cacheContext.fillStyle = palette.ground;
+    setCachePen(palette.ground, 1);
     for (let index = 0; index < silhouette.length; index += 3) {
       cacheContext.fillRect(
         silhouette[index] - gridX,
@@ -1976,24 +2057,19 @@ function createMosaic(
       return;
     }
 
-    const { order, fade, shrink, targetX, targetY, active, parted, activeList } = tiles;
-    cacheContext.globalAlpha = 1;
+    const { order, fade, shrink, targetX, targetY, active } = tiles;
     cacheContext.clearRect(0, 0, cache.width, cache.height);
     paintGround();
     cacheReady = true;
 
-    let alpha = 1;
     let start = 0;
     colorEnds.forEach((end, color) => {
-      cacheContext.fillStyle = styles[color];
       for (let cursor = start; cursor < end; cursor++) {
         const tile = order[cursor];
         if (active[tile]) {
           continue;
         }
-        if (fade[tile] !== alpha) {
-          cacheContext.globalAlpha = alpha = fade[tile];
-        }
+        setCachePen(styles[color], fade[tile]);
         const size = tileSize * shrink[tile];
         const inset = insetOf(size);
         cacheContext.fillRect(
@@ -2005,122 +2081,6 @@ function createMosaic(
       }
       start = end;
     });
-
-    // A theme change while the name is showing.
-    for (let index = 0; index < activeCount; index++) {
-      if (parted[activeList[index]]) {
-        openHome(activeList[index]);
-      }
-    }
-  };
-
-  // Where the name's first line of glyphs sits against the canvas, without the CSS
-  // entrance it may be partway through: the mask is for where it ends up.
-  const nameLines = () =>
-    Array.from(section.querySelectorAll<HTMLElement>('[data-intro-hide^="line-"]'));
-  const entranceOffset = (line: HTMLElement) => {
-    const { m41, m42 } = new DOMMatrixReadOnly(getComputedStyle(line).transform);
-    return { x: m41, y: m42 };
-  };
-  const nameOffset = () => {
-    const [line] = nameLines();
-    if (!line) {
-      return { x: 0, y: 0 };
-    }
-    const entrance = entranceOffset(line);
-    const lineRect = line.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
-    return {
-      x: lineRect.left - entrance.x - canvasRect.left,
-      y: lineRect.top - entrance.y - canvasRect.top,
-    };
-  };
-
-  // Rasterises the name at one pixel per grid cell, so reading a tile's coverage back is a
-  // plain lookup. Letter by letter from the line's own rects, which already carry its
-  // tracking and kerning, stroked one tile wide to dilate it.
-  const maskName = () => {
-    if (!tiles || !maskContext) {
-      return;
-    }
-
-    maskContext.canvas.width = gridColumns;
-    maskContext.canvas.height = gridRows;
-    maskContext.setTransform(1 / pitch, 0, 0, 1 / pitch, -gridX / pitch, -gridY / pitch);
-    maskContext.lineWidth = pitch * 2;
-    maskContext.lineJoin = "round";
-
-    const origin = canvas.getBoundingClientRect();
-    const range = document.createRange();
-    for (const line of nameLines()) {
-      const text = line.firstChild;
-      if (!(text instanceof Text)) {
-        continue;
-      }
-
-      const lineStyles = getComputedStyle(line);
-      const entrance = entranceOffset(line);
-      const upper = lineStyles.textTransform === "uppercase";
-      maskContext.font = `${lineStyles.fontWeight} ${parseFloat(lineStyles.fontSize) * dpr}px ${lineStyles.fontFamily}`;
-      const ascent = maskContext.measureText("H").fontBoundingBoxAscent;
-      for (let index = 0; index < text.length; index++) {
-        range.setStart(text, index);
-        range.setEnd(text, index + 1);
-        const glyph = range.getBoundingClientRect();
-        const character = upper ? text.data[index].toUpperCase() : text.data[index];
-        const x = (glyph.left - entrance.x - origin.left) * dpr;
-        const y = (glyph.top - entrance.y - origin.top) * dpr + ascent;
-        maskContext.fillText(character, x, y);
-        maskContext.strokeText(character, x, y);
-      }
-    }
-
-    const { data } = maskContext.getImageData(0, 0, gridColumns, gridRows);
-    const { count, targetX, targetY, underName } = tiles;
-    const cutoff = MOSAIC.textReveal.coverage * 255;
-    let left = Infinity;
-    let right = -Infinity;
-    for (let tile = 0; tile < count; tile++) {
-      const column = Math.round((targetX[tile] - gridX) / pitch);
-      const row = Math.round((targetY[tile] - gridY) / pitch);
-      const under = data[(row * gridColumns + column) * 4 + 3] > cutoff;
-      underName[tile] = under ? 1 : 0;
-      if (under) {
-        left = Math.min(left, targetX[tile]);
-        right = Math.max(right, targetX[tile]);
-      }
-    }
-    nameSpan = { left, width: Math.max(right - left, 1) };
-    maskedAt = nameOffset();
-  };
-
-  // Everything under the letters comes off the cache, to be drawn each frame as it parts.
-  const partName = () => {
-    if (!tiles) {
-      return;
-    }
-
-    maskName();
-    const { count, underName, parted } = tiles;
-    for (let tile = 0; tile < count; tile++) {
-      if (underName[tile] && !parted[tile]) {
-        lift(tile);
-        parted[tile] = 1;
-        openHome(tile);
-      }
-    }
-  };
-
-  // The parallax moves the name and the portrait against each other under a resting pointer.
-  const followName = () => {
-    if (!overName) {
-      return;
-    }
-    const { x, y } = nameOffset();
-    if (Math.max(Math.abs(x - maskedAt.x), Math.abs(y - maskedAt.y)) * dpr >= pitch / 2) {
-      partName();
-      awake = true;
-    }
   };
 
   // True when the grid was actually rebuilt. ResizeObserver also reports the size it
@@ -2169,16 +2129,38 @@ function createMosaic(
   const measureCopy = () => {
     const origin = canvas.getBoundingClientRect();
     const range = document.createRange();
-    copyBounds = Array.from(section.querySelectorAll("[data-intro-hide]"), (element) => {
-      range.selectNodeContents(element);
-      const bounds = range.getBoundingClientRect();
-      return {
-        left: (bounds.left - origin.left) * dpr - tileSize,
-        top: (bounds.top - origin.top) * dpr - tileSize,
-        right: (bounds.right - origin.left) * dpr,
-        bottom: (bounds.bottom - origin.top) * dpr,
-      };
-    });
+    copyBounds = Float32Array.from(
+      Array.from(section.querySelectorAll("[data-intro-hide]")).flatMap((element) => {
+        range.selectNodeContents(element);
+        const bounds = range.getBoundingClientRect();
+        return [
+          (bounds.left - origin.left) * dpr - tileSize,
+          (bounds.top - origin.top) * dpr - tileSize,
+          (bounds.right - origin.left) * dpr,
+          (bounds.bottom - origin.top) * dpr,
+        ];
+      }),
+    );
+  };
+
+  // The copy's own entrance, which can outlast the portrait's.
+  const handleEntrance = () => {
+    measureCopy();
+    draw();
+  };
+
+  const isOnCopy = (x: number, y: number) => {
+    for (let index = 0; index < copyBounds.length; index += 4) {
+      if (
+        x > copyBounds[index] &&
+        y > copyBounds[index + 1] &&
+        x < copyBounds[index + 2] &&
+        y < copyBounds[index + 3]
+      ) {
+        return true;
+      }
+    }
+    return false;
   };
 
   const drawDust = (now: number) => {
@@ -2193,7 +2175,7 @@ function createMosaic(
     for (let speck = 0; speck < dustCount; speck++) {
       const x = Math.round(dust.x[speck] * canvas.width);
       const y = Math.round(dust.y[speck] * canvas.height);
-      if (copyBounds.some((b) => x > b.left && x < b.right && y > b.top && y < b.bottom)) {
+      if (isOnCopy(x, y)) {
         continue;
       }
 
@@ -2219,45 +2201,93 @@ function createMosaic(
     }
   };
 
-  // Tiles off the cache: moved by the pointer, parted for the name, or both. Whole pixels,
-  // so a moving tile stays as sharp as the rest and steps rather than blurs.
+  // Tiles off the cache, which only a shot takes them off. Whole pixels, so a moving tile stays
+  // as sharp as the rest and steps rather than blurs.
   const drawActive = () => {
     if (!context || !tiles || activeCount === 0) {
       return;
     }
 
-    const { x, y, fade, shrink, reveal, parted, targetX, targetY, colorIndex, activeList } = tiles;
-    const { opacity, scale } = MOSAIC.textReveal;
-
-    // What the cache's holes used to hold, going as the tile goes, so the name fades in.
-    context.fillStyle = palette.ground;
-    for (let index = 0; index < activeCount; index++) {
-      const tile = activeList[index];
-      if (parted[tile]) {
-        context.globalAlpha = 1 - easeReveal(reveal[tile]);
-        context.fillRect(targetX[tile], targetY[tile], pitch, pitch);
-      }
-    }
-
-    let style = "";
+    sortActive();
+    const { fade, shrink, targetX, targetY, colorIndex, activeList } = tiles;
+    const { knockX, knockY, holeScale } = tiles;
+    let lastColor = -1;
     let alpha = -1;
 
     for (let index = 0; index < activeCount; index++) {
       const tile = activeList[index];
       const color = colorIndex[tile];
-      const parting = easeReveal(reveal[tile]);
-      if (styles[color] !== style) {
-        context.fillStyle = style = styles[color];
+      const size = tileSize * shrink[tile] * holeScale[tile];
+      if (size <= 0) {
+        continue;
       }
-      const nextAlpha = fade[tile] * (1 - (1 - opacity) * parting);
-      if (nextAlpha !== alpha) {
-        context.globalAlpha = alpha = nextAlpha;
+      if (color !== lastColor) {
+        context.fillStyle = styles[color];
+        lastColor = color;
+      }
+      if (fade[tile] !== alpha) {
+        context.globalAlpha = alpha = fade[tile];
       }
 
-      const fullSize = tileSize * shrink[tile];
-      const size = fullSize * (1 - (1 - scale) * parting);
       const inset = insetOf(size);
-      context.fillRect(Math.round(x[tile]) + inset, Math.round(y[tile]) + inset, size, size);
+      context.fillRect(
+        Math.round(targetX[tile] + knockX[tile]) + inset,
+        Math.round(targetY[tile] + knockY[tile]) + inset,
+        size,
+        size,
+      );
+    }
+  };
+
+  // On top of the tiles: each shot's ring and flash, and the bits that came off.
+  const drawShots = () => {
+    if (!context) {
+      return;
+    }
+
+    const { ring, flash, debris: bits } = impactConfig;
+    const size = Math.max(pitch, Math.round(bits.minSize * dpr));
+    for (let pink = 1; pink >= 0; pink--) {
+      context.fillStyle = pink ? palette.accentStyle : palette.inkStyle;
+      for (let bit = 0; bit < debrisCount; bit++) {
+        if (debris.age[bit] < 0 || debris.pink[bit] !== pink) {
+          continue;
+        }
+        const progress = debris.age[bit] / debris.life[bit];
+        const out = 1 - (1 - progress) * (1 - progress) * (1 - progress);
+        context.globalAlpha = 1 - progress * progress;
+        context.fillRect(
+          Math.round(debris.x[bit] + debris.travelX[bit] * out),
+          Math.round(debris.y[bit] + debris.travelY[bit] * out),
+          size,
+          size,
+        );
+      }
+    }
+
+    context.strokeStyle = palette.accentStyle;
+    context.lineWidth = ring.width * dpr;
+    for (let shot = 0; shot < impactConfig.max; shot++) {
+      const age = shots.age[shot];
+      if (age >= 0 && age < ring.duration) {
+        const progress = age / ring.duration;
+        const out = 1 - (1 - progress) * (1 - progress);
+        context.globalAlpha = 1 - progress;
+        context.beginPath();
+        context.arc(shots.x[shot], shots.y[shot], out * shots.reach[shot], 0, FULL_CIRCLE);
+        context.stroke();
+      }
+      // Not with the ring alone, which is all there is under reduced motion.
+      if (age >= 0 && shots.life[shot] > ring.duration) {
+        if (shots.frames[shot] < flash.frames || age < flash.duration) {
+          shots.frames[shot]++;
+          context.globalAlpha = 1;
+          context.fillStyle = palette.accentStyle;
+          context.beginPath();
+          context.arc(shots.x[shot], shots.y[shot], flash.radius * dpr, 0, FULL_CIRCLE);
+          context.fill();
+        }
+      }
     }
   };
 
@@ -2271,7 +2301,8 @@ function createMosaic(
     const { targetX, targetY, colorIndex, active, fade } = tiles;
     const { duration, strength } = MOSAIC.idle.twinkle;
     context.globalAlpha = 1;
-    for (const twinkle of twinkles) {
+    for (let index = 0; index < twinkles.length; index++) {
+      const twinkle = twinkles[index];
       const age = (now - twinkle.start) / twinkle.duration;
       if (twinkle.start < 0 || age >= 1) {
         twinkle.tile = accentTiles[Math.floor(Math.random() * accentTiles.length)];
@@ -2283,14 +2314,22 @@ function createMosaic(
         const color = colorIndex[tile];
         const size = tileSize * (palette.print ? tiles.shrink[tile] : 1);
         const inset = insetOf(size);
-        const level = 1 + Math.sin(age * Math.PI * 2) * strength;
-        const [red, green, blue] = colors[color];
-        context.fillStyle = toCss([red * level, green * level, blue * level]);
+        const level = Math.round((Math.sin(age * FULL_CIRCLE) / 2 + 0.5) * TWINKLE_LEVELS);
+        const key = color * (TWINKLE_LEVELS + 1) + level;
+        let style = twinkleStyles[key];
+        if (!style) {
+          const bright = 1 + ((level / TWINKLE_LEVELS) * 2 - 1) * strength;
+          const [red, green, blue] = colors[color];
+          style = twinkleStyles[key] = toCss([red * bright, green * bright, blue * bright]);
+        }
+        context.fillStyle = style;
         context.fillRect(targetX[tile] + inset, targetY[tile] + inset, size, size);
       }
     }
   };
 
+  // NOINLINE, here and where the loop steps: a minifier puts a function that is called in only one
+  // place there as a closure, made anew every frame.
   const draw = () => {
     if (!context || !tiles || phase === "waiting" || !onScreen) {
       return;
@@ -2298,16 +2337,17 @@ function createMosaic(
 
     const now = performance.now() / 1000;
     context.clearRect(0, 0, canvas.width, canvas.height);
-    drawDust(now);
+    /*#__NOINLINE__*/ drawDust(now);
     if (phase === "assembling") {
-      drawSilhouette();
+      /*#__NOINLINE__*/ drawSilhouette();
     } else {
       context.globalAlpha = 1;
       context.drawImage(cache, gridX, gridY);
-      drawActive();
+      /*#__NOINLINE__*/ drawActive();
       if (lively) {
-        drawTwinkles(now);
+        /*#__NOINLINE__*/ drawTwinkles(now);
       }
+      /*#__NOINLINE__*/ drawShots();
       if (debugLayer) {
         context.globalAlpha = 1;
         context.drawImage(debugLayer, gridX, gridY);
@@ -2316,149 +2356,221 @@ function createMosaic(
     context.globalAlpha = 1;
   };
 
-  // Lifts every tile under the pointer off the cache. A lookup by cell, so the cost is the
-  // pointer's reach and not the size of the mosaic.
-  const wakeNearPointer = () => {
-    if (!tiles || !pointer) {
+  // Knocks the tiles around a shot outwards, the nearest the furthest, and shoots out the ones
+  // right under it. A lookup by cell, so the cost is the shot's reach and not the size of the
+  // mosaic.
+  const knockTiles = (atX: number, atY: number, reach: number) => {
+    if (!tiles) {
       return;
     }
 
-    const { targetX, targetY, active } = tiles;
-    const reach = MOSAIC.hover.radius * dpr;
+    const { targetX, targetY, knockVx, knockVy, struck, active } = tiles;
+    const { holeAge, holeFrom, holeScale } = tiles;
+    const { push, jitter, cap, hole } = impactConfig;
     const half = tileSize / 2;
-    const fromColumn = Math.max(Math.floor((pointer.x - reach - gridX) / pitch), 0);
-    const toColumn = Math.min(Math.ceil((pointer.x + reach - gridX) / pitch), gridColumns - 1);
-    const fromRow = Math.max(Math.floor((pointer.y - reach - gridY) / pitch), 0);
-    const toRow = Math.min(Math.ceil((pointer.y + reach - gridY) / pitch), gridRows - 1);
+    const gone = hole.radius * dpr;
+    const maxSpeed = cap * dpr * SPRING.kick;
+    const fromColumn = Math.max(Math.floor((atX - reach - gridX) / pitch), 0);
+    const toColumn = Math.min(Math.ceil((atX + reach - gridX) / pitch), gridColumns - 1);
+    const fromRow = Math.max(Math.floor((atY - reach - gridY) / pitch), 0);
+    const toRow = Math.min(Math.ceil((atY + reach - gridY) / pitch), gridRows - 1);
 
+    setCachePen(palette.ground, 1);
     for (let row = fromRow; row <= toRow; row++) {
-      for (let column = fromColumn; column <= toColumn; column++) {
-        const tile = tileAt[row * gridColumns + column];
-        if (tile < 0 || active[tile]) {
+      // Thousands of them leave the cache at once, so theirs are cleared a run at a time.
+      let runFrom = -1;
+      // One past the end, for the run that gets there.
+      for (let column = fromColumn; column <= toColumn + 1; column++) {
+        const tile = column > toColumn ? -1 : tileAt[row * gridColumns + column];
+        const dx = tile < 0 ? 0 : targetX[tile] + half - atX;
+        const dy = tile < 0 ? 0 : targetY[tile] + half - atY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const near = 1 - distance / reach;
+        const leaves = tile >= 0 && near > 0 && !active[tile];
+        if (leaves) {
+          activate(tile);
+          runFrom = runFrom < 0 ? column : runFrom;
+        } else if (runFrom >= 0) {
+          const left = runFrom * pitch;
+          cacheContext?.fillRect(left, row * pitch, column * pitch - left, pitch);
+          runFrom = -1;
+        }
+        if (tile < 0 || near <= 0) {
           continue;
         }
-        const dx = targetX[tile] + half - pointer.x;
-        const dy = targetY[tile] + half - pointer.y;
-        if (dx * dx + dy * dy < reach * reach) {
-          lift(tile);
+
+        // None of it at the very edge, which would otherwise show as a circle.
+        const loose = jitter * dpr * Math.min(near * 4, 1);
+        const out = (push * dpr * near * near) / Math.max(distance, 1);
+        const speedX = knockVx[tile] + (dx * out + (Math.random() * 2 - 1) * loose) * SPRING.kick;
+        const speedY = knockVy[tile] + (dy * out + (Math.random() * 2 - 1) * loose) * SPRING.kick;
+        const speed = Math.sqrt(speedX * speedX + speedY * speedY);
+        const held = speed > maxSpeed ? maxSpeed / speed : 1;
+        knockVx[tile] = speedX * held;
+        knockVy[tile] = speedY * held;
+        if (distance <= gone) {
+          // Only as big as it has grown back to, if it was already out.
+          holeFrom[tile] = holeScale[tile];
+          holeAge[tile] = 0;
+          struck[tile] |= SHOT;
         }
+        struck[tile] |= KNOCKED;
       }
     }
   };
 
-  // Moves everything off the cache by one step. A tile near the pointer springs towards a spot
-  // next to its own cell for part of each turn, and otherwise stays put. Moving them all at once
-  // reads as a disc however small the move, and moving them away from the pointer as a ring
-  // around a hole. A tile under the name parts or closes on its own clock, and instant jumps
-  // straight to the end of that.
-  const stepPhysics = (instant = false) => {
+  const throwDebris = (shot: number, atX: number, atY: number) => {
+    const { count, from, distance, life } = impactConfig.debris;
+    const thrown = Math.round(between(count));
+    const turn = Math.random() * FULL_CIRCLE;
+    for (let index = 0; index < count.max; index++) {
+      const bit = shot * count.max + index;
+      if (index >= thrown) {
+        debris.age[bit] = -1;
+        continue;
+      }
+      // All the way round, but not evenly.
+      const angle = turn + ((index + Math.random() * 0.8) / thrown) * FULL_CIRCLE;
+      const start = Math.random() * from * dpr;
+      const travel = between(distance) * dpr;
+      debris.x[bit] = atX + Math.cos(angle) * start;
+      debris.y[bit] = atY + Math.sin(angle) * start;
+      debris.travelX[bit] = Math.cos(angle) * travel;
+      debris.travelY[bit] = Math.sin(angle) * travel;
+      debris.age[bit] = 0;
+      debris.life[bit] = between(life);
+      debris.pink[bit] = index % 2;
+    }
+  };
+
+  // Reduced motion gets the ring, and nothing that moves.
+  const strike = (atX: number, atY: number) => {
+    const still = prefersReducedMotion();
+    const radius = isCompact() ? impactConfig.radius.compact : impactConfig.radius.wide;
+    const reach = radius * dpr;
+    const shot = shots.next;
+    shots.next = (shot + 1) % impactConfig.max;
+    shots.x[shot] = atX;
+    shots.y[shot] = atY;
+    shots.reach[shot] = reach;
+    shots.age[shot] = 0;
+    shots.life[shot] = still ? impactConfig.ring.duration : impactConfig.duration;
+    shots.frames[shot] = 0;
+    if (!still) {
+      /*#__NOINLINE__*/ knockTiles(atX, atY, reach);
+      /*#__NOINLINE__*/ throwDebris(shot, atX, atY);
+    }
+    awake = true;
+    syncLoop();
+  };
+
+  // True while there is a shot still going.
+  const stepShots = () => {
+    let going = false;
+    for (let shot = 0; shot < impactConfig.max; shot++) {
+      if (shots.age[shot] >= 0) {
+        shots.age[shot] += STEP_SECONDS;
+        if (shots.age[shot] >= shots.life[shot]) {
+          shots.age[shot] = -1;
+        } else {
+          going = true;
+        }
+      }
+    }
+    for (let bit = 0; bit < debrisCount; bit++) {
+      if (debris.age[bit] >= 0) {
+        debris.age[bit] += STEP_SECONDS;
+        if (debris.age[bit] >= debris.life[bit]) {
+          debris.age[bit] = -1;
+        }
+      }
+    }
+    return going;
+  };
+
+  // One step of a struck tile's spring, and of its growing back: gone, and then a little too far
+  // before it fits.
+  const stepStruck = (tile: number) => {
+    if (!tiles) {
+      return;
+    }
+
+    const { knockX, knockY, knockVx, knockVy, holeAge, holeFrom, holeScale, struck } = tiles;
+    const { cap, hole, restsBelow } = impactConfig;
+    if (struck[tile] & SHOT) {
+      holeAge[tile] += STEP_SECONDS;
+      const left = (holeAge[tile] - hole.shrink - hole.hold) / hole.regrow - 1;
+      if (holeAge[tile] < hole.shrink) {
+        holeScale[tile] = holeFrom[tile] * (1 - holeAge[tile] / hole.shrink);
+      } else if (left >= 0) {
+        holeScale[tile] = 1;
+        struck[tile] &= ~SHOT;
+      } else {
+        holeScale[tile] = left <= -1 ? 0 : 1 + 2.2 * left * left * left + 1.2 * left * left;
+      }
+    }
+    if ((struck[tile] & KNOCKED) === 0) {
+      return;
+    }
+
+    let offX = knockX[tile] * SPRING.stay + knockVx[tile] * SPRING.go;
+    let offY = knockY[tile] * SPRING.stay + knockVy[tile] * SPRING.go;
+    const speedX = knockX[tile] * SPRING.pull + knockVx[tile] * SPRING.keep;
+    const speedY = knockY[tile] * SPRING.pull + knockVy[tile] * SPRING.keep;
+    const off = offX * offX + offY * offY;
+    const most = cap * dpr;
+    const rest = restsBelow * dpr;
+    if (off > most * most) {
+      const held = most / Math.sqrt(off);
+      offX *= held;
+      offY *= held;
+    } else if (off < rest * rest) {
+      // Slow as well as close: on its way through home it is only the one.
+      const restSpeed = rest * SPRING.kick;
+      if (speedX * speedX + speedY * speedY < restSpeed * restSpeed) {
+        knockX[tile] = knockY[tile] = knockVx[tile] = knockVy[tile] = 0;
+        struck[tile] &= ~KNOCKED;
+        return;
+      }
+    }
+    knockX[tile] = offX;
+    knockY[tile] = offY;
+    knockVx[tile] = speedX;
+    knockVy[tile] = speedY;
+  };
+
+  // Moves every struck tile on by one step, and puts the ones that are home back on the cache.
+  const stepPhysics = () => {
     if (!tiles) {
       return false;
     }
-    if (pointerMoved) {
-      wakeNearPointer();
-      pointerMoved = false;
-    }
 
-    const { x, y, vx, vy, seed, targetX, targetY, active, activeList } = tiles;
-    const { reveal, underName, parted } = tiles;
-    const { radius, maxMove, busy, rate, spring, friction, settledBelow } = MOSAIC.hover;
-    const { duration, stagger, outDuration } = MOSAIC.textReveal;
-    const reach = radius * dpr;
-    const move = maxMove * dpr;
-    const settled = settledBelow * dpr;
-    const half = tileSize / 2;
-    const stepSeconds = PHYSICS_STEP_MS / 1000;
-    const partBy = instant ? 1 : stepSeconds / duration;
-    const closeBy = instant ? 1 : stepSeconds / outDuration;
-    let moving = false;
+    sortActive();
+    const { active, activeList, struck } = tiles;
+    let moving = /*#__NOINLINE__*/ stepShots();
+    // The active tiles that stay so are moved up over the ones that don't, and keep their order.
+    let kept = 0;
 
-    revealClock += stepSeconds;
-    wanderClock += stepSeconds;
-    for (let index = activeCount - 1; index >= 0; index--) {
+    for (let index = 0; index < activeCount; index++) {
       const tile = activeList[index];
-      const wanted = overName && underName[tile] === 1;
-      if (!wanted) {
-        reveal[tile] = Math.max(reveal[tile] - closeBy, 0);
-      } else if (
-        instant ||
-        revealClock >= ((targetX[tile] - nameSpan.left) / nameSpan.width) * stagger
-      ) {
-        reveal[tile] = Math.min(reveal[tile] + partBy, 1);
-      }
-      if (wanted ? reveal[tile] < 1 : reveal[tile] > 0) {
+      /*#__NOINLINE__*/ stepStruck(tile);
+      if (struck[tile]) {
         moving = true;
-      } else if (!wanted && parted[tile]) {
-        parted[tile] = 0;
-        closeHome(tile);
-      }
-
-      let goalX = 0;
-      let goalY = 0;
-      let hovered = false;
-
-      if (pointer) {
-        const near =
-          1 -
-          Math.hypot(targetX[tile] + half - pointer.x, targetY[tile] + half - pointer.y) / reach;
-        if (near > 0) {
-          hovered = true;
-          // Above this line of a sine wave is the tile's turn. Further out the line is higher,
-          // so turns are shorter and rarer, but a tile that moves still moves as far.
-          const share = busy * near * near * (3 - 2 * near);
-          const turn = Math.sin(wanderClock * rate + seed[tile] * 97) - (1 - share);
-          if (turn > 0) {
-            const amount = (move * turn) / share;
-            goalX = amount * Math.cos(seed[tile] * 61);
-            goalY = amount * Math.sin(seed[tile] * 61);
-          }
-        }
-      }
-
-      const offX = targetX[tile] + goalX - x[tile];
-      const offY = targetY[tile] + goalY - y[tile];
-      vx[tile] = (vx[tile] + offX * spring) * friction;
-      vy[tile] = (vy[tile] + offY * spring) * friction;
-      x[tile] += vx[tile];
-      y[tile] += vy[tile];
-
-      // Being slow isn't enough: every tile is, at the top of the spring's overshoot, and
-      // the loop would go back to sleep with them all stuck out there.
-      const slow = Math.abs(vx[tile]) + Math.abs(vy[tile]) < settled;
-      const arrived = slow && Math.abs(offX) < 0.5 && Math.abs(offY) < 0.5;
-      if (hovered || !arrived) {
-        moving = true;
-      } else if (!parted[tile]) {
-        // Back on its cell: exact, and back on the cache.
-        x[tile] = targetX[tile];
-        y[tile] = targetY[tile];
-        vx[tile] = vy[tile] = 0;
+        activeList[kept++] = tile;
+      } else {
+        // Back on its cell, and back on the cache.
         active[tile] = 0;
-        activeList[index] = activeList[--activeCount];
         stampHome(tile);
       }
     }
+    activeCount = kept;
 
     return moving;
   };
 
-  const applyNameHover = () => {
-    if (overName) {
-      revealClock = 0;
-      partName();
-    }
-    if (lively) {
-      awake = true;
-    } else {
-      // No frame loop to run it on: reduced motion, or a layout without the overlap.
-      stepPhysics(true);
-      draw();
-    }
-  };
-
-  const driftDust = (seconds: number) => {
-    const shareX = seconds / section.offsetWidth;
-    const shareY = seconds / section.offsetHeight;
+  const driftDust = (elapsed: number) => {
+    const shareX = elapsed / 1000 / section.offsetWidth;
+    const shareY = elapsed / 1000 / section.offsetHeight;
     for (let speck = 0; speck < dustCount; speck++) {
       dust.x[speck] = (dust.x[speck] + dust.vx[speck] * shareX + 1) % 1;
       dust.y[speck] = (dust.y[speck] + dust.vy[speck] * shareY + 1) % 1;
@@ -2469,38 +2581,42 @@ function createMosaic(
     frame = window.requestAnimationFrame(tick);
 
     // Full rate only while tiles are physically moving.
-    const elapsed = now - lastFrame;
+    const elapsed = now - clock.last;
     if (!awake && elapsed < IDLE_FRAME_MS) {
       return;
     }
-    lastFrame = now;
+    clock.last = now;
 
     if (awake) {
       // Coming from idle, this frame's elapsed is the idle gap and not time anything moved
-      // for. Counting it would run the first steps all at once, and bunch up the reveal.
-      stepBudget += stepping
+      // for. Counting it would run the first steps of a shot all at once.
+      clock.budget += stepping
         ? Math.min(elapsed, PHYSICS_STEP_MS * MAX_STEPS_PER_FRAME)
         : PHYSICS_STEP_MS;
       let moving = true;
-      while (stepBudget >= PHYSICS_STEP_MS) {
+      while (clock.budget >= PHYSICS_STEP_MS) {
         moving = stepPhysics();
-        stepBudget -= PHYSICS_STEP_MS;
+        clock.budget -= PHYSICS_STEP_MS;
       }
       awake = moving;
     }
     stepping = awake;
 
     if (lively) {
-      driftDust(elapsed / 1000);
-      followName();
+      /*#__NOINLINE__*/ driftDust(elapsed);
     }
     draw();
+    // Nothing is left to move, and that was the last of it drawn.
+    if (!awake) {
+      syncLoop();
+    }
   };
 
+  // Where nothing moves at rest, on touch and under reduced motion, it only runs for a shot.
   const syncLoop = () => {
-    const wanted = phase === "settled" && lively && onScreen && !document.hidden;
+    const wanted = phase === "settled" && (lively || awake) && onScreen && !document.hidden;
     if (wanted && !frame) {
-      lastFrame = performance.now();
+      clock.last = performance.now();
       frame = window.requestAnimationFrame(tick);
     } else if (!wanted && frame) {
       window.cancelAnimationFrame(frame);
@@ -2508,34 +2624,35 @@ function createMosaic(
     }
   };
 
-  const settle = () => {
+  const endFlight = () => {
     flight?.kill();
     flight = null;
     flightRenderer?.destroy();
     flightRenderer = null;
-    flightCanvas.hidden = true;
-    flightCanvas.width = flightCanvas.height = 0;
+    flightCanvas?.remove();
+    flightCanvas = null;
+  };
+
+  const settle = () => {
+    endFlight();
     phase = "settled";
     surroundOpacity = 1;
     measureCopy();
     awake = false;
-    pointer = null;
     activeCount = 0;
+    shots.age.fill(-1);
+    debris.age.fill(-1);
     if (tiles) {
-      tiles.x.set(tiles.targetX);
-      tiles.y.set(tiles.targetY);
-      tiles.vx.fill(0);
-      tiles.vy.fill(0);
-      tiles.reveal.fill(0);
-      tiles.parted.fill(0);
       tiles.active.fill(0);
+      tiles.knockX.fill(0);
+      tiles.knockY.fill(0);
+      tiles.knockVx.fill(0);
+      tiles.knockVy.fill(0);
+      tiles.holeScale.fill(1);
+      tiles.struck.fill(0);
     }
     if (!cacheReady) {
       paintCache();
-    }
-    // The pointer may have been resting on the name since before the tiles landed.
-    if (overName) {
-      applyNameHover();
     }
     draw();
     syncLoop();
@@ -2545,11 +2662,11 @@ function createMosaic(
     timing = nextTiming;
     phase = "assembling";
     if (!tiles) {
-      return 0;
+      return;
     }
 
     const { startX, startY, startRotation, delay, reach, count } = tiles;
-    const turn = lively ? (MOSAIC.assemble.rotation * Math.PI) / 180 : 0;
+    const turn = (MOSAIC.assemble.rotation * Math.PI) / 180;
     for (let tile = 0; tile < count; tile++) {
       startX[tile] = Math.random() * canvas.width;
       startY[tile] = Math.random() * canvas.height;
@@ -2565,10 +2682,13 @@ function createMosaic(
       context.clearRect(0, 0, 1, 1);
     }
 
+    flightCanvas = document.createElement("canvas");
     flightCanvas.width = canvas.width;
     flightCanvas.height = canvas.height;
+    flightCanvas.className = canvas.className;
     flightCanvas.style.cssText = canvas.style.cssText;
-    flightCanvas.hidden = false;
+    flightCanvas.setAttribute("aria-hidden", "true");
+    canvas.after(flightCanvas);
     flightRenderer = createFlightRenderer(
       flightCanvas,
       tiles,
@@ -2579,7 +2699,6 @@ function createMosaic(
     // Nothing is in the air yet. This is for the driver, which finishes compiling a shader
     // on its first draw, and would otherwise do that on the flight's first frame.
     flightRenderer?.draw(0);
-    return timing.flight + timing.stagger + timing.scatter;
   };
 
   const renderFlight = (time: number, duration: number) => {
@@ -2597,8 +2716,8 @@ function createMosaic(
   // A plain clock rather than a tween per tile, so none of this depends on the intro's
   // GSAP context surviving its revert. Without WebGL2 there is no flight: the finished
   // mosaic simply appears when it would have started, as it does under reduced motion.
-  const createFlight = (nextTiming: Timing) => {
-    const duration = prepareFlight(nextTiming);
+  const createFlight = () => {
+    const duration = timing.flight + timing.stagger + timing.scatter;
     const clock = { time: 0 };
     flight = gsap.to(clock, {
       time: duration,
@@ -2611,76 +2730,71 @@ function createMosaic(
     return flight;
   };
 
-  const handlePointerMove = (event: PointerEvent) => {
-    if (phase !== "settled" || !lively) {
-      return;
-    }
-
-    const { radius } = MOSAIC.hover;
-    const rect = box.getBoundingClientRect();
-    const near =
-      event.clientX >= rect.left - radius &&
-      event.clientX <= rect.right + radius &&
-      event.clientY >= rect.top - radius &&
-      event.clientY <= rect.bottom + radius;
-
-    if (near) {
-      const canvasRect = canvas.getBoundingClientRect();
-      pointer = {
-        x: (event.clientX - canvasRect.left) * dpr,
-        y: (event.clientY - canvasRect.top) * dpr,
-      };
-      pointerMoved = true;
-      awake = true;
-    } else if (pointer) {
-      pointer = null;
-      awake = true;
-    }
-  };
-
-  const handlePointerLeave = () => {
-    pointer = null;
-    awake = true;
-  };
-
-  const setOverName = (over: boolean) => {
-    if (over !== overName) {
-      overName = over;
-      if (phase === "settled") {
-        applyNameHover();
+  const hasTileNear = (x: number, y: number, reach: number) => {
+    const cells = Math.ceil(reach / pitch);
+    const column = Math.floor((x - gridX) / pitch);
+    const row = Math.floor((y - gridY) / pitch);
+    const toRow = Math.min(row + cells, gridRows - 1);
+    const toColumn = Math.min(column + cells, gridColumns - 1);
+    for (let nextRow = Math.max(row - cells, 0); nextRow <= toRow; nextRow++) {
+      for (let next = Math.max(column - cells, 0); next <= toColumn; next++) {
+        if (tileAt[nextRow * gridColumns + next] >= 0) {
+          return true;
+        }
       }
     }
+    return false;
   };
 
-  // The h1 is as wide as the copy's column, well past its last letter and across the figure,
-  // so the box that counts stops where the letters do. Its height is the h1's own.
-  const handleNameMove = (event: PointerEvent) => {
-    const range = document.createRange();
-    setOverName(
-      nameLines().some((line) => {
-        range.selectNodeContents(line);
-        const { left, right } = range.getBoundingClientRect();
-        return event.clientX >= left && event.clientX <= right;
-      }),
-    );
-  };
-
-  const handleNameLeave = () => setOverName(false);
-
-  // On the section and the h1 rather than the canvas, which never takes a pointer event: the
-  // buttons and the name under it have to stay clickable and selectable.
-  if (hasHover) {
-    name.addEventListener("pointermove", handleNameMove);
-    name.addEventListener("pointerleave", handleNameLeave);
-    if (!prefersReducedMotion()) {
-      section.addEventListener("pointermove", handlePointerMove);
-      section.addEventListener("pointerleave", handlePointerLeave);
+  // Whether a pointer is on the mosaic, and free to shoot at it, and where that is in aim. The
+  // scroll is locked while the intro plays and while anything is open over the page.
+  const takeAim = (event: PointerEvent) => {
+    const { target } = event;
+    if (
+      phase !== "settled" ||
+      isScrollLocked() ||
+      !(target instanceof Element) ||
+      target.closest(PRESSABLE)
+    ) {
+      return false;
     }
+    const rect = canvas.getBoundingClientRect();
+    aim.x = (event.clientX - rect.left) * dpr;
+    aim.y = (event.clientY - rect.top) * dpr;
+    const { mouse, touch } = impactConfig.aim;
+    return hasTileNear(aim.x, aim.y, (event.pointerType === "mouse" ? mouse : touch) * dpr);
+  };
+
+  // Not while a button is held: the aim stops text being selected, and that may be a selection.
+  const handleAim = (event: PointerEvent) => {
+    if (event.pointerType === "mouse" && event.buttons === 0) {
+      section.toggleAttribute("data-aim", takeAim(event));
+    }
+  };
+
+  const handleAimEnd = () => {
+    section.removeAttribute("data-aim");
+  };
+
+  const handlePress = (event: PointerEvent) => {
+    if (event.pointerType === "mouse" && event.button === 0 && takeAim(event)) {
+      strike(aim.x, aim.y);
+    }
+  };
+
+  const stopTaps = listenForTaps(section, () => strike(aim.x, aim.y), takeAim);
+  section.addEventListener("pointerdown", handlePress);
+
+  // On the section rather than the canvas, which never takes a pointer event: the buttons and the
+  // name under it have to stay clickable and selectable. Moving the mouse only changes the cursor.
+  if (hasHover) {
+    section.addEventListener("pointermove", handleAim);
+    section.addEventListener("pointerleave", handleAimEnd);
   }
   document.addEventListener("visibilitychange", syncLoop);
   // The copy's CSS entrance can outlast a short assembly, so where it ended up is only
   // known once that finishes.
-  section.addEventListener("animationend", measureCopy);
+  section.addEventListener("animationend", handleEntrance);
 
   // What is left of the hero behind the header is off screen. Links to the next section stop
   // with that much of it there, and the loop would run on under whatever that one is doing.
@@ -2723,8 +2837,52 @@ function createMosaic(
   });
   themeChange.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
+  const enter = () => {
+    if (phase !== "waiting" || entering) {
+      return;
+    }
+    entering = true;
+
+    // The promise also keeps the tween out of any GSAP context the caller is in.
+    // HeroIntro calls this from its own, and reverting that would kill the flight.
+    void Promise.all([image.decode(), document.fonts.ready])
+      .then(() => {
+        if (destroyed || phase !== "waiting") {
+          return;
+        }
+        ensureGrid();
+        if (prefersReducedMotion()) {
+          settle();
+        } else if (tiles?.count) {
+          prepareFlight(MOSAIC.assemble.quick);
+          createFlight();
+        }
+      })
+      .catch(() => {
+        // A broken image has nothing to sample, and its alt text is still there.
+      });
+  };
+
   return {
+    prepare() {
+      if (phase !== "waiting") {
+        return;
+      }
+      ensureGrid();
+      if (tiles?.count) {
+        prepareFlight(MOSAIC.assemble.intro);
+        prepared = true;
+      }
+    },
+
     assemble() {
+      if (!prepared || phase !== "assembling" || flight) {
+        return null;
+      }
+      return createFlight();
+    },
+
+    appear(duration) {
       if (phase !== "waiting") {
         return null;
       }
@@ -2732,32 +2890,19 @@ function createMosaic(
       if (!tiles?.count) {
         return null;
       }
-      return createFlight(lively ? MOSAIC.assemble.intro : MOSAIC.assemble.touch);
+      settle();
+      // From one level off nothing, so it is painted before it fades in and not as it does.
+      return gsap.fromTo(canvas, { opacity: 0.004 }, { opacity: 1, duration, ease: "none" });
     },
 
-    enter() {
-      if (phase !== "waiting" || entering) {
-        return;
-      }
-      entering = true;
+    enter,
 
-      // The promise also keeps the tween out of any GSAP context the caller is in.
-      // HeroIntro calls this from its own, and reverting that would kill the flight.
-      void Promise.all([image.decode(), document.fonts.ready])
-        .then(() => {
-          if (destroyed || phase !== "waiting") {
-            return;
-          }
-          ensureGrid();
-          if (prefersReducedMotion()) {
-            settle();
-          } else if (tiles?.count) {
-            createFlight(MOSAIC.assemble.quick);
-          }
-        })
-        .catch(() => {
-          // A broken image has nothing to sample, and its alt text is still there.
-        });
+    finish() {
+      if (phase === "assembling") {
+        settle();
+      } else {
+        enter();
+      }
     },
 
     retune(next) {
@@ -2770,16 +2915,16 @@ function createMosaic(
 
     destroy() {
       destroyed = true;
-      flight?.kill();
-      flightRenderer?.destroy();
+      endFlight();
       window.cancelAnimationFrame(frame);
       window.clearTimeout(resizeTimer);
-      section.removeEventListener("pointermove", handlePointerMove);
-      section.removeEventListener("pointerleave", handlePointerLeave);
-      name.removeEventListener("pointermove", handleNameMove);
-      name.removeEventListener("pointerleave", handleNameLeave);
+      stopTaps();
+      handleAimEnd();
+      section.removeEventListener("pointerdown", handlePress);
+      section.removeEventListener("pointermove", handleAim);
+      section.removeEventListener("pointerleave", handleAimEnd);
       document.removeEventListener("visibilitychange", syncLoop);
-      section.removeEventListener("animationend", measureCopy);
+      section.removeEventListener("animationend", handleEntrance);
       visibility.disconnect();
       resize.disconnect();
       themeChange.disconnect();
@@ -2793,38 +2938,39 @@ function createMosaic(
 
 // The only picture of the portrait there is: the real image stays in the DOM at
 // opacity 0, as the sampling source and for its alt text.
-export function MosaicPortrait({
-  ref,
-  imageRef,
-  boxRef,
-  sectionRef,
-  nameRef,
-}: MosaicPortraitProps) {
+export function MosaicPortrait({ ref, imageRef, boxRef, sectionRef }: MosaicPortraitProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const flightCanvasRef = useRef<HTMLCanvasElement>(null);
   const mosaicRef = useRef<Mosaic | null>(null);
 
   useImperativeHandle(
     ref,
     () => ({
+      prepare: () => mosaicRef.current?.prepare(),
       assemble: () => mosaicRef.current?.assemble() ?? null,
+      appear: (duration) => mosaicRef.current?.appear(duration) ?? null,
       enter: () => mosaicRef.current?.enter(),
+      finish: () => mosaicRef.current?.finish(),
     }),
     [],
   );
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const flightCanvas = flightCanvasRef.current;
     const image = imageRef.current;
     const box = boxRef.current;
     const section = sectionRef.current;
-    const name = nameRef.current;
-    if (!canvas || !flightCanvas || !image || !box || !section || !name) {
+    if (!canvas || !image || !box || !section) {
       return;
     }
 
-    const mosaic = createMosaic(canvas, flightCanvas, image, box, section, name);
+    let mosaic: Mosaic;
+    try {
+      mosaic = createMosaic(canvas, image, box, section);
+    } catch (error) {
+      // A browser without the canvas for it loses the portrait, and not the page with it.
+      console.error("[MosaicPortrait] The portrait could not be drawn.", error);
+      return;
+    }
     mosaicRef.current = mosaic;
 
     // While the head script's intro is playing, the intro decides when this starts.
@@ -2854,26 +3000,15 @@ export function MosaicPortrait({
       mosaic.destroy();
       mosaicRef.current = null;
     };
-  }, [imageRef, boxRef, sectionRef, nameRef]);
+  }, [imageRef, boxRef, sectionRef]);
 
   return (
-    <>
-      <canvas
-        ref={canvasRef}
-        aria-hidden="true"
-        width={0}
-        height={0}
-        className="absolute [image-rendering:pixelated]"
-      />
-      {/* Only for the second the tiles are in the air, then back to nothing. */}
-      <canvas
-        ref={flightCanvasRef}
-        aria-hidden="true"
-        hidden
-        width={0}
-        height={0}
-        className="absolute [image-rendering:pixelated]"
-      />
-    </>
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      width={0}
+      height={0}
+      className="pointer-events-none absolute touch-pan-y touch-pinch-zoom [image-rendering:pixelated]"
+    />
   );
 }

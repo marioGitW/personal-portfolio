@@ -73,7 +73,10 @@ function hide({ frame, fill, strokes, details, corners, items }: Parts) {
 function clear({ frame, fill, strokes, details, corners, items }: Parts) {
   gsap.set([frame, ...corners, ...items], { clearProps: "transform,opacity" });
   gsap.set([fill, ...details], { clearProps: "opacity" });
-  gsap.set(strokes, { clearProps: "strokeDasharray,strokeDashoffset" });
+  // Only an lg frame is drawn, and an empty list is a target GSAP says it couldn't find.
+  if (strokes.length > 0) {
+    gsap.set(strokes, { clearProps: "strokeDasharray,strokeDashoffset" });
+  }
 }
 
 function show(parts: Parts, delay: number) {

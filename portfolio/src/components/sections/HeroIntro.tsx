@@ -5,8 +5,9 @@ import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import type { MosaicPortraitHandle } from "@/components/sections/MosaicPortrait";
-import { HERO_NAME_CLASSES, markIntroPlayed } from "@/lib/intro";
+import { HERO_NAME_CLASSES, INTRO_DEADLINE_MS, markIntroPlayed } from "@/lib/intro";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+import { listenForTaps } from "@/lib/tap";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP, SplitText);
@@ -16,11 +17,19 @@ if (typeof window !== "undefined") {
 // offset from the start of its phase. The portrait's timing lives in MosaicPortrait.
 const INTRO = {
   word: "PORTFOLIO",
-  // Phase A: the wait for assets, before the timeline below starts. The word is measured
-  // in the real font, so past fontsMaxMs the intro is dropped rather than built on the
+  // Phase A: the wait for assets, before the timeline below starts. The word is measured in the
+  // real font, so without it by the deadline the intro is dropped rather than built on the
   // fallback's metrics. The image can arrive later, as the mosaic waits for it.
-  wait: { minMs: 400, maxMs: 2500, fontsMaxMs: 8000 },
-  breathe: { scaleX: 1.3, scaleY: 0.62, duration: 0.8, ease: "sine.inOut" },
+  wait: { minMs: 400, imageMaxMs: 1500, marginMs: 200 },
+  // A phone plays the same timeline in this share of the time.
+  compact: 0.85,
+  // Reduced motion, where nothing moves: the backdrop goes and the hero comes, in 0.55s.
+  still: {
+    fadeOut: { at: 0, duration: 0.25, ease: "none" },
+    fadeIn: { at: 0.15, duration: 0.4, ease: "none" },
+  },
+  // How long the timeline may stand still, or run over, before the hero is shown regardless.
+  stall: { maxMs: 1500, checkMs: 250 },
   // Where each phase starts on the master timeline.
   phases: { bang: 0, letters: 0.4, swap: 1.2, handoff: 1.8, reveal: 2.2 },
   // The dot's size in the stylesheet, which it is scaled from.
@@ -67,7 +76,24 @@ const INTRO = {
   },
 } as const;
 
-const SKIP_EVENTS = ["click", "keydown", "wheel", "touchstart"] as const;
+// A phone plays the intro shorter, and reduced motion a fade. Crossing from one to another part
+// way through ends it, since it was measured for the layout it started in.
+const VERSIONS = {
+  still: "(prefers-reduced-motion: reduce)",
+  compact: "(max-width: 767.98px)",
+  full: "(min-width: 768px)",
+};
+
+// Not touchstart: a finger on the screen is as often the start of a scroll, or nothing at all, as
+// a wish to skip, and a moving mouse skips nothing either. A tap is one, and is listened for. The
+// click is a mouse's, since a finger's follows a long press as well.
+const SKIP_EVENTS = ["click", "keydown", "wheel"] as const;
+
+// How long after a tap its click may come.
+const CLICK_AFTER_TAP_MS = 500;
+
+// What GSAP writes to the elements of the page itself.
+const TWEENED = ["opacity", "transform", "translate", "rotate", "scale"] as const;
 
 // Everything that decides how the name's glyphs look, read off the real line so the word
 // cannot drift from it.
@@ -151,6 +177,26 @@ type HeroIntroProps = {
 
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
+// Once what was just built has been painted: the second frame from here begins after the first
+// has been on screen. Returns what cancels it.
+function afterPaint(callback: () => void) {
+  let frame = window.requestAnimationFrame(() => {
+    frame = window.requestAnimationFrame(callback);
+  });
+  return () => window.cancelAnimationFrame(frame);
+}
+
+// The click that comes after a tap lands on whatever is there by then, and the intro it was meant
+// for no longer is.
+function dropNextClick() {
+  const drop = (event: Event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+  window.addEventListener("click", drop, { capture: true, once: true });
+  window.setTimeout(() => window.removeEventListener("click", drop, true), CLICK_AFTER_TAP_MS);
+}
+
 export function HeroIntro({ mosaicRef }: HeroIntroProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const floorRef = useRef<HTMLDivElement>(null);
@@ -161,12 +207,14 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
   const dotRef = useRef<HTMLSpanElement>(null);
 
   useGSAP(
-    (context, contextSafe) => {
-      const failsafe = window.__introFailsafe;
-      if (!failsafe) {
+    (context) => {
+      const headTimer = window.__introFailsafe;
+      if (!headTimer) {
         return;
       }
-      window.clearTimeout(failsafe);
+      // Taken over from the head script, whose timer knows nothing of what is set up below.
+      window.clearTimeout(headTimer);
+      const deadline = window.__introDeadline ?? performance.now() + INTRO_DEADLINE_MS;
 
       const html = document.documentElement;
       // React's dev-only Strict Mode remount strips the attribute off <html>. A
@@ -193,15 +241,28 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
       const tagline = part("tagline");
       const cta = part("cta");
       const portrait = section?.querySelector<HTMLImageElement>("[data-intro-portrait]") ?? null;
+      const shown = Array.from(section?.querySelectorAll<HTMLElement>("[data-intro-hide]") ?? []);
+      // Outside the hero: the header, and the social rail when there is one.
+      const chrome = Array.from(document.querySelectorAll<HTMLElement>("[data-intro-chrome]"));
 
       let timeline: gsap.core.Timeline | null = null;
+      let started = false;
       let finished = false;
       let unmounted = false;
+      let startWidth = 0;
+      let failsafe = 0;
+      let watchdog = 0;
       let revertFrame = 0;
+      let stopTaps = () => {};
 
-      const removeListeners = () => {
-        SKIP_EVENTS.forEach((type) => window.removeEventListener(type, skip, true));
+      const stopWatching = () => {
+        window.clearTimeout(failsafe);
+        window.clearInterval(watchdog);
+        SKIP_EVENTS.forEach((type) => window.removeEventListener(type, handleSkip, true));
+        window.removeEventListener("pointerdown", notePointer, true);
+        stopTaps();
         window.removeEventListener("resize", handleResize);
+        window.removeEventListener("error", handleError);
       };
 
       const finish = () => {
@@ -210,39 +271,78 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         }
         finished = true;
         window.__introFailsafe = 0;
-        removeListeners();
+        stopWatching();
         markIntroPlayed();
         unlockScroll();
-        // Only does anything if the timeline never got to assemble the portrait: a skip
-        // during the wait, or an image that had not loaded by the time it was built.
-        mosaicRef.current?.enter();
         // The attribute first, so the CSS hide never outlives GSAP's inline values.
         // Everything is at its final value by now and the revert only takes those
         // inline styles away.
         html.setAttribute("data-intro", "done");
-        revertFrame = window.requestAnimationFrame(() => {
+        // Only does anything if the timeline never got to assemble the portrait, or not to the
+        // end of it: a skip during the wait, an image that had not loaded by the time it was
+        // built, or a failure part way.
+        try {
+          mosaicRef.current?.finish();
+        } catch (error) {
+          console.error("[HeroIntro] The portrait could not be shown.", error);
+        }
+        revertFrame = window.requestAnimationFrame(tidy);
+      };
+
+      const tidy = () => {
+        window.cancelAnimationFrame(revertFrame);
+        try {
           context.revert();
-          // SplitText's revert puts the intro word back.
-          wordRef.current?.replaceChildren();
-        });
+        } catch (error) {
+          console.error("[HeroIntro] Not everything could be put back.", error);
+        }
+        // The revert has done this, unless it didn't get that far.
+        for (const element of [...shown, ...chrome]) {
+          TWEENED.forEach((property) => element.style.removeProperty(property));
+        }
+        // SplitText's revert puts the intro word back.
+        wordRef.current?.replaceChildren();
+      };
+
+      // At once, and not a frame later: there may not be another.
+      const fail = (error: unknown) => {
+        if (!finished) {
+          console.error("[HeroIntro] Dropped for the finished hero.", error);
+          finish();
+          tidy();
+        }
       };
 
       const skip = () => {
-        if (timeline) {
-          timeline.progress(1);
-        } else {
+        try {
+          timeline?.progress(1);
+        } finally {
           finish();
         }
       };
 
-      // The landing spots were measured for this width, so don't play on past it.
-      const startWidth = window.innerWidth;
-      const handleResize = () => {
-        if (word && lineTwo) {
-          copyStyles(lineTwo, word);
-        }
-        if (window.innerWidth !== startWidth) {
+      let fingers = false;
+      const notePointer = (event: PointerEvent) => {
+        fingers = event.pointerType !== "mouse";
+      };
+      const handleSkip = (event: Event) => {
+        if (event.type !== "click" || !fingers) {
           skip();
+        }
+      };
+
+      // The landing spots were measured for this width, so don't play on past it. Before they
+      // are, any width will do.
+      const handleResize = () => {
+        if (startWidth > 0 && root && root.clientWidth !== startWidth) {
+          skip();
+        }
+      };
+
+      // This site's own scripts alone: what an in-app browser injects throws all day.
+      const handleError = (event: ErrorEvent) => {
+        if (event.filename.includes("/_next/")) {
+          fail(event.error);
         }
       };
 
@@ -266,23 +366,18 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         return;
       }
 
+      failsafe = window.setTimeout(finish, Math.max(deadline - performance.now(), 0));
       SKIP_EVENTS.forEach((type) =>
-        window.addEventListener(type, skip, { capture: true, passive: true }),
+        window.addEventListener(type, handleSkip, { capture: true, passive: true }),
       );
-      window.addEventListener("resize", handleResize);
-      lockScroll();
-
-      // The dot's resting ellipse is in the stylesheet, so it is already on screen
-      // before this runs.
-      const { breathe } = INTRO;
-      const breathing = gsap.to(dot, {
-        scaleX: breathe.scaleX,
-        scaleY: breathe.scaleY,
-        duration: breathe.duration,
-        ease: breathe.ease,
-        repeat: -1,
-        yoyo: true,
+      window.addEventListener("pointerdown", notePointer, { capture: true, passive: true });
+      stopTaps = listenForTaps(window, () => {
+        dropNextClick();
+        skip();
       });
+      window.addEventListener("resize", handleResize);
+      window.addEventListener("error", handleError);
+      lockScroll();
 
       const buildTimeline = () => {
         // A one-word title has no second line to land on.
@@ -404,7 +499,7 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         const finalRestX = finalRight + ball - centerX;
 
         const { phases, bang, letters, swap, handoff, reveal } = INTRO;
-        const tl = gsap.timeline({ onComplete: finish });
+        const tl = gsap.timeline({ paused: true, onComplete: finish });
         (Object.keys(phases) as (keyof typeof phases)[]).forEach((label) =>
           tl.addLabel(label, phases[label]),
         );
@@ -694,7 +789,7 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
 
         tl.fromTo(
           // Reversed: the social rail comes first in the DOM, the navbar leads here.
-          [tagline, cta, ...[...document.querySelectorAll("[data-intro-chrome]")].reverse()],
+          [tagline, cta, ...[...chrome].reverse()],
           { opacity: 0, y: reveal.copy.y },
           {
             opacity: 1,
@@ -710,36 +805,144 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         return tl;
       };
 
-      const play = contextSafe!(() => {
-        if (finished || unmounted) {
+      // Reduced motion: the backdrop fades off and the finished hero, portrait and all, fades in.
+      const buildFade = () => {
+        const { fadeOut, fadeIn } = INTRO.still;
+        const tl = gsap.timeline({ paused: true, onComplete: finish });
+        tl.to(
+          [floor, root],
+          { opacity: 0, duration: fadeOut.duration, ease: fadeOut.ease },
+          fadeOut.at,
+        ).fromTo(
+          [...shown, ...chrome],
+          { opacity: 0 },
+          { opacity: 1, duration: fadeIn.duration, ease: fadeIn.ease, immediateRender: false },
+          fadeIn.at,
+        );
+
+        const portraitFade = mosaicRef.current?.appear(fadeIn.duration) ?? null;
+        if (portraitFade) {
+          tl.add(portraitFade, fadeIn.at);
+        }
+        return tl;
+      };
+
+      // GSAP's clock only moves with its frames, so this one is the browser's.
+      const watch = (tl: gsap.core.Timeline) => {
+        const { maxMs, checkMs } = INTRO.stall;
+        const endBy = performance.now() + (tl.duration() / tl.timeScale()) * 1000 + maxMs;
+        let time = -1;
+        let movedAt = performance.now();
+        watchdog = window.setInterval(() => {
+          const now = performance.now();
+          // A hidden tab has no frames, and has caught up by the first it is shown in.
+          if (document.hidden || tl.time() !== time) {
+            time = tl.time();
+            movedAt = now;
+          }
+          if (now - movedAt > maxMs || (now > endBy && !document.hidden)) {
+            fail(new Error(`The timeline stopped at ${time.toFixed(2)}s`));
+          }
+        }, checkMs);
+      };
+
+      const ready = (minMs: number) => {
+        const left = Math.max(deadline - performance.now() - INTRO.wait.marginMs, 0);
+        const fonts = Promise.allSettled([
+          document.fonts.load(fontOf(lineTwo), lineTwo.textContent ?? ""),
+          document.fonts.ready,
+        ]);
+        return Promise.all([
+          wait(Math.min(minMs, left)),
+          Promise.race([fonts, wait(left)]),
+          Promise.race([
+            Promise.allSettled([portrait.decode()]),
+            wait(Math.min(INTRO.wait.imageMaxMs, left)),
+          ]),
+        ]);
+      };
+
+      // Nothing else catches what a promise or a frame throws.
+      const attempt = (step: () => void) => {
+        try {
+          step();
+        } catch (error) {
+          fail(error);
+        }
+      };
+
+      gsap.matchMedia().add(VERSIONS, (version) => {
+        if (finished || started) {
+          finish();
           return;
         }
 
-        breathing.kill();
-        // A session that has somehow already scrolled has no hero in view to land on.
-        timeline =
-          window.scrollY > 0 || !document.fonts.check(fontOf(lineTwo)) ? null : buildTimeline();
-        if (timeline) {
-          markIntroPlayed();
-        } else {
-          finish();
-        }
-      });
+        const { still, compact } = version.conditions as Record<keyof typeof VERSIONS, boolean>;
+        let cancelled = false;
+        let cancelPaint = () => {};
 
-      const fonts = Promise.allSettled([
-        document.fonts.load(fontOf(lineTwo), lineTwo.textContent ?? ""),
-        document.fonts.ready,
-      ]);
-      void Promise.all([
-        wait(INTRO.wait.minMs),
-        Promise.race([fonts, wait(INTRO.wait.fontsMaxMs)]),
-        Promise.race([Promise.allSettled([portrait.decode()]), wait(INTRO.wait.maxMs)]),
-      ]).then(play);
+        const play = () => {
+          if (cancelled || finished || unmounted || !timeline) {
+            return;
+          }
+
+          started = true;
+          window.clearTimeout(failsafe);
+          // Where the stylesheet's breathing has got to, for the timeline to go on from.
+          const { a, d } = new DOMMatrixReadOnly(getComputedStyle(dot).transform);
+          dot.style.animation = "none";
+          version.add(() => {
+            gsap.set(dot, { scaleX: a, scaleY: d });
+          });
+          markIntroPlayed();
+          timeline.play();
+          watch(timeline);
+        };
+
+        const build = () => {
+          if (cancelled || finished || unmounted) {
+            return;
+          }
+
+          // A session that has somehow already scrolled has no hero in view to land on.
+          if (window.scrollY > 0 || !document.fonts.check(fontOf(lineTwo))) {
+            finish();
+            return;
+          }
+
+          // Everything slow, the tiles above all, and then a frame to paint it in, before the
+          // clock starts. It counts every millisecond the page is busy, so whatever is done after
+          // that is so much of the intro that nobody sees.
+          if (!still) {
+            mosaicRef.current?.prepare();
+          }
+          startWidth = root.clientWidth;
+          version.add(() => {
+            timeline = still ? buildFade() : buildTimeline();
+          });
+          if (!timeline) {
+            finish();
+            return;
+          }
+          if (compact && !still) {
+            timeline.timeScale(1 / INTRO.compact);
+          }
+          cancelPaint = afterPaint(() => attempt(play));
+        };
+
+        void ready(still ? 0 : INTRO.wait.minMs).then(() => attempt(build), fail);
+
+        return () => {
+          cancelled = true;
+          cancelPaint();
+          dot.style.animation = "";
+        };
+      });
 
       return () => {
         unmounted = true;
         window.cancelAnimationFrame(revertFrame);
-        removeListeners();
+        stopWatching();
         if (!finished) {
           unlockScroll();
           html.setAttribute("data-intro", "done");
