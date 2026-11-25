@@ -4,11 +4,8 @@ import { useEffect, useImperativeHandle, useRef, type Ref, type RefObject } from
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/animations";
 
-type ColorMode = "palette" | "photo";
-
 // Every number behind the mosaic. Lengths are CSS pixels and times are seconds.
 const MOSAIC = {
-  colorMode: "palette" as ColorMode,
   // Converted to whole device pixels when the grid is built, so a tile is the same
   // size everywhere on the portrait at any display scale.
   tileSize: 3,
@@ -102,7 +99,6 @@ const MOSAIC = {
     accentScale: 1,
   },
   color: {
-    photoSaturation: 0.85,
     // "at" is the tone of a tile, from shadow (0) to highlight (1), and the ramp between stops
     // runs through OKLab, where the mid-tones don't go grey. A stop's alpha lays it over the page.
     // Dark theme only: the light one is ink alone, see tone.light.
@@ -269,7 +265,6 @@ function createTiles(count: number) {
     // Off its cached image: displaced, parted or both, and drawn every frame.
     active: flags(),
     colorIndex: flags(),
-    rgb: new Uint8ClampedArray(count * 3),
     // Tile indexes grouped by colour, the order they are drawn in.
     order: new Uint16Array(count),
     activeList: new Uint16Array(count),
@@ -1328,56 +1323,6 @@ function readPalette() {
   };
 }
 
-// Median cut: keeps halving whichever group of colours spans the widest channel range.
-function quantize(rgb: Uint8ClampedArray, count: number, buckets: number) {
-  const groups = [Array.from({ length: count }, (_, index) => index)];
-
-  while (groups.length < buckets) {
-    let widest = -1;
-    let widestChannel = 0;
-    let widestRange = 0;
-    groups.forEach((group, groupIndex) => {
-      for (let channel = 0; channel < 3; channel++) {
-        let min = 255;
-        let max = 0;
-        for (const tile of group) {
-          min = Math.min(min, rgb[tile * 3 + channel]);
-          max = Math.max(max, rgb[tile * 3 + channel]);
-        }
-        if (group.length > 1 && max - min > widestRange) {
-          widest = groupIndex;
-          widestChannel = channel;
-          widestRange = max - min;
-        }
-      }
-    });
-    if (widest < 0) {
-      break;
-    }
-
-    const sorted = groups[widest].sort(
-      (a, b) => rgb[a * 3 + widestChannel] - rgb[b * 3 + widestChannel],
-    );
-    const middle = sorted.length >> 1;
-    groups.splice(widest, 1, sorted.slice(0, middle), sorted.slice(middle));
-  }
-
-  const assigned = new Uint8Array(count);
-  const colors = groups.map((group, groupIndex): Rgb => {
-    const sum = [0, 0, 0];
-    for (const tile of group) {
-      assigned[tile] = groupIndex;
-      sum[0] += rgb[tile * 3];
-      sum[1] += rgb[tile * 3 + 1];
-      sum[2] += rgb[tile * 3 + 2];
-    }
-    const size = group.length || 1;
-    return [sum[0] / size, sum[1] / size, sum[2] / size];
-  });
-
-  return { assigned, colors };
-}
-
 // ?mosaicDebug=detail|regions|tone in development: what the pipeline decided, on the grid.
 function paintDebugLayer(
   mode: string,
@@ -1710,26 +1655,15 @@ function createMosaic(
       return;
     }
 
-    const { count, tone, jitter, rgb, order, accent, colorIndex } = tiles;
+    const { count, tone, jitter, order, accent, colorIndex } = tiles;
     const { levels } = tuning.tone;
-    let base: Rgb[];
 
-    if (MOSAIC.colorMode === "photo") {
-      const jittered = new Uint8ClampedArray(count * 3);
-      for (let index = 0; index < count * 3; index++) {
-        jittered[index] = rgb[index] * (1 + jitter[Math.floor(index / 3)]);
-      }
-      const quantized = quantize(jittered, count, levels);
-      colorIndex.set(quantized.assigned);
-      base = quantized.colors;
-    } else {
-      base = Array.from({ length: levels }, (_, level) =>
-        rampColor(palette.stops, (level + 0.5) / levels),
-      );
-      for (let tile = 0; tile < count; tile++) {
-        const jittered = tone[tile] * (1 + jitter[tile]);
-        colorIndex[tile] = Math.min(Math.max(Math.floor(jittered * levels), 0), levels - 1);
-      }
+    const base = Array.from({ length: levels }, (_, level) =>
+      rampColor(palette.stops, (level + 0.5) / levels),
+    );
+    for (let tile = 0; tile < count; tile++) {
+      const jittered = tone[tile] * (1 + jitter[tile]);
+      colorIndex[tile] = Math.min(Math.max(Math.floor(jittered * levels), 0), levels - 1);
     }
 
     baseCount = base.length;
@@ -1785,11 +1719,9 @@ function createMosaic(
     }
 
     const { grid, classified } = figureGrid;
-    const { columns, rows, brightness, red, green, blue } = grid;
+    const { columns, rows } = grid;
     const { tone, accent } = look;
-    const { rgb } = tiles;
     const { jitter: grain, bottomFade, light } = tuning.tone;
-    const { photoSaturation } = MOSAIC.color;
     const curve = filmicCurve(light.printContrast);
     const fadeFrom = palette.print ? light.fadeFrom : MOSAIC.fadeFrom;
     const accented: number[] = [];
@@ -1834,14 +1766,6 @@ function createMosaic(
         tiles.shrink[tile] = 1 - (1 - bottomFade.minScale) * fading;
         tiles.fade[tile] = 1 - smoothstep(0.35, 1, fading);
       }
-
-      // The photo's colour at the enhanced brightness.
-      const lift = brightness[cell] > 0 ? tone.tone[cell] / brightness[cell] : 1;
-      const curved = [red[cell] * lift, green[cell] * lift, blue[cell] * lift];
-      const grey = luminance(curved[0], curved[1], curved[2]);
-      curved.forEach((channel, index) => {
-        rgb[tile * 3 + index] = grey + (channel - grey) * photoSaturation;
-      });
     }
 
     accentTiles = Uint16Array.from(accented);
