@@ -205,7 +205,7 @@ export function About({ about }: AboutProps) {
   }, []);
 
   return (
-    <section id="about" aria-labelledby="about-title" className="section-shell">
+    <section id="about" aria-labelledby="about-title" className="section-shell about-section">
       <div
         ref={rowRef}
         className="about-row relative flex flex-col lg:flex-row lg:items-end lg:justify-center"
@@ -218,7 +218,7 @@ export function About({ about }: AboutProps) {
           onPointerLeave={(event: PointerEvent) => handlePanelHover(event, false)}
           className="about-panel z-10 w-full lg:shrink-0"
         >
-          <div className="relative px-6 py-8 text-center sm:px-10 sm:py-10 lg:px-[42px] lg:pt-8 lg:pb-[34px] lg:text-left">
+          <div className="relative px-6 py-10 text-center sm:px-10 sm:py-12 lg:px-[42px] lg:py-11 lg:text-left">
             <div data-about-item className="flex items-center justify-between">
               <HudLabel>{eyebrow}</HudLabel>
             </div>

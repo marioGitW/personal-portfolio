@@ -144,9 +144,9 @@ export function Header({
       return;
     }
     const x = label.getBoundingClientRect().left - list.getBoundingClientRect().left;
-    const scale = label.offsetWidth / indicator.offsetWidth;
-    indicator.style.transitionDuration = slide ? "" : "0s";
-    indicator.style.transform = `translateX(${x}px) scaleX(${scale})`;
+    indicator.toggleAttribute("data-slides", slide);
+    indicator.style.setProperty("--x", `${x}px`);
+    indicator.style.setProperty("--w", `${label.offsetWidth}`);
   }, []);
 
   useLayoutEffect(() => {
@@ -227,7 +227,13 @@ export function Header({
                 homepage has a section to be under. */}
             {isHome && (
               <li aria-hidden="true">
-                <span ref={indicatorRef} className="nav-indicator" />
+                <span ref={indicatorRef} className="nav-indicator">
+                  <span className="nav-indicator-node" />
+                  <span className="nav-indicator-line" />
+                  <svg className="nav-indicator-hook" width={10} height={10}>
+                    <path d="M-1 9H1L9 1" />
+                  </svg>
+                </span>
               </li>
             )}
           </ul>

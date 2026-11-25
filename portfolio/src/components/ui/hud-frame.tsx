@@ -6,10 +6,10 @@ type OwnProps<T extends ElementType> = {
   as?: T;
   size: HudSize;
   /**
-   * Reacts to the pointer and to keyboard focus. md and sm only. "segment" is an md with its
-   * accent there at rest, which growing it is all it does.
+   * Reacts to the pointer and to keyboard focus. md and sm only. "lock" is an md for a picture:
+   * its accent is there at rest, and the whole frame opens up around it.
    */
-  interactive?: boolean | "segment";
+  interactive?: boolean | "lock";
   /** Comes in with useHudReveal, from the section it is in. */
   reveal?: boolean;
   /** lg only: where its chamfer goes from 16px to 24px. Must match --hud-cut. */
@@ -58,7 +58,8 @@ export function HudFrame<T extends ElementType = "div">({
 }: HudFrameProps<T>) {
   const Tag: ElementType = as ?? "div";
   const live = interactive === true;
-  const reaction = live ? "hud-live " : interactive ? "hud-quiet " : "";
+  const locks = interactive === "lock";
+  const reaction = live ? "hud-live " : locks ? "hud-lock " : "";
 
   return (
     <Tag
@@ -81,6 +82,7 @@ export function HudFrame<T extends ElementType = "div">({
           <span aria-hidden="true" data-hud-corner className="hud-corner hud-corner-tr" />
           <span aria-hidden="true" data-hud-corner className="hud-corner hud-corner-bl" />
           {interactive && <span aria-hidden="true" className="hud-accent" />}
+          {locks && <span aria-hidden="true" className="hud-chamfer" />}
         </>
       )}
       {children}

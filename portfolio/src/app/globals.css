@@ -387,18 +387,54 @@ html[data-intro="pending"] .hero-intro {
   background-color: color-mix(in srgb, var(--background) 92%, transparent);
 }
 
-/* Placed and scaled from the link it is under, which its width is only a unit for. */
+/* Under the active link: a node, a line, and the frames' chamfer at the end of it. --x and --w
+   are the link's, and each part goes to its own place along them, so that only the line is ever
+   stretched. Ease and time are the same for all three, which keeps them joined on the way. */
 .nav-indicator {
+  --w: 0;
   position: absolute;
-  bottom: 4px;
+  bottom: 5px;
   left: 0;
+  pointer-events: none;
+}
+
+.nav-indicator:not([style]) {
+  visibility: hidden;
+}
+
+.nav-indicator > * {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.nav-indicator[data-slides] > * {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-indicator-node {
+  bottom: -1px;
+  width: 4px;
+  height: 4px;
+  background-color: var(--foreground);
+  transform: translateX(var(--x));
+}
+
+/* Its width is only a unit. */
+.nav-indicator-line {
   width: 100px;
   height: 2px;
   background-color: var(--accent);
-  transform: scaleX(0);
+  transform: translateX(calc(var(--x) + 8px)) scaleX(calc((var(--w) - 8) / 100));
   transform-origin: 0 50%;
-  transition: transform 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
-  pointer-events: none;
+}
+
+.nav-indicator-hook {
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  transform: translateX(calc(var(--x) + var(--w) * 1px));
 }
 
 /* Behind the bar and in front of the page. */
@@ -457,7 +493,7 @@ html[data-intro="pending"] .hero-intro {
 
 @media (prefers-reduced-motion: reduce) {
   .site-header,
-  .nav-indicator,
+  .nav-indicator[data-slides] > *,
   .site-menu,
   .site-menu-backdrop,
   [data-open] .site-menu-item {
@@ -472,11 +508,39 @@ html[data-intro="pending"] .hero-intro {
 
 /* The About section (About.tsx): a hologram beside a HUD panel. The figure, its portal and
    everything that moves on them are drawn by components/about/hologram.ts. */
+
+/* More room above and below it than the other sections have, and more of it on a taller screen.
+   A link to it stops where the row is in the middle of what the header leaves, as the top of the
+   section is mostly room. */
+.about-section {
+  --about-space: clamp(3.5rem, 10svh, 6rem);
+  padding-block: var(--about-space);
+}
+
+@media (min-width: 48rem) {
+  .about-section {
+    --about-space: clamp(4rem, 13svh, 10rem);
+  }
+}
+
+@media (min-width: 64rem) {
+  .about-section {
+    --about-space: clamp(8rem, 17svh, 12rem);
+  }
+
+  main .about-section[id] {
+    scroll-margin-top: calc(
+      var(--header-height) + max(2rem, (100svh - var(--header-height) - 42rem) / 2) -
+        var(--about-space)
+    );
+  }
+}
+
 .about-stage {
   position: relative;
   flex: none;
   width: 100%;
-  margin-top: 2rem;
+  margin-top: 3rem;
   /* 1.22 figures: the room over his head, him, and the portal under his soles. hologramLayout()
      is this backwards, and the canvas is exactly this box. */
   height: 360px;
@@ -744,7 +808,7 @@ html[data-intro="pending"] .hero-intro {
   }
 
   .hud-live,
-  .hud-quiet {
+  .hud-lock {
     /* Clear of the header and of the viewport's edges, focus ring and all, when it is tabbed to. */
     scroll-margin: calc(var(--header-height) + 1.5rem) 1rem 1rem;
   }
@@ -759,7 +823,7 @@ html[data-intro="pending"] .hero-intro {
   }
 
   .hud-live:focus-visible,
-  .hud-quiet:focus-visible {
+  .hud-lock:focus-visible {
     outline: 2px solid var(--link);
     outline-offset: 2px;
   }
@@ -768,21 +832,102 @@ html[data-intro="pending"] .hero-intro {
     --hud-on: 1;
   }
 
-  /* Its accent is there at rest, and growing is all it does. */
-  .hud-quiet .hud-accent {
-    width: 28px;
-    scale: none;
-    transition: transform 0.25s ease-out;
+  /* A picture's frame opens up around it: the brackets reach further and step away, and the
+     accent answers itself across the other diagonal. --lock is 1 while it has, and the parts
+     follow the frame a little later the further out they are. */
+  .hud-lock {
+    --lock: 0;
+    --lock-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    scale: calc(1 + 0.02 * var(--lock) * var(--hud-move));
+    transition: scale 0.4s var(--lock-ease);
   }
 
-  .hud-quiet:focus-visible .hud-accent {
-    transform: scaleX(3);
+  .hud-lock:focus-visible {
+    --lock: 1;
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .hud-quiet:hover .hud-accent {
-      transform: scaleX(3);
+    .hud-lock:hover {
+      --lock: 1;
     }
+  }
+
+  .hud-lock .hud-accent {
+    width: 28px;
+    scale: none;
+    transform: scaleX(calc(1 + 2 * var(--lock)));
+    transition: transform 0.3s var(--lock-ease);
+  }
+
+  /* Over the cut at the bottom right, drawn out from the middle of it. */
+  .hud-chamfer {
+    --length: calc(var(--hud-cut) * 1.4142);
+    position: absolute;
+    right: calc((var(--hud-cut) - var(--length)) / 2);
+    bottom: calc(var(--hud-cut) / 2 - 1.25px);
+    z-index: 1;
+    width: var(--length);
+    height: 2.5px;
+    background-color: var(--accent);
+    opacity: var(--lock);
+    rotate: -45deg;
+    scale: var(--lock) 1;
+    transition:
+      scale 0.35s var(--lock-ease) 0.05s,
+      opacity 0.15s ease-out 0.05s;
+    pointer-events: none;
+  }
+
+  /* Two arms each rather than a border, which would get thicker as it got longer. */
+  .hud-lock .hud-corner {
+    --reach: calc(var(--lock) * var(--hud-move));
+    border-width: 0;
+    scale: none;
+    transition: translate 0.4s var(--lock-ease) 0.03s;
+  }
+
+  .hud-lock .hud-corner::before,
+  .hud-lock .hud-corner::after {
+    content: "";
+    position: absolute;
+    inset: auto;
+    border: 0;
+    background-color: var(--foreground);
+    opacity: 1;
+    transform-origin: inherit;
+    transition: scale 0.4s var(--lock-ease) 0.03s;
+  }
+
+  .hud-lock .hud-corner::before {
+    width: 20px;
+    height: 2px;
+    scale: calc(1 + 0.6 * var(--reach)) 1;
+  }
+
+  .hud-lock .hud-corner::after {
+    width: 2px;
+    height: 20px;
+    scale: 1 calc(1 + 0.6 * var(--reach));
+  }
+
+  .hud-lock .hud-corner-tr {
+    translate: calc(var(--reach) * 2px) calc(var(--reach) * -2px);
+  }
+
+  .hud-lock .hud-corner-tr::before,
+  .hud-lock .hud-corner-tr::after {
+    top: 0;
+    right: 0;
+  }
+
+  .hud-lock .hud-corner-bl {
+    translate: calc(var(--reach) * -2px) calc(var(--reach) * 2px);
+  }
+
+  .hud-lock .hud-corner-bl::before,
+  .hud-lock .hud-corner-bl::after {
+    bottom: 0;
+    left: 0;
   }
 
   .hud-solid:focus-visible {
@@ -828,7 +973,12 @@ html[data-intro="pending"] .hero-intro {
       --hud-time: 0s;
     }
 
-    .hud-quiet .hud-accent {
+    .hud-lock,
+    .hud-lock .hud-accent,
+    .hud-lock .hud-corner,
+    .hud-lock .hud-corner::before,
+    .hud-lock .hud-corner::after,
+    .hud-chamfer {
       transition: none;
     }
   }

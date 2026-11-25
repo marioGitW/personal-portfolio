@@ -87,7 +87,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       <HudFrame
         as={Link}
         size="md"
-        interactive="segment"
+        interactive="lock"
         reveal
         href={projectPath(slug)}
         prefetch={false}
@@ -109,7 +109,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       as="button"
       type="button"
       size="md"
-      interactive="segment"
+      interactive="lock"
       reveal
       onClick={() => onOpen(project)}
       className={cardClasses}

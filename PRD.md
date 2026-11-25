@@ -96,7 +96,7 @@ Rendered in order by `src/app/page.tsx`:
 7. **Activity counter** — site visits and a one-per-session like button
 8. **Footer** — logo, tagline, social icons, copyright
 
-Persistent chrome: sticky header with a sliding indicator under the active section, a full-width menu panel on phones, a fixed social
+Persistent chrome: sticky header with a chamfered line that slides under the active section, a full-width menu panel on phones, a fixed social
 sidebar (`xl` and a mouse), and a hero intro that plays once per session (dot, "!", PORTFOLIO,
 SPASOVSKI, then a handoff into the real hero). Any input skips it, and later loads get a
 short entrance instead. The native cursor stays everywhere, and nothing follows it.
@@ -130,8 +130,8 @@ tap, and reduced motion gets a still figure with a 300ms fade.
 Every box on the site is a `HudFrame` (`components/ui/hud-frame.tsx`): chamfered top left and
 bottom right, bracketed at the other two corners. `lg` is the drawn one (About, the contact
 form, the activity card), and the only one with pink, texture and ticks at rest. `md` is the
-cards, dialogs and pictures, where pink is for hover and focus (project cards have their segment
-at rest, and growing it is their only hover). `sm` is buttons, tiles, tags and
+cards, dialogs and pictures, where pink is for hover and focus (a project card has its segment
+at rest; on hover it grows 2%, its brackets open, and the pink answers across the other diagonal). `sm` is buttons, tiles, tags and
 icon squares. `md` and `sm` are CSS alone, with the clip-path on their pseudo-elements so a focus
 ring is never cut. Hover needs a fine pointer, keyboard focus gets the same state, and only
 transform and opacity animate. `useHudReveal` brings the frames of a section in once as they
