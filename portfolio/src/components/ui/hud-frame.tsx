@@ -79,6 +79,7 @@ export function HudFrame<T extends ElementType = "div">({
         </>
       )}
       {children}
+      {size === "lg" && <HudBrackets />}
     </Tag>
   );
 }
@@ -125,35 +126,15 @@ function HudLines({ cut, className }: { cut: number; className: string }) {
         />
       </svg>
 
-      <svg x="100%" className="overflow-visible">
-        <path
-          data-hud-stroke
-          pathLength={1}
-          className="hud-edge hud-bracket"
-          d={`M${-BRACKET} 0H0V${BRACKET}`}
-        />
-      </svg>
-      <svg y="100%" className="overflow-visible">
-        <path
-          data-hud-stroke
-          pathLength={1}
-          className="hud-edge hud-bracket"
-          d={`M0 ${-BRACKET}V0H${BRACKET}`}
-        />
-      </svg>
-
-      {/* Its own origin, so growing it is a scale from its left end. */}
-      <svg x={cut + SEGMENT.gap} className="overflow-visible">
-        <line
-          data-hud-stroke
-          pathLength={1}
-          className="hud-segment"
-          x1={0}
-          y1={0}
-          x2={SEGMENT.length}
-          y2={0}
-        />
-      </svg>
+      <line
+        data-hud-stroke
+        pathLength={1}
+        className="hud-segment"
+        x1={cut + SEGMENT.gap}
+        y1={0}
+        x2={cut + SEGMENT.gap + SEGMENT.length}
+        y2={0}
+      />
 
       <g data-hud-detail className="hud-ticks">
         <svg x="100%" y="100%" className="overflow-visible">
@@ -170,6 +151,32 @@ function HudLines({ cut, className }: { cut: number; className: string }) {
         </svg>
       </g>
     </svg>
+  );
+}
+
+/**
+ * The brackets at a panel's two square corners. hot is the same two in the accent, to fade in
+ * over them. They come after what is in the panel: the About one's are layers of their own, and
+ * text over a layer loses its subpixel antialiasing.
+ */
+export function HudBrackets({ hot = false }: { hot?: boolean }) {
+  const look = `hud-frame hud-bracket ${hot ? "hud-bracket-hot " : ""}pointer-events-none absolute overflow-visible`;
+  const stroke = hot ? {} : { "data-hud-stroke": true, pathLength: 1 };
+
+  return (
+    <>
+      <svg aria-hidden="true" width={BRACKET} height={BRACKET} className={`${look} top-0 right-0`}>
+        <path className="hud-edge" d={`M0 0H${BRACKET}V${BRACKET}`} {...stroke} />
+      </svg>
+      <svg
+        aria-hidden="true"
+        width={BRACKET}
+        height={BRACKET}
+        className={`${look} bottom-0 left-0`}
+      >
+        <path className="hud-edge" d={`M0 0V${BRACKET}H${BRACKET}`} {...stroke} />
+      </svg>
+    </>
   );
 }
 

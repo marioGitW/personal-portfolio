@@ -10,11 +10,17 @@ type HologramCharacterProps = {
   stageRef: RefObject<HTMLDivElement | null>;
   /** Must be stable: a new one rebuilds the hologram. */
   onActiveChange: (active: boolean) => void;
+  className?: string;
 };
 
 // The figure is never in the page as an image: the canvas is all there is of it. The stage
 // has its full size before anything is drawn, so nothing moves when it is.
-export function HologramCharacter({ ref, stageRef, onActiveChange }: HologramCharacterProps) {
+export function HologramCharacter({
+  ref,
+  stageRef,
+  onActiveChange,
+  className = "",
+}: HologramCharacterProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hologramRef = useRef<Hologram | null>(null);
 
@@ -37,8 +43,7 @@ export function HologramCharacter({ ref, stageRef, onActiveChange }: HologramCha
   useImperativeHandle(
     ref,
     () => ({
-      enter: () => hologramRef.current?.enter(),
-      leave: () => hologramRef.current?.leave(),
+      hoverPanel: (over) => hologramRef.current?.hoverPanel(over),
       scan: () => hologramRef.current?.scan(),
       ready: () => hologramRef.current?.ready() ?? Promise.resolve(),
       reveal: (timeline) => hologramRef.current?.reveal(timeline),
@@ -49,12 +54,12 @@ export function HologramCharacter({ ref, stageRef, onActiveChange }: HologramCha
   );
 
   return (
-    <div ref={stageRef} data-about-stage className="about-stage">
+    <div ref={stageRef} data-about-stage className={`about-stage ${className}`.trim()}>
       <canvas
         ref={canvasRef}
         role="img"
         aria-label="Halftone hologram illustration of Mario"
-        className="pointer-events-none absolute"
+        className="pointer-events-none absolute top-0 left-0"
       />
     </div>
   );

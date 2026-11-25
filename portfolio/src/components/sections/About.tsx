@@ -1,13 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, type PointerEvent } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { HologramCharacter, type HologramHandle } from "@/components/about/HologramCharacter";
 import { HudConnector } from "@/components/about/HudConnector";
 import { REVEAL } from "@/components/about/hologram";
-import { HudFrame, HudLabel, HudTag, HudTagRule } from "@/components/ui/hud-frame";
-import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
+import { HudBrackets, HudFrame, HudLabel, HudTag, HudTagRule } from "@/components/ui/hud-frame";
+import {
+  prefersReducedMotion,
+  refreshWhenLoaded,
+  registerGsapPlugins,
+  whenIdle,
+} from "@/lib/animations";
 import { toParagraphs } from "@/lib/format";
 import { aboutLanguages, sectionCopy } from "@/content/fallbacks";
 import type { About as AboutContent } from "@/types/sanity";
@@ -16,9 +21,13 @@ type AboutProps = {
   about: AboutContent;
 };
 
-// Where the top of the section is when he starts to come up.
-const REVEAL_START = { desktop: "top 65%", stacked: "top 75%" };
-const DESKTOP = "(min-width: 64rem)";
+// He comes up a moment after the middle of his stage is this far down the viewport. On a page
+// that loads with it past that already, it is the page he waits for.
+const TRIGGER = { line: 0.7, delay: 0.3, lateDelay: 0.4 };
+
+// Where the panel is above him, and comes in on its own.
+const STACKED = "(max-width: 63.99rem)";
+const PANEL_START = "top 85%";
 
 // The line from the portal, shut at the portal's end. Percentages on the right, since a clip
 // only tweens between like units, and enough of one to clear the node past the line's end.
@@ -32,101 +41,95 @@ export function About({ about }: AboutProps) {
   const tags = about.tags ?? [];
   const { eyebrow, titleLead, titleAccent } = sectionCopy.about;
 
-  const sectionRef = useRef<HTMLElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const hologramRef = useRef<HologramHandle>(null);
-  const lastPointer = useRef<string>("mouse");
 
-  // The hologram owns the hover state, since a sweep outlasts the pointer. The panel and the
-  // connector follow it in CSS, from this attribute.
+  // The panel and the connector follow the hologram's hover state in CSS, from this attribute.
   const handleActiveChange = useCallback((active: boolean) => {
     rowRef.current?.toggleAttribute("data-active", active);
   }, []);
 
-  // On the row rather than its two halves, so crossing from one to the other, over the
-  // connector, doesn't leave and start over.
-  const handlePointerEnter = (event: PointerEvent) => {
+  const handlePanelHover = (event: PointerEvent, over: boolean) => {
     if (event.pointerType !== "touch") {
-      hologramRef.current?.enter();
-    }
-  };
-
-  const handlePointerLeave = (event: PointerEvent) => {
-    if (event.pointerType !== "touch") {
-      hologramRef.current?.leave();
-    }
-  };
-
-  const handlePointerDown = (event: PointerEvent) => {
-    lastPointer.current = event.pointerType;
-  };
-
-  // A click rather than pointerup, which a scroll that starts here would also end in.
-  const handleClick = (event: MouseEvent) => {
-    if (lastPointer.current === "touch" && !event.defaultPrevented) {
-      hologramRef.current?.scan();
+      hologramRef.current?.hoverPanel(over);
     }
   };
 
   useEffect(() => {
-    const section = sectionRef.current;
     const row = rowRef.current;
     const panel = panelRef.current;
     const stage = stageRef.current;
     const hologram = hologramRef.current;
-    if (!section || !row || !panel || !stage || !hologram) {
+    if (!row || !panel || !stage || !hologram) {
       return;
     }
 
     registerGsapPlugins();
+    refreshWhenLoaded();
 
     let cancelled = false;
     const context = gsap.context(() => undefined);
-    // Asked again on every refresh, as the layout it goes by changes at the same width.
-    const start = () =>
-      window.matchMedia(DESKTOP).matches ? REVEAL_START.desktop : REVEAL_START.stacked;
+    const media = gsap.matchMedia();
 
-    if (prefersReducedMotion()) {
-      void hologram.ready().then(() => {
-        if (!cancelled) {
-          context.add(() => {
-            ScrollTrigger.create({ trigger: section, start, once: true, onEnter: hologram.appear });
+    const stageBox = stage.getBoundingClientRect();
+    const late = stageBox.top + stageBox.height / 2 <= window.innerHeight * TRIGGER.line;
+
+    // Once, and never backwards: the trigger is killed as it fires.
+    const whenDue = (play: () => void) => {
+      const playAfter = (delay: number) => {
+        const figure = hologram.ready();
+        gsap.delayedCall(delay, () => {
+          void figure.then(() => {
+            if (!cancelled) {
+              play();
+            }
           });
-        }
-      });
-    } else {
-      const strokes = row.querySelectorAll("[data-hud-stroke]");
-      const details = row.querySelectorAll("[data-hud-detail]");
-      const items = panel.querySelectorAll("[data-about-item]");
-      const shape = panel.querySelector("[data-hud-shape]");
-      const connector = row.querySelector("[data-hud-connector]");
+        });
+      };
 
+      if (late) {
+        playAfter(TRIGGER.lateDelay);
+        return;
+      }
       context.add(() => {
-        // Every stroke's pathLength is 1. The gap is longer, so none of them shows a dot of its
-        // dash at rest.
-        gsap.set(strokes, { strokeDasharray: "1 2", strokeDashoffset: 1 });
-        gsap.set(details, { opacity: 0 });
-        // One level off nothing, so that its gradients are painted, and their shaders compiled,
-        // before the reveal rather than in it.
-        gsap.set(shape, { opacity: 0.004 });
-        gsap.set(items, { opacity: 0, y: 12 });
-        gsap.set(connector, { clipPath: CONNECTOR_CLIP.closed, "--hud-pulse": 0 });
+        ScrollTrigger.create({
+          trigger: stage,
+          start: `center ${TRIGGER.line * 100}%`,
+          once: true,
+          onEnter: () => playAfter(TRIGGER.delay),
+        });
       });
+    };
 
-      void hologram.ready().then(() => {
-        if (cancelled) {
-          return;
-        }
+    const setUp = () => {
+      if (prefersReducedMotion()) {
+        whenDue(hologram.appear);
+        return;
+      }
+
+      const connector = row.querySelector("[data-hud-connector]");
+      let opening: gsap.core.Timeline | null = null;
+
+      // Left alone where it is on screen already. Hiding it then would be a flash.
+      if (panel.getBoundingClientRect().top >= window.innerHeight) {
+        const strokes = panel.querySelectorAll("[data-hud-stroke]");
+        const details = panel.querySelectorAll("[data-hud-detail]");
+        const items = panel.querySelectorAll("[data-about-item]");
+        const shape = panel.querySelector("[data-hud-shape]");
 
         context.add(() => {
-          let standing = false;
-          let scanOwed = false;
+          // Every stroke's pathLength is 1. The gap is longer, so none of them shows a dot of its
+          // dash at rest.
+          gsap.set(strokes, { strokeDasharray: "1 2", strokeDashoffset: 1 });
+          gsap.set(details, { opacity: 0 });
+          // One level off nothing, so that its gradients are painted, and their shaders compiled,
+          // before the reveal rather than in it.
+          gsap.set(shape, { opacity: 0.004 });
+          gsap.set(items, { opacity: 0, y: 12 });
 
-          // On its own timeline rather than the reveal's, so that going back, its longer tail
-          // doesn't have to run out before he starts to sink.
-          const opening = gsap
+          opening = gsap
             .timeline({ paused: true })
             .to(
               strokes,
@@ -137,108 +140,82 @@ export function About({ about }: AboutProps) {
             .to(shape, { opacity: 1, duration: 0.8, ease: "power2.out" }, 0)
             .to(details, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0.6)
             .to(items, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", stagger: 0.06 }, 0.8);
+        });
 
-          const reveal = gsap.timeline({
-            scrollTrigger: {
-              trigger: section,
-              start,
-              toggleActions: "play none none reverse",
-              onEnter: () => {
-                reveal.timeScale(1);
-                hologram.setPhase("building");
-                if (reveal.time() >= REVEAL.panelAt) {
-                  opening.timeScale(1).play();
-                }
-              },
-              onLeaveBack: () => {
-                standing = false;
-                // Negative, as a timeline that runs backwards has its sign turned.
-                reveal.timeScale(-REVEAL.reverse);
-                opening.timeScale(-REVEAL.reverse).paused(false);
-                hologram.setPhase("sinking");
-              },
-            },
-            onComplete: () => {
-              standing = true;
-              hologram.setPhase("standing");
-              if (scanOwed) {
-                scanOwed = false;
-                hologram.scan();
-              }
-            },
-            onReverseComplete: () => hologram.setPhase("waiting"),
+        media.add(STACKED, () => {
+          ScrollTrigger.create({
+            trigger: panel,
+            start: PANEL_START,
+            once: true,
+            onEnter: () => opening?.play(),
           });
+        });
+      }
 
-          hologram.reveal(reveal);
+      context.add(() => {
+        gsap.set(connector, { clipPath: CONNECTOR_CLIP.closed, "--hud-pulse": 0 });
 
-          const locking = REVEAL.duration - REVEAL.lockAt;
-          reveal
-            .call(
-              () => {
-                if (!reveal.reversed()) {
-                  opening.timeScale(1).play();
-                }
-              },
-              undefined,
-              REVEAL.panelAt,
-            )
-            .to(
-              connector,
-              { clipPath: CONNECTOR_CLIP.open, duration: locking, ease: "power1.inOut" },
-              REVEAL.lockAt,
-            )
-            .to(
-              connector,
-              { "--hud-pulse": 1, duration: locking, ease: "power1.inOut" },
-              REVEAL.lockAt,
-            );
+        const reveal = gsap.timeline({
+          paused: true,
+          onComplete: () => {
+            hologram.setPhase("standing");
+            // Nothing to hover with, so the sweep shows itself once.
+            if (window.matchMedia("(hover: none)").matches) {
+              hologram.scan();
+            }
+          },
+        });
 
-          // Nothing to hover with, so the sweep shows itself once, when there is all of him
-          // to sweep.
-          if (window.matchMedia("(hover: none)").matches) {
-            ScrollTrigger.create({
-              trigger: stage,
-              start: "top 55%",
-              once: true,
-              onEnter: () => {
-                if (standing) {
-                  hologram.scan();
-                } else {
-                  scanOwed = true;
-                }
-              },
-            });
-          }
+        hologram.reveal(reveal);
+
+        const locking = REVEAL.duration - REVEAL.lockAt;
+        reveal
+          .call(() => opening?.play(), undefined, REVEAL.panelAt)
+          .to(
+            connector,
+            { clipPath: CONNECTOR_CLIP.open, duration: locking, ease: "power1.inOut" },
+            REVEAL.lockAt,
+          )
+          .to(
+            connector,
+            { "--hud-pulse": 1, duration: locking, ease: "power1.inOut" },
+            REVEAL.lockAt,
+          );
+
+        whenDue(() => {
+          hologram.setPhase("building");
+          reveal.play();
         });
       });
+    };
+
+    let cancelIdle: (() => void) | null = null;
+    if (late) {
+      setUp();
+    } else {
+      cancelIdle = whenIdle(setUp);
     }
 
     return () => {
       cancelled = true;
+      cancelIdle?.();
+      media.revert();
       context.revert();
     };
   }, []);
 
   return (
-    <section id="about" aria-labelledby="about-title" ref={sectionRef} className="section-shell">
+    <section id="about" aria-labelledby="about-title" className="section-shell">
       <div
         ref={rowRef}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-        onPointerDown={handlePointerDown}
-        onClick={handleClick}
         className="about-row relative flex flex-col lg:flex-row lg:items-end lg:justify-center"
       >
-        <HologramCharacter
-          ref={hologramRef}
-          stageRef={stageRef}
-          onActiveChange={handleActiveChange}
-        />
-
         <HudFrame
           ref={panelRef}
           size="lg"
           wideFrom="lg"
+          onPointerEnter={(event: PointerEvent) => handlePanelHover(event, true)}
+          onPointerLeave={(event: PointerEvent) => handlePanelHover(event, false)}
           className="about-panel z-10 w-full lg:shrink-0"
         >
           <div className="relative px-6 py-8 text-center sm:px-10 sm:py-10 lg:px-[42px] lg:pt-8 lg:pb-[34px] lg:text-left">
@@ -292,7 +269,19 @@ export function About({ about }: AboutProps) {
               ))}
             </ul>
           </div>
+
+          <HudBrackets hot />
+          <svg aria-hidden="true" width={90} height={1} className="hud-segment-hot">
+            <line className="hud-segment" x2={90} />
+          </svg>
         </HudFrame>
+
+        <HologramCharacter
+          ref={hologramRef}
+          stageRef={stageRef}
+          onActiveChange={handleActiveChange}
+          className="lg:order-first"
+        />
 
         <HudConnector rowRef={rowRef} stageRef={stageRef} panelRef={panelRef} />
       </div>

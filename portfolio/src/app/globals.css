@@ -361,9 +361,17 @@ html[data-intro="pending"] .hero-intro {
 .about-stage {
   position: relative;
   flex: none;
-  /* A 360px figure, its headroom and the portal's lower half. hologramLayout() is this
-     backwards. */
-  height: calc(360px * 0.98 + 60px);
+  width: 100%;
+  margin-top: 2rem;
+  /* 1.22 figures: the room over his head, him, and the portal under his soles. hologramLayout()
+     is this backwards, and the canvas is exactly this box. */
+  height: 360px;
+}
+
+@media (min-width: 48rem) {
+  .about-stage {
+    height: 420px;
+  }
 }
 
 .about-panel {
@@ -376,9 +384,13 @@ html[data-intro="pending"] .hero-intro {
   }
 
   .about-stage {
+    --figure: clamp(440px, 39.5vw, 580px);
     flex: 1 1 0;
     max-width: clamp(380px, 39.5vw, 560px);
-    height: calc(clamp(440px, 39.5vw, 580px) * 0.98 + 60px);
+    height: calc(var(--figure) * 1.22);
+    /* All but 12px of the room over his head and 48px of what is under the portal's middle is
+       for light and particles, and nothing lines up with it. */
+    margin-block: calc(12px - var(--figure) * 0.1) calc(48px - var(--figure) * 0.14);
   }
 
   .about-panel {
@@ -848,6 +860,13 @@ html[data-intro="pending"] .hero-intro {
   mask-image: radial-gradient(ellipse 62% 66% at 100% 0, var(--border), transparent);
 }
 
+/* Its gradients are a tenth of a second of the GPU's time to compile, and the About panel is near
+   enough the fold for them to be painted with the first frame. Under the intro that is time the
+   hero's WebGL waits for. */
+html[data-intro="pending"] .hud-dots {
+  display: none;
+}
+
 .hud-frame {
   fill: none;
 }
@@ -873,17 +892,47 @@ html[data-intro="pending"] .hero-intro {
   stroke: var(--foreground);
 }
 
-/* The only panel with a hover of its own. */
-.about-panel .hud-bracket {
-  transition: stroke 0.5s ease;
-}
-
-/* 60px, growing to 150px. */
 .hud-segment {
   stroke: var(--accent);
   stroke-width: 3;
+}
+
+/* The only panel with a hover of its own. Everything that changes in it is an HTML box or an
+   <svg>'s own root, and only by opacity or transform: a stroke that changes colour, or scales
+   inside its <svg>, has the whole panel laid out, painted and hit-tested again every frame. */
+.about-panel > .hud-bracket {
+  transition: opacity 0.5s ease;
+}
+
+.hud-bracket-hot {
+  stroke: var(--accent);
+  opacity: 0;
+}
+
+/* The 90px that its 60px one grows by. From the end of that and not over it, where the soft
+   edges of the two would add up. */
+.hud-segment-hot {
+  position: absolute;
+  top: 0;
+  left: calc(var(--hud-cut) + 80px);
+  overflow: visible;
+  transform: scaleX(0);
   transform-origin: 0 0;
   transition: transform 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+  pointer-events: none;
+}
+
+@media (hover: hover) and (min-width: 64rem) {
+  .about-panel > .hud-bracket,
+  .hud-connector-dashes,
+  .hud-connector-line {
+    will-change: opacity;
+  }
+
+  .hud-segment-hot,
+  .hud-connector-pulse {
+    will-change: transform;
+  }
 }
 
 .hud-ticks {
@@ -1017,27 +1066,25 @@ html[data-intro="pending"] .hero-intro {
   background-color: var(--accent);
 }
 
-/* data-active is the hologram's own hover state, which a sweep can hold on to after the
-   pointer has gone. */
-[data-active] .hud-bracket {
-  stroke: var(--accent);
-}
-
+/* data-active is the hologram's own hover state: the pointer is over it or the panel, and he is
+   standing. */
+[data-active] .hud-bracket,
 [data-active] .hud-connector-dashes {
   opacity: 0;
 }
 
+[data-active] .hud-bracket-hot,
 [data-active] .hud-connector-line {
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  [data-active] .hud-segment {
-    transform: scaleX(2.5);
+  [data-active] .hud-segment-hot {
+    transform: none;
   }
 
-  [data-active] .hud-bracket,
-  [data-active] .hud-segment,
+  [data-active] .hud-segment-hot,
+  [data-active] .about-panel > .hud-bracket,
   [data-active] .hud-connector-dashes,
   [data-active] .hud-connector-line {
     transition-duration: 0.4s;
@@ -1049,7 +1096,7 @@ html[data-intro="pending"] .hero-intro {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .about-panel .hud-bracket,
+  .about-panel > .hud-bracket,
   .hud-connector-dashes,
   .hud-connector-line {
     transition: none;

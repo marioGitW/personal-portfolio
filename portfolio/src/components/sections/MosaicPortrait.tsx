@@ -185,6 +185,8 @@ const HISTOGRAM_BINS = 256;
 const ACCENT_STEPS = 4;
 const ACCENT_FULL = ACCENT_STEPS + 1;
 const IDLE_FRAME_MS = 1000 / MOSAIC.idle.fps - 2;
+// The sticky header without its hairline, in rem terms the h-16 it is.
+const HEADER_PX = 64;
 const PHYSICS_STEP_MS = 1000 / 60;
 const MAX_STEPS_PER_FRAME = 4;
 
@@ -2768,11 +2770,16 @@ function createMosaic(
   // known once that finishes.
   section.addEventListener("animationend", measureCopy);
 
-  const visibility = new IntersectionObserver(([entry]) => {
-    onScreen = entry.isIntersecting;
-    draw();
-    syncLoop();
-  });
+  // What is left of the hero behind the header is off screen. Links to the next section stop
+  // with that much of it there, and the loop would run on under whatever that one is doing.
+  const visibility = new IntersectionObserver(
+    ([entry]) => {
+      onScreen = entry.isIntersecting;
+      draw();
+      syncLoop();
+    },
+    { rootMargin: `-${HEADER_PX}px 0px 0px` },
+  );
   visibility.observe(section);
 
   // Debounced, and only once there is a grid to rebuild: assemble and enter build the

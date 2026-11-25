@@ -4,7 +4,7 @@ import type { RefObject } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, registerGsapPlugins, whenIdle } from "@/lib/animations";
 
 // Times are seconds from when a frame's turn comes, and everything in it is readable by 0.8.
 const REVEAL = {
@@ -21,9 +21,6 @@ const REVEAL = {
 // One level off nothing, so a frame's gradients are painted, and their shaders compiled, before
 // it is revealed rather than as it is.
 const UNSEEN = "0.004";
-
-// The longest a section's frames wait for the page to be idle before they are hidden.
-const IDLE_TIMEOUT_MS = 1500;
 
 type Parts = {
   frame: HTMLElement;
@@ -105,16 +102,6 @@ function show(parts: Parts, delay: number) {
     const stagger = spread(items.length, REVEAL.items);
     timeline.to(items, { opacity: 1, y: 0, duration, ease, stagger }, at);
   }
-}
-
-// Hydration is busy enough, and none of this is needed before the page has been scrolled.
-function whenIdle(callback: () => void): () => void {
-  if (typeof window.requestIdleCallback === "function") {
-    const handle = window.requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS });
-    return () => window.cancelIdleCallback(handle);
-  }
-  const handle = window.setTimeout(callback, 200);
-  return () => window.clearTimeout(handle);
 }
 
 /**

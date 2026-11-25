@@ -9,7 +9,7 @@ import { ProjectsScroller } from "@/components/projects/ProjectsScroller";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { sectionCopy } from "@/content/fallbacks";
 import { useHudReveal } from "@/hooks/useHudReveal";
-import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
+import { prefersReducedMotion, refreshWhenLoaded, registerGsapPlugins } from "@/lib/animations";
 import type { Project } from "@/types/sanity";
 
 type ProjectsProps = {
@@ -148,24 +148,12 @@ export function Projects({ projects }: ProjectsProps) {
         });
         resizeObserver.observe(document.documentElement);
 
-        let disposed = false;
-        document.fonts.ready.then(() => {
-          if (!disposed) {
-            ScrollTrigger.refresh();
-          }
-        });
-
-        const handleLoad = () => ScrollTrigger.refresh();
-        if (document.readyState !== "complete") {
-          window.addEventListener("load", handleLoad, { once: true });
-        }
+        refreshWhenLoaded();
 
         return () => {
-          disposed = true;
           pin = null;
           resizeObserver.disconnect();
           window.clearTimeout(refreshTimeout);
-          window.removeEventListener("load", handleLoad);
           st.kill();
         };
       });
