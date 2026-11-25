@@ -8,6 +8,11 @@
   --border: #b7d9ea;
   --foreground: #072d59;
   --muted: #4a6585;
+  /* The hero's role line and bio. Darker than --muted here, to carry the weight they have on
+     the dark theme. */
+  --copy: #2b4666;
+  /* The hero's drifting specks. */
+  --dust: #cbe4f2;
   /* Fills only: too light to read as text on the light background. Pink text
      and focus rings use --link. */
   --accent: #fd6e88;
@@ -29,6 +34,8 @@
   --border: #1c4373;
   --foreground: #dbf2fc;
   --muted: #93b4cc;
+  --copy: var(--muted);
+  --dust: var(--foreground);
   --accent: #fd6e88;
   --accent-hover: #f7607c;
   --accent-foreground: #072d59;
@@ -41,6 +48,7 @@
   --color-border: var(--border);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-copy: var(--copy);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);

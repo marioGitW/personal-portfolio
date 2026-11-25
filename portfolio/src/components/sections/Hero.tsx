@@ -99,7 +99,7 @@ export function Hero({ hero }: HeroProps) {
           portrait bleeding behind it. */}
       <div ref={copyRef} className={COPY_CLASSES}>
         <div className={COPY_FRONT_CLASSES}>
-          <p className="hero-enter-eyebrow flex items-center justify-center gap-2 font-heading text-[0.6875rem] font-semibold tracking-[0.3em] text-muted uppercase sm:gap-2.5 lg:justify-start lg:text-[0.8125rem]">
+          <p className="hero-enter-eyebrow flex items-center justify-center gap-2 font-heading text-[0.6875rem] font-semibold tracking-[0.3em] text-copy uppercase sm:gap-2.5 lg:justify-start lg:text-[0.8125rem]">
             <span data-intro-hide="eyebrow-dot" className="hero-eyebrow-dot" aria-hidden="true" />
             <span data-intro-hide="eyebrow-text">{hero.roleTag}</span>
           </p>
@@ -129,7 +129,7 @@ export function Hero({ hero }: HeroProps) {
         <div className={COPY_FRONT_CLASSES}>
           <p
             data-intro-hide="tagline"
-            className="hero-enter-tagline mx-auto mt-6 max-w-[26rem] text-center text-base text-muted sm:mt-8 sm:max-w-[32rem] sm:text-lg md:mt-10 md:max-w-[32rem] lg:mx-0 lg:mt-7 lg:text-left"
+            className="hero-enter-tagline mx-auto mt-6 max-w-[26rem] text-center text-base text-copy sm:mt-8 sm:max-w-[32rem] sm:text-lg md:mt-10 md:max-w-[32rem] lg:mx-0 lg:mt-7 lg:text-left"
           >
             {hero.subtitle}
           </p>

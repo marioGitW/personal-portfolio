@@ -20,7 +20,67 @@ const MOSAIC = {
   maxTiles: 25_000,
   maxDpr: 2,
   minAlpha: 0.35,
-  detail: { localContrast: 0.7, clipLimit: 2.5, regions: [6, 8], sharpen: 0.6, levels: 24 },
+  // From the photo's luminance to each tile's tone, in the order toneMap runs them. Tone runs from
+  // shadow (0) to highlight (1) and nothing here knows the theme, so neither can come out as a
+  // negative. "Copy config" on the ?mosaicTune=1 panel gives this and accent to paste over them.
+  tone: {
+    // Cells of reach for the median that goes first, so nothing after it amplifies noise, and
+    // the step in luminance from it past which a cell is detail and stays as it is.
+    denoise: 1,
+    denoiseLimit: 0.04,
+    // Percentiles of the figure's luminance.
+    blackPoint: 1,
+    whitePoint: 99,
+    // The most any band of tone is stretched, as a multiple of its share of the figure, where 1
+    // leaves the levels as they are. The navy shirt is most of the figure in about 8 levels out of
+    // 255, and without this it lands on two levels of the ramp and its folds are gone.
+    balance: 6,
+    // How much steeper the S-curve is at its middle, where 1 leaves the tone alone.
+    contrast: 1.3,
+    clarity: 0.35,
+    clarityRadius: 8,
+    claheBlend: 0.15,
+    claheRegions: [3, 4],
+    claheClipLimit: 1.5,
+    keyLight: { falloff: 0.18, followPhotoLight: true },
+    // How much further the face's shadows go from its highlights, and how far the hair is
+    // burnt down, darker than the shirt it is lighter than in the photo, to frame the face.
+    faceDepth: 0.9,
+    hairBurn: 0.7,
+    edgeBurn: 0.08,
+    edgeBurnCells: 4,
+    sharpen: 0.8,
+    edgeThreshold: 0.06,
+    jitter: 0.02,
+    levels: 32,
+    bottomFade: { minScale: 0.4 },
+    // The light theme is a print: one ink, --foreground, on the page. A tile's dot grows with its
+    // darkness instead of the tile changing colour, and the highlights print nothing. These stand
+    // in for the settings above in that theme alone, so the dark theme never sees them.
+    light: {
+      clarity: 0.9,
+      sharpen: 1.4,
+      faceDepth: 0.2,
+      // An S-curve of its own on the finished tone, where 1 leaves it alone.
+      printContrast: 1.2,
+      // Dots print from this tone, and nothing at all from the second, so highlights stay open.
+      openFrom: 0.92,
+      openTo: 0.985,
+      // The least a face's dot covers of its cell while it is a midtone, as a share.
+      midtoneDot: 0.18,
+      // The least a T-shirt dot covers. It is a dark feature, so its folds lighten its dots rather
+      // than open them to the page.
+      shirtDot: 0.72,
+      // The least a dot covers on the outermost cells of the figure, fading over contourCells, so
+      // the jaw and neck keep an edge where the skin itself is a highlight.
+      contour: 0.35,
+      contourCells: 3,
+      // The biggest dot, as a share of its cell. Under 1 keeps the grid visible in the shadows.
+      maxDot: 0.97,
+      // Solid down to this share of the box, as in the dark theme, but for longer.
+      fadeFrom: 0.95,
+    },
+  },
   // Which part of the figure a cell is, from its colour in the photo.
   masks: {
     // Luminance, 0-1. Warm cells darker than this aren't skin, unless the face encloses them.
@@ -30,31 +90,28 @@ const MOSAIC = {
     // The first warm patch from the top this big, as a share of the figure, is the face.
     faceShare: 0.01,
   },
-  // Marks fine detail on the T-shirt, and nowhere else. Percentages of its cells.
-  accent: { softPercent: 8, fullPercent: 2.5, softMix: 0.45, accentScale: 1 },
-  // Light theme only, where the portrait is ink on a pale page. The gamma, on the enhanced
-  // luminance before the ramp, puts more ink in the mid-tones. The ramp's brightest tile stops
-  // at this token, so even the highlights stay visible against the page.
-  tone: { light: { gamma: 1.3, highlightStop: "border" } },
+  // Light on the T-shirt's raised folds, and nowhere else. Percentages of its cells, leaving out
+  // the hemBand cells next to the skin, so the collar and sleeves don't get a pink ring.
+  accent: {
+    shirtHighlightPercent: 10,
+    fullPercent: 2,
+    maxMix: 0.55,
+    hemBand: 3,
+    // Cells. A fold ridge is measured against the shirt this far around it.
+    foldRadius: 3,
+    accentScale: 1,
+  },
   color: {
-    jitter: 0.06,
     photoSaturation: 0.85,
-    // "at" is the tone of a tile, from shadow (0) to highlight (1), in both themes.
-    // Only the stops differ, so neither theme can come out as a negative. They crowd the
-    // low end because that is where the shirt is, between about 0.07 and 0.25.
+    // "at" is the tone of a tile, from shadow (0) to highlight (1), and the ramp between stops
+    // runs through OKLab, where the mid-tones don't go grey. A stop's alpha lays it over the page.
+    // Dark theme only: the light one is ink alone, see tone.light.
     dark: {
       ramp: [
         { at: 0, token: "--border", alpha: 0.3 },
         { at: 0.15, token: "--border", alpha: 1 },
         { at: 0.55, token: "--muted", alpha: 1 },
         { at: 0.92, token: "--foreground", alpha: 1 },
-      ],
-    },
-    light: {
-      // Runs on to tone.light.highlightStop at 1.
-      ramp: [
-        { at: 0.03, token: "--foreground", alpha: 1 },
-        { at: 0.15, token: "--muted", alpha: 1 },
       ],
     },
   },
@@ -70,8 +127,11 @@ const MOSAIC = {
     // Coverage of a grid cell by the dilated letters that counts as being under them.
     coverage: 0.35,
   },
+  // The smallest dot worth printing, as a share of its cell, in the light theme.
+  minDot: 0.12,
   rebuild: { debounceMs: 150, minChange: 1 },
-  // Solid down to this share of the box, then gone at its bottom edge, the hero's.
+  // Solid down to this share of the box, then gone at its bottom edge, the hero's. The light
+  // theme's is tone.light.fadeFrom.
   fadeFrom: 0.86,
   // Relative to the portrait box: the face, which the figure gathers outward from.
   focus: { x: 0.5, y: 0.28 },
@@ -91,8 +151,10 @@ const MOSAIC = {
     // a phone is not four times as dense as a laptop.
     fullFrom: 1_000_000,
     minShare: 0.35,
-    token: "--foreground",
-    opacity: { min: 0.1, max: 0.3 },
+    // --dust is the foreground in the dark theme, and a pale blue in the light one, which is
+    // why it is nearly opaque there.
+    token: "--dust",
+    opacity: { dark: { min: 0.1, max: 0.3 }, light: { min: 0.6, max: 1 } },
     // Pixels and radians per second.
     drift: 5,
     twinkle: { min: 0.5, max: 1.5 },
@@ -118,8 +180,10 @@ const MOSAIC = {
 } as const;
 
 const HISTOGRAM_BINS = 256;
-// One cell's reach either way is 2, the radius both the sharpening and the detail map use.
-const BLUR_KERNEL = [1, 4, 6, 4, 1] as const;
+// Between a plain tile and the accent. Each is a whole set of colours for the flight's shader,
+// which has room for about 250.
+const ACCENT_STEPS = 4;
+const ACCENT_FULL = ACCENT_STEPS + 1;
 const IDLE_FRAME_MS = 1000 / MOSAIC.idle.fps - 2;
 const PHYSICS_STEP_MS = 1000 / 60;
 const MAX_STEPS_PER_FRAME = 4;
@@ -131,9 +195,18 @@ const OUTLINE = 4;
 
 type Rgb = readonly [number, number, number];
 type RampStop = { at: number; rgb: Rgb };
+type RampStopConfig = { readonly at: number; readonly token: string; readonly alpha: number };
+type Widened<T> = T extends number
+  ? number
+  : T extends boolean
+    ? boolean
+    : { readonly [K in keyof T]: Widened<T[K]> };
+// The part of the config the tuning panel can change with the page open.
+export type MosaicTuning = Widened<Pick<typeof MOSAIC, "tone" | "accent">>;
 type Timing = { readonly flight: number; readonly stagger: number; readonly scatter: number };
 type Source = ReturnType<typeof readPortrait> & object;
 type Cells = ReturnType<typeof sampleCells>;
+type Regions = ReturnType<typeof classifyRegions>;
 type Tiles = ReturnType<typeof createTiles>;
 
 export type MosaicPortraitHandle = {
@@ -146,6 +219,8 @@ export type MosaicPortraitHandle = {
 
 type Mosaic = MosaicPortraitHandle & {
   destroy: () => void;
+  // Development only: rebuilds the grid with a changed config.
+  retune: (tuning: MosaicTuning) => void;
 };
 
 type MosaicPortraitProps = {
@@ -174,12 +249,17 @@ function createTiles(count: number) {
     tone: floats(),
     jitter: floats(),
     fade: floats(),
+    // The cell it is on, for what it needs to know of its theme's tone.
+    cell: new Uint32Array(count),
+    // Its size, as a share of a full tile: shrunk by the bottom fade in the dark theme, and in
+    // the light one a dot's, from nothing up to the whole cell.
+    shrink: floats(),
     reach: floats(),
     // Fixed for each tile, 0-1: when and which way it moves under the pointer.
     seed: floats(),
     // How far it has parted for the name, 0-1.
     reveal: floats(),
-    // 0 = none, 1 = soft, 2 = full.
+    // 0 = none, then each step of its mix towards the accent, up to ACCENT_FULL.
     accent: flags(),
     underName: flags(),
     // Its cell on the cache is a hole, so the name can show through once it has parted.
@@ -329,45 +409,138 @@ function fitGrid(source: Source, boxWidth: number, boxHeight: number, dpr: numbe
   return { ...cells, pitch: tile + space, tileSize: tile };
 }
 
-// Blurs by 2 cells over figure cells alone: weights are renormalised rather than letting
-// the transparent cells around the silhouette darken its edge.
-function blurFigure(values: Float32Array, { figure, columns, rows }: Cells) {
-  const valueSum = new Float32Array(columns * rows);
-  const weightSum = new Float32Array(columns * rows);
-  const reach = (BLUR_KERNEL.length - 1) / 2;
+// The values over a mask and the mask itself, blurred alike and divided at the end.
+type Blurring = [values: Float32Array, weights: Float32Array];
 
+// A kernel's weighted sums along every row.
+function kernelRows([values, weights]: Blurring, columns: number, rows: number, kernel: number[]) {
+  const reach = (kernel.length - 1) / 2;
+  const next: Blurring = [new Float32Array(values.length), new Float32Array(values.length)];
   for (let row = 0; row < rows; row++) {
+    const start = row * columns;
     for (let column = 0; column < columns; column++) {
       let value = 0;
       let weight = 0;
-      for (let step = -reach; step <= reach; step++) {
-        const cell = row * columns + column + step;
-        if (column + step >= 0 && column + step < columns && figure[cell]) {
-          value += values[cell] * BLUR_KERNEL[step + reach];
-          weight += BLUR_KERNEL[step + reach];
-        }
+      const to = Math.min(reach, columns - 1 - column);
+      for (let step = Math.max(-reach, -column); step <= to; step++) {
+        value += values[start + column + step] * kernel[step + reach];
+        weight += weights[start + column + step] * kernel[step + reach];
       }
-      valueSum[row * columns + column] = value;
-      weightSum[row * columns + column] = weight;
+      next[0][start + column] = value;
+      next[1][start + column] = weight;
+    }
+  }
+  return next;
+}
+
+// The same down every column, a whole row at a time, which keeps to memory in order.
+function kernelColumns(
+  [values, weights]: Blurring,
+  columns: number,
+  rows: number,
+  kernel: number[],
+) {
+  const reach = (kernel.length - 1) / 2;
+  const next: Blurring = [new Float32Array(values.length), new Float32Array(values.length)];
+  for (let row = 0; row < rows; row++) {
+    const to = Math.min(reach, rows - 1 - row);
+    for (let step = Math.max(-reach, -row); step <= to; step++) {
+      const share = kernel[step + reach];
+      const from = (row + step) * columns;
+      for (let column = 0; column < columns; column++) {
+        next[0][row * columns + column] += values[from + column] * share;
+        next[1][row * columns + column] += weights[from + column] * share;
+      }
+    }
+  }
+  return next;
+}
+
+// Plain sums over a window reaching the same way each side, along every row and then down every
+// column, as running totals, so it costs the same however far it reaches.
+function boxBoth([values, weights]: Blurring, columns: number, rows: number, reach: number) {
+  const across: Blurring = [new Float32Array(values.length), new Float32Array(values.length)];
+  for (let row = 0; row < rows; row++) {
+    const start = row * columns;
+    let value = 0;
+    let weight = 0;
+    for (let column = 0; column < Math.min(reach, columns); column++) {
+      value += values[start + column];
+      weight += weights[start + column];
+    }
+    for (let column = 0; column < columns; column++) {
+      if (column + reach < columns) {
+        value += values[start + column + reach];
+        weight += weights[start + column + reach];
+      }
+      if (column - reach - 1 >= 0) {
+        value -= values[start + column - reach - 1];
+        weight -= weights[start + column - reach - 1];
+      }
+      across[0][start + column] = value;
+      across[1][start + column] = weight;
     }
   }
 
-  const blurred = new Float32Array(columns * rows);
-  for (let row = 0; row < rows; row++) {
+  const next: Blurring = [new Float32Array(values.length), new Float32Array(values.length)];
+  const value = new Float64Array(columns);
+  const weight = new Float64Array(columns);
+  const add = (row: number, sign: number) => {
     for (let column = 0; column < columns; column++) {
-      if (!figure[row * columns + column]) {
-        continue;
-      }
-      let value = 0;
-      let weight = 0;
-      for (let step = -reach; step <= reach; step++) {
-        if (row + step >= 0 && row + step < rows) {
-          const cell = (row + step) * columns + column;
-          value += valueSum[cell] * BLUR_KERNEL[step + reach];
-          weight += weightSum[cell] * BLUR_KERNEL[step + reach];
-        }
-      }
-      blurred[row * columns + column] = value / weight;
+      value[column] += across[0][row * columns + column] * sign;
+      weight[column] += across[1][row * columns + column] * sign;
+    }
+  };
+  for (let row = 0; row < Math.min(reach, rows); row++) {
+    add(row, 1);
+  }
+  for (let row = 0; row < rows; row++) {
+    if (row + reach < rows) {
+      add(row + reach, 1);
+    }
+    if (row - reach - 1 >= 0) {
+      add(row - reach - 1, -1);
+    }
+    next[0].set(value, row * columns);
+    next[1].set(weight, row * columns);
+  }
+  return next;
+}
+
+// A gaussian over the mask's cells alone: weights are renormalised rather than letting the
+// transparent cells around the silhouette darken its edge. The radius is its sigma, in cells.
+// From three cells up it's three box blurs in a row, which come out all but the same.
+function blurFigure(
+  values: Float32Array,
+  { figure, columns, rows }: Pick<Cells, "figure" | "columns" | "rows">,
+  radius: number,
+) {
+  let blurring: Blurring = [new Float32Array(columns * rows), new Float32Array(columns * rows)];
+  for (let cell = 0; cell < figure.length; cell++) {
+    if (figure[cell]) {
+      blurring[0][cell] = values[cell];
+      blurring[1][cell] = 1;
+    }
+  }
+
+  if (radius >= 3) {
+    const reach = Math.round((Math.sqrt(4 * radius * radius + 1) - 1) / 2);
+    for (let pass = 0; pass < 3; pass++) {
+      blurring = boxBoth(blurring, columns, rows, reach);
+    }
+  } else {
+    const reach = Math.ceil(radius * 2);
+    const kernel = Array.from({ length: reach * 2 + 1 }, (_, index) =>
+      Math.exp(-((index - reach) ** 2) / (2 * radius * radius)),
+    );
+    blurring = kernelColumns(kernelRows(blurring, columns, rows, kernel), columns, rows, kernel);
+  }
+
+  const [sums, weights] = blurring;
+  const blurred = new Float32Array(columns * rows);
+  for (let cell = 0; cell < blurred.length; cell++) {
+    if (figure[cell]) {
+      blurred[cell] = sums[cell] / weights[cell];
     }
   }
   return blurred;
@@ -375,13 +548,12 @@ function blurFigure(values: Float32Array, { figure, columns, rows }: Cells) {
 
 // CLAHE: each region of the figure gets its own histogram equalization, its slope held
 // down by the clip limit, and every cell reads between its four nearest regions so no
-// seams show. This is what finds folds in a shirt that sits in one narrow band of navy.
-function equalizeLocally({ figure, brightness, columns, rows }: Cells) {
-  const {
-    regions: [across, down],
-    clipLimit,
-    localContrast,
-  } = MOSAIC.detail;
+// seams show. Only blended in lightly: on its own it evens out the whole picture.
+function equalizeLocally(
+  values: Float32Array,
+  { figure, columns, rows }: Cells,
+  { claheRegions: [across, down], claheClipLimit: clipLimit, claheBlend }: MosaicTuning["tone"],
+) {
   let minColumn = columns;
   let maxColumn = 0;
   let minRow = rows;
@@ -410,7 +582,7 @@ function equalizeLocally({ figure, brightness, columns, rows }: Cells) {
         const regionX = Math.min(Math.floor((column - minColumn) / regionWidth), across - 1);
         const regionY = Math.min(Math.floor((row - minRow) / regionHeight), down - 1);
         const region = regionY * across + regionX;
-        curves[region * HISTOGRAM_BINS + binOf(brightness[cell])]++;
+        curves[region * HISTOGRAM_BINS + binOf(values[cell])]++;
         counts[region]++;
       }
     }
@@ -458,45 +630,377 @@ function equalizeLocally({ figure, brightness, columns, rows }: Cells) {
       const x0 = Math.max(Math.floor(placeX), 0);
       const x1 = Math.min(Math.floor(placeX) + 1, across - 1);
       const shareX = placeX - Math.floor(placeX);
-      const bin = binOf(brightness[cell]);
+      const bin = binOf(values[cell]);
       const upper = curve(x0, y0, bin) * (1 - shareX) + curve(x1, y0, bin) * shareX;
       const lower = curve(x0, y1, bin) * (1 - shareX) + curve(x1, y1, bin) * shareX;
       const value = upper * (1 - shareY) + lower * shareY;
-      equalized[cell] = brightness[cell] + (value - brightness[cell]) * localContrast;
+      equalized[cell] = values[cell] + (value - values[cell]) * claheBlend;
     }
   }
   return equalized;
 }
 
-// The tone of every cell, and how much edge or texture it sits on.
-function enhanceDetail(cells: Cells) {
-  const equalized = equalizeLocally(cells);
-  const soft = blurFigure(equalized, cells);
-  const tone = new Float32Array(equalized.length);
-  for (let cell = 0; cell < tone.length; cell++) {
-    if (cells.figure[cell]) {
-      const sharpened = equalized[cell] + MOSAIC.detail.sharpen * (equalized[cell] - soft[cell]);
-      tone[cell] = Math.min(Math.max(sharpened, 0), 1);
+function clamp01(value: number) {
+  return Math.min(Math.max(value, 0), 1);
+}
+
+function smoothstep(from: number, to: number, value: number) {
+  const progress = clamp01((value - from) / (to - from));
+  return progress * progress * (3 - 2 * progress);
+}
+
+// Less towards either end, which keeps local contrast and grain out of the deep shadows and
+// the clean highlights.
+function midtoneWeight(tone: number) {
+  return 1 - Math.abs(2 * tone - 1);
+}
+
+// Each cell's median among itself and its neighbours in the figure, where it is only a small step
+// from it. A bigger step is an eye, a nostril or the line of the lips, two or three cells across
+// here, and a plain median would take those out along with the noise.
+function medianFigure(
+  values: Float32Array,
+  { figure, columns, rows }: Cells,
+  reach: number,
+  limit: number,
+) {
+  const filtered = Float32Array.from(values);
+  const window = new Float32Array((reach * 2 + 1) ** 2);
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const cell = row * columns + column;
+      if (!figure[cell]) {
+        continue;
+      }
+      let size = 0;
+      for (let y = Math.max(row - reach, 0); y <= Math.min(row + reach, rows - 1); y++) {
+        for (let x = Math.max(column - reach, 0); x <= Math.min(column + reach, columns - 1); x++) {
+          if (figure[y * columns + x]) {
+            // Kept in order as it fills: a sort call per cell is most of the cost otherwise.
+            const value = values[y * columns + x];
+            let place = size++;
+            while (place > 0 && window[place - 1] > value) {
+              window[place] = window[place - 1];
+              place--;
+            }
+            window[place] = value;
+          }
+        }
+      }
+      const median = window[size >> 1];
+      const step = values[cell] - median;
+      filtered[cell] = median + step * smoothstep(limit, limit * 2, Math.abs(step));
+    }
+  }
+  return filtered;
+}
+
+// Levels on the figure's percentiles, then a global histogram equalization with its slope held
+// under tone.balance times even. The shirt is most of the figure in about 8 levels out of 255,
+// so it takes that much more of the range than it had, and no more: the rest of what plain
+// equalization would have given it goes to everything else, the face's skin included.
+function setRange(
+  values: Float32Array,
+  { figure }: Cells,
+  tone: MosaicTuning["tone"],
+  curve: (tone: number) => number,
+) {
+  const sorted = values.filter((_, cell) => figure[cell]).sort();
+  const percentile = (percent: number) =>
+    sorted[Math.min(Math.floor((percent / 100) * sorted.length), sorted.length - 1)];
+  const black = percentile(tone.blackPoint);
+  const span = Math.max(percentile(tone.whitePoint) - black, 1e-3);
+  const level = (value: number) => clamp01((value - black) / span);
+
+  const histogram = new Float32Array(HISTOGRAM_BINS);
+  const binOf = (value: number) => Math.min(Math.floor(value * HISTOGRAM_BINS), HISTOGRAM_BINS - 1);
+  for (const value of sorted) {
+    histogram[binOf(level(value))]++;
+  }
+  const limit = (tone.balance * sorted.length) / HISTOGRAM_BINS;
+  let excess = 0;
+  for (let bin = 0; bin < HISTOGRAM_BINS; bin++) {
+    excess += Math.max(histogram[bin] - limit, 0);
+  }
+  // Where each bin starts on the way out. Read in between, so a band only a few bins wide
+  // still comes out as a smooth run of tone rather than a few steps.
+  const starts = new Float32Array(HISTOGRAM_BINS + 1);
+  for (let bin = 0; bin < HISTOGRAM_BINS; bin++) {
+    const share = Math.min(histogram[bin], limit) + excess / HISTOGRAM_BINS;
+    starts[bin + 1] = starts[bin] + share / sorted.length;
+  }
+
+  const ranged = new Float32Array(values.length);
+  for (let cell = 0; cell < values.length; cell++) {
+    if (figure[cell]) {
+      const place = level(values[cell]) * HISTOGRAM_BINS;
+      const bin = Math.min(Math.floor(place), HISTOGRAM_BINS - 1);
+      ranged[cell] = curve(starts[bin] + (starts[bin + 1] - starts[bin]) * (place - bin));
+    }
+  }
+  return ranged;
+}
+
+// A contrast sigmoid around the middle, stretched back out to fill 0-1, so the shadows and
+// highlights roll off rather than clip. Contrast is its slope at the middle, near enough.
+function filmicCurve(contrast: number) {
+  const steepness = (contrast - 1) * 13;
+  if (steepness < 0.01) {
+    return (tone: number) => tone;
+  }
+  const sigmoid = (tone: number) => 1 / (1 + Math.exp(-steepness * (tone - 0.5)));
+  const low = sigmoid(0);
+  const span = sigmoid(1) - low;
+  return (tone: number) => (sigmoid(tone) - low) / span;
+}
+
+// Cells to the nearest source cell, by a two-pass chamfer. Nothing past the grid counts as a
+// source, which is what keeps the box's bottom edge, only a crop, from reading as the figure's.
+function distanceFrom(sources: Uint8Array, columns: number, rows: number) {
+  const distance = new Float32Array(sources.length);
+  for (let cell = 0; cell < distance.length; cell++) {
+    distance[cell] = sources[cell] ? 0 : columns + rows;
+  }
+  const diagonal = Math.SQRT2;
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const cell = row * columns + column;
+      let best = distance[cell];
+      if (column > 0) {
+        best = Math.min(best, distance[cell - 1] + 1);
+      }
+      if (row > 0) {
+        const above = cell - columns;
+        best = Math.min(best, distance[above] + 1);
+        if (column > 0) {
+          best = Math.min(best, distance[above - 1] + diagonal);
+        }
+        if (column < columns - 1) {
+          best = Math.min(best, distance[above + 1] + diagonal);
+        }
+      }
+      distance[cell] = best;
+    }
+  }
+  for (let row = rows - 1; row >= 0; row--) {
+    for (let column = columns - 1; column >= 0; column--) {
+      const cell = row * columns + column;
+      let best = distance[cell];
+      if (column < columns - 1) {
+        best = Math.min(best, distance[cell + 1] + 1);
+      }
+      if (row < rows - 1) {
+        const below = cell + columns;
+        best = Math.min(best, distance[below] + 1);
+        if (column < columns - 1) {
+          best = Math.min(best, distance[below + 1] + diagonal);
+        }
+        if (column > 0) {
+          best = Math.min(best, distance[below - 1] + diagonal);
+        }
+      }
+      distance[cell] = best;
+    }
+  }
+  return distance;
+}
+
+// The key light: on the face's skin, nudged up towards the eyes and then towards whichever side
+// the photo is already lit from. Inside the inner radius, which takes in the face, it does nothing.
+function placeKeyLight({ brightness, figure, columns }: Cells, face: number[], follow: boolean) {
+  let sumColumn = 0;
+  let sumRow = 0;
+  let top = Infinity;
+  let bottom = 0;
+  for (const cell of face) {
+    const column = cell % columns;
+    const row = (cell - column) / columns;
+    sumColumn += column;
+    sumRow += row;
+    top = Math.min(top, row);
+    bottom = Math.max(bottom, row);
+  }
+  const centerColumn = sumColumn / face.length;
+  const centerRow = sumRow / face.length - (bottom - top) * 0.1;
+
+  let outer = 0;
+  for (let cell = 0; cell < figure.length; cell++) {
+    if (figure[cell]) {
+      const column = cell % columns;
+      const row = (cell - column) / columns;
+      outer = Math.max(outer, Math.hypot(column - centerColumn, row - centerRow));
     }
   }
 
-  const softTone = blurFigure(tone, cells);
-  const detail = new Float32Array(tone.length);
-  for (let cell = 0; cell < detail.length; cell++) {
-    detail[cell] = Math.abs(tone[cell] - softTone[cell]);
+  // By 8% of its reach, all of it once one half of the face is 0.02 brighter than the other.
+  let shift = 0;
+  if (follow) {
+    const sums = [0, 0];
+    const counts = [0, 0];
+    for (const cell of face) {
+      const side = cell % columns < centerColumn ? 0 : 1;
+      sums[side] += brightness[cell];
+      counts[side]++;
+    }
+    const difference = sums[1] / (counts[1] || 1) - sums[0] / (counts[0] || 1);
+    shift = Math.min(Math.max(difference / 0.02, -1), 1) * 0.08 * outer;
   }
-  return { tone, detail };
+
+  return {
+    column: centerColumn + shift,
+    row: centerRow,
+    inner: centerRow - top + Math.abs(shift),
+    outer,
+  };
 }
 
-// Flood-fills the first sizeable warm patch from the top. The arms are warm too, but the
-// shirt cuts them off from it, which is how the head can be told from them.
-function findFace(warm: Uint8Array, columns: number, rows: number, minCells: number) {
+// Dodge and burn, all of it by taking tone away, so nothing here adds a colour or a rim. The
+// photo's face is evenly lit and the brightest thing in the figure, so on its own it sits in the
+// top fifth of the ramp with nothing to model it. Its shadows go deeper by their distance from
+// its highlights, which stay where they are, and the hair is burnt down to frame it.
+function lightFigure(
+  values: Float32Array,
+  cells: Cells,
+  { face, hair }: Pick<Regions, "face" | "hair">,
+  tone: MosaicTuning["tone"],
+) {
+  const { figure, columns, rows } = cells;
+  const { falloff, followPhotoLight } = tone.keyLight;
+  const light = face.length ? placeKeyLight(cells, face, followPhotoLight) : null;
+  const edge = distanceFrom(
+    figure.map((inside) => (inside ? 0 : 1)),
+    columns,
+    rows,
+  );
+  // Soft, or the hairline and the jaw would show as a step.
+  const burn = blurFigure(Float32Array.from(hair), cells, 1);
+  const faceMask = new Float32Array(values.length);
+  for (const cell of face) {
+    faceMask[cell] = 1;
+  }
+  const modeled = blurFigure(faceMask, cells, 2);
+  const lit = new Float32Array(values.length);
+
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const cell = row * columns + column;
+      if (!figure[cell]) {
+        continue;
+      }
+      let level = 1 - (1 - values[cell]) * (1 + tone.faceDepth * modeled[cell]);
+      level *= 1 - burn[cell] * tone.hairBurn;
+      if (light) {
+        const distance = Math.hypot(column - light.column, row - light.row);
+        level *= 1 - falloff * smoothstep(light.inner, light.outer, distance);
+      }
+      // The outermost cells are 1 from the nearest cell outside.
+      const rim = 1 - (edge[cell] - 1) / tone.edgeBurnCells;
+      if (rim > 0) {
+        level *= 1 - tone.edgeBurn * rim * rim;
+      }
+      lit[cell] = level;
+    }
+  }
+  return { lit, edge, face: modeled };
+}
+
+// How steeply the tone changes at each cell, per cell, reading across the figure alone.
+function edgeStrength(values: Float32Array, { figure, columns, rows }: Cells) {
+  const strength = new Float32Array(values.length);
+  for (let row = 1; row < rows - 1; row++) {
+    for (let column = 1; column < columns - 1; column++) {
+      const cell = row * columns + column;
+      if (!figure[cell]) {
+        continue;
+      }
+      const read = (offset: number) =>
+        figure[cell + offset] ? values[cell + offset] : values[cell];
+      strength[cell] = Math.hypot((read(1) - read(-1)) / 2, (read(columns) - read(-columns)) / 2);
+    }
+  }
+  return strength;
+}
+
+// Every cell's tone and how strong an edge it's on, the shirt's light before the key light falls
+// off, for the accent, and where the face and the silhouette's edge are, for the light theme's
+// dots. The last two steps, the grain and the bottom fade, belong to each tile.
+function toneMap(cells: Cells, regions: Regions, tone: MosaicTuning["tone"]) {
+  const { figure } = cells;
+  const curve = filmicCurve(tone.contrast);
+  const cleaned = tone.denoise
+    ? medianFigure(cells.brightness, cells, tone.denoise, tone.denoiseLimit)
+    : cells.brightness;
+  const ranged = setRange(cleaned, cells, tone, curve);
+
+  const soft = blurFigure(ranged, cells, tone.clarityRadius);
+  const clear = new Float32Array(ranged.length);
+  for (let cell = 0; cell < clear.length; cell++) {
+    if (figure[cell]) {
+      const local = tone.clarity * midtoneWeight(ranged[cell]) * (ranged[cell] - soft[cell]);
+      clear[cell] = clamp01(ranged[cell] + local);
+    }
+  }
+
+  const shaped = tone.claheBlend > 0 ? equalizeLocally(clear, cells, tone) : clear;
+  const { lit, edge, face } = lightFigure(shaped, cells, regions, tone);
+  const detail = edgeStrength(lit, cells);
+  const unsharp = blurFigure(lit, cells, 1);
+  const finished = new Float32Array(lit.length);
+  for (let cell = 0; cell < finished.length; cell++) {
+    if (figure[cell]) {
+      // Eased in above the threshold, so where it starts doesn't show as a speckle of its own.
+      const { sharpen, edgeThreshold } = tone;
+      const amount = sharpen * smoothstep(edgeThreshold, edgeThreshold * 1.5, detail[cell]);
+      finished[cell] = clamp01(lit[cell] + amount * (lit[cell] - unsharp[cell]));
+    }
+  }
+  return { tone: finished, detail, shirtLight: shaped, edge, face };
+}
+
+// The settings the light theme's tone is made with, in place of the ones above.
+function lightTone({ light, ...tone }: MosaicTuning["tone"]): MosaicTuning["tone"] {
+  const { clarity, sharpen, faceDepth } = light;
+  return { ...tone, light, clarity, sharpen, faceDepth };
+}
+
+// The share of its cell an ink dot has to cover for the cell to come out the right lightness to
+// the eye, which adds light up, not lightness. The tone runs from the ink (0) to the page (1).
+function dotCoverage(tone: number, { ink, page }: { ink: number; page: number }) {
+  const lightness = ink + clamp01(tone) * (page - ink);
+  return clamp01((page ** 3 - lightness ** 3) / (page ** 3 - ink ** 3));
+}
+
+// How much of its cell a light-theme dot covers, from the tone of its cell: an ink dot grows with
+// darkness and a highlight prints nothing. Three things hold it up where it would be too small to
+// read: the face's midtones keep a smallest dot, so does the T-shirt, and so does the silhouette's
+// edge.
+function printedCoverage(
+  tone: number,
+  face: number,
+  edge: number,
+  onShirt: boolean,
+  palette: { ink: number; page: number },
+  { light }: MosaicTuning["tone"],
+  curve: (tone: number) => number,
+) {
+  const shade = curve(tone);
+  const printed = 1 - smoothstep(light.openFrom, light.openTo, shade);
+  const midtone =
+    face * light.midtoneDot * (1 - smoothstep(light.openFrom - 0.06, light.openTo, shade));
+  const rim = Math.max(1 - (edge - 1) / light.contourCells, 0);
+  const shirt = onShirt ? light.shirtDot : 0;
+  return Math.max(dotCoverage(shade, palette) * printed, midtone, shirt, light.contour * rim * rim);
+}
+
+// Flood-fills the first sizeable patch from the top. Of warm cells, that is the face: the arms
+// are warm too, but the shirt cuts them off from it. Of dark cells, it is the hair.
+function firstPatch(mask: Uint8Array, columns: number, rows: number, minCells: number) {
   const size = columns * rows;
   const seen = new Uint8Array(size);
   const stack = new Int32Array(size);
 
   for (let start = 0; start < size; start++) {
-    if (!warm[start] || seen[start]) {
+    if (!mask[start] || seen[start]) {
       continue;
     }
 
@@ -515,7 +1019,7 @@ function findFace(warm: Uint8Array, columns: number, rows: number, minCells: num
         cell + columns,
       ];
       for (const other of next) {
-        if (other >= 0 && other < size && warm[other] && !seen[other]) {
+        if (other >= 0 && other < size && mask[other] && !seen[other]) {
           seen[other] = 1;
           stack[depth++] = other;
         }
@@ -543,7 +1047,13 @@ function classifyRegions(cells: Cells) {
 
   // Per column of the face: its first and last cell. Everything between them counts as
   // skin, which takes in the brows, eyes, nostrils and lips that are too dark to be warm.
-  const face = findFace(warm, columns, rows, count * faceShare);
+  const dark = figure.map((inside, cell) => (inside && brightness[cell] < hairBelow ? 1 : 0));
+  const hair = new Uint8Array(size);
+  for (const cell of firstPatch(dark, columns, rows, count * faceShare)) {
+    hair[cell] = 1;
+  }
+
+  const face = firstPatch(warm, columns, rows, count * faceShare);
   const first = new Int32Array(columns).fill(-1);
   const last = new Int32Array(columns).fill(-1);
   let faceTop = 0;
@@ -565,7 +1075,9 @@ function classifyRegions(cells: Cells) {
       }
 
       const inFaceColumn = first[column] >= 0;
-      if (inFaceColumn && row < first[column]) {
+      if (hair[cell]) {
+        regions[cell] = HAIR;
+      } else if (inFaceColumn && row < first[column]) {
         // Light strands up here are nothing rather than skin, whatever their hue.
         regions[cell] = brightness[cell] < hairBelow ? HAIR : 0;
       } else if (inFaceColumn && row <= last[column]) {
@@ -598,22 +1110,107 @@ function classifyRegions(cells: Cells) {
       }
     }
   }
-  return regions;
+  // The face's skin alone, for the key light: the hair's lighter strands can be warm too.
+  return { regions, hair, face: face.filter((cell) => !hair[cell]) };
 }
 
-// By percentile of the T-shirt's own cells, so it adapts to any photo and screen size.
+// By percentile of the T-shirt's own cells, so it adapts to any photo and screen size. Its
+// brightest cells against their surroundings are the raised ridges of its folds, where the
+// photo's broader light would only pick out one side of the chest. They mix towards the accent by
+// how bright they are, and the blur turns that into soft patches: a ridge one cell wide comes out
+// of it faint, and only a broad one reaches full.
 // Nothing here is random, so a rebuild at the same size places exactly the same tiles.
-function placeAccent(detail: Float32Array, regions: Uint8Array) {
-  const { softPercent, fullPercent } = MOSAIC.accent;
-  const accent = new Uint8Array(regions.length);
-  const sorted = detail.filter((_, cell) => regions[cell] === SHIRT).sort();
-  const softFrom = sorted[Math.floor(sorted.length * (1 - softPercent / 100))];
-  const fullFrom = sorted[Math.floor(sorted.length * (1 - fullPercent / 100))];
-
-  for (let cell = 0; cell < regions.length; cell++) {
-    if (regions[cell] === SHIRT) {
-      accent[cell] = detail[cell] >= fullFrom ? 2 : detail[cell] >= softFrom ? 1 : 0;
+function placeAccent(
+  light: Float32Array,
+  regions: Uint8Array,
+  { columns, rows }: Cells,
+  { shirtHighlightPercent, fullPercent, hemBand, foldRadius }: MosaicTuning["accent"],
+) {
+  const size = regions.length;
+  const accent = new Uint8Array(size);
+  const skin = new Uint8Array(size);
+  for (let cell = 0; cell < size; cell++) {
+    skin[cell] = regions[cell] === SKIN ? 1 : 0;
+  }
+  const fromSkin = distanceFrom(skin, columns, rows);
+  const open = new Uint8Array(size);
+  let openCount = 0;
+  for (let cell = 0; cell < size; cell++) {
+    if (regions[cell] === SHIRT && fromSkin[cell] > hemBand) {
+      open[cell] = 1;
+      openCount++;
     }
+  }
+  // Each open cell's values, in order, for their percentiles.
+  const gather = (values: Float32Array) => {
+    const gathered = new Float32Array(openCount);
+    let index = 0;
+    for (let cell = 0; cell < size; cell++) {
+      if (open[cell]) {
+        gathered[index++] = values[cell];
+      }
+    }
+    return gathered.sort();
+  };
+
+  const surroundings = blurFigure(light, { figure: open, columns, rows }, foldRadius);
+  const raised = new Float32Array(size);
+  for (let cell = 0; cell < size; cell++) {
+    if (open[cell]) {
+      raised[cell] = light[cell] - surroundings[cell];
+    }
+  }
+  const sorted = gather(raised);
+  if (!sorted.length) {
+    return accent;
+  }
+
+  const top = (percent: number, values: Float32Array) =>
+    values[Math.min(Math.floor(values.length * (1 - percent / 100)), values.length - 1)];
+  const softFrom = top(shirtHighlightPercent, sorted);
+  const span = Math.max(top(fullPercent, sorted) - softFrom, 1e-4);
+  const selected = new Float32Array(regions.length);
+  for (let cell = 0; cell < regions.length; cell++) {
+    if (open[cell]) {
+      selected[cell] = clamp01((raised[cell] - softFrom) / span);
+    }
+  }
+
+  const soft = blurFigure(selected, { figure: open, columns, rows }, 1);
+  const full = top(fullPercent, gather(soft)) || 1;
+  for (let cell = 0; cell < regions.length; cell++) {
+    if (open[cell]) {
+      accent[cell] =
+        soft[cell] >= full ? ACCENT_FULL : Math.round((soft[cell] / full) * ACCENT_STEPS);
+    }
+  }
+
+  // Full accent only comes in blocks of at least two by two. A cell of it on its own, or the
+  // step at the edge of a diagonal run, reads as a stray pink dot, so it stays a mix.
+  const isFull = (column: number, row: number) =>
+    column >= 0 &&
+    column < columns &&
+    row >= 0 &&
+    row < rows &&
+    accent[row * columns + column] >= ACCENT_FULL;
+  const inBlock = (column: number, row: number) =>
+    [-1, 0].some((dy) =>
+      [-1, 0].some(
+        (dx) =>
+          isFull(column + dx, row + dy) &&
+          isFull(column + dx + 1, row + dy) &&
+          isFull(column + dx, row + dy + 1) &&
+          isFull(column + dx + 1, row + dy + 1),
+      ),
+    );
+  const stray: number[] = [];
+  for (let cell = 0; cell < accent.length; cell++) {
+    if (accent[cell] === ACCENT_FULL && !inBlock(cell % columns, Math.floor(cell / columns))) {
+      stray.push(cell);
+    }
+  }
+  for (const cell of stray) {
+    accent[cell] = ACCENT_STEPS;
   }
   return accent;
 }
@@ -642,6 +1239,46 @@ function mixRgb(from: Rgb, to: Rgb, share: number): Rgb {
   ];
 }
 
+function toLinear(channel: number) {
+  const value = channel / 255;
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+
+function fromLinear(value: number) {
+  const encoded = value <= 0.0031308 ? value * 12.92 : 1.055 * value ** (1 / 2.4) - 0.055;
+  return clamp01(encoded) * 255;
+}
+
+function toOklab([red, green, blue]: Rgb): Rgb {
+  const r = toLinear(red);
+  const g = toLinear(green);
+  const b = toLinear(blue);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+  ];
+}
+
+function fromOklab([lightness, a, b]: Rgb): Rgb {
+  const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  return [
+    fromLinear(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    fromLinear(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    fromLinear(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+  ];
+}
+
+// What color-mix(in oklab, from, to share) gives for two opaque colours.
+function mixOklab(from: Rgb, to: Rgb, share: number): Rgb {
+  return fromOklab(mixRgb(toOklab(from), toOklab(to), share));
+}
+
 function rampColor(stops: RampStop[], tone: number) {
   const next = stops.findIndex((stop) => stop.at >= tone);
   if (next === 0 || next === -1) {
@@ -649,7 +1286,7 @@ function rampColor(stops: RampStop[], tone: number) {
   }
   const from = stops[next - 1];
   const to = stops[next];
-  return mixRgb(from.rgb, to.rgb, (tone - from.at) / (to.at - from.at));
+  return mixOklab(from.rgb, to.rgb, (tone - from.at) / (to.at - from.at));
 }
 
 function readPalette() {
@@ -668,36 +1305,25 @@ function readPalette() {
   };
 
   const isDark = document.documentElement.classList.contains("dark");
-  const { gamma, highlightStop } = MOSAIC.tone.light;
-  const ramp: readonly { at: number; token: string; alpha: number }[] = isDark
-    ? MOSAIC.color.dark.ramp
-    : [...MOSAIC.color.light.ramp, { at: 1, token: `--${highlightStop}`, alpha: 1 }];
+  const ink: RampStopConfig[] = [{ at: 0, token: "--foreground", alpha: 1 }];
+  const ramp: readonly RampStopConfig[] = isDark ? MOSAIC.color.dark.ramp : ink;
   const ground = read("--background");
   // Flattened on to the page, which is what the silhouette puts under every tile. Opaque
   // colours are what let a tile be mixed towards the accent ahead of time.
-  const stops = ramp.map((stop) => ({
-    at: stop.at,
-    rgb: mixRgb(ground, read(stop.token), stop.alpha),
+  const stops = ramp.map(({ at, token, alpha }) => ({
+    at,
+    rgb: mixRgb(ground, read(token), alpha),
   }));
 
   return {
+    dark: isDark,
     stops,
-    gamma: isDark ? 1 : gamma,
     accent: read("--accent"),
     ground: toCss(ground),
     dust: toCss(read(MOSAIC.dust.token)),
+    // Lightness in OKLab of the ink and the page its dots are on, in the theme that prints.
+    print: isDark ? null : { ink: toOklab(stops[0].rgb)[0], page: toOklab(ground)[0] },
   };
-}
-
-// Where one level of the ramp ends and the next begins. Halfway between even steps and
-// steps of equal population: even alone gives the shirt, most of the figure in a narrow
-// band of tone, a handful of its 24 levels, and equal population alone starves the face.
-function levelBounds(tone: Float32Array, levels: number) {
-  const sorted = Float32Array.from(tone).sort();
-  return Array.from({ length: levels - 1 }, (_, index) => {
-    const share = (index + 1) / levels;
-    return (share + sorted[Math.floor(share * sorted.length)]) / 2;
-  });
 }
 
 // Median cut: keeps halving whichever group of colours spans the widest channel range.
@@ -757,6 +1383,10 @@ function paintDebugLayer(
   { tone, detail }: { tone: Float32Array; detail: Float32Array },
   regions: Uint8Array,
 ) {
+  if (!["detail", "regions", "tone"].includes(mode)) {
+    return null;
+  }
+
   const layer = document.createElement("canvas");
   layer.width = columns * pitch;
   layer.height = rows * pitch;
@@ -804,6 +1434,7 @@ in float targetY;
 in float startRotation;
 in float delay;
 in float fade;
+in float shrink;
 in float colorIndex;
 uniform vec2 resolution;
 uniform float time;
@@ -811,6 +1442,8 @@ uniform float flight;
 uniform float tileSize;
 uniform float accentSize;
 uniform float baseCount;
+// 1 in the light theme, whose dots reach a tenth of a pixel and past a tile's own size.
+uniform float print;
 uniform vec3 colors[${colorCount}];
 out vec4 color;
 out vec2 local;
@@ -818,18 +1451,20 @@ out float halfSize;
 
 void main() {
   float progress = (time - delay) / flight;
-  if (progress <= 0.0) {
+  if (progress <= 0.0 || (print > 0.5 && shrink <= 0.0)) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
 
   // expo.out, and exactly 1 at the end, which puts a landed tile on its pixels.
   float eased = progress >= 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * progress);
-  halfSize = (colorIndex >= baseCount ? accentSize : tileSize) * eased / 2.0;
+  halfSize = (colorIndex >= baseCount ? accentSize : tileSize) * shrink * eased / 2.0;
   local = corner * (halfSize + 1.0);
   float turn = startRotation * (1.0 - eased);
   vec2 axis = vec2(cos(turn), sin(turn));
-  vec2 center = mix(vec2(startX, startY), vec2(targetX, targetY), eased) + tileSize / 2.0;
+  // A dot bigger than a tile grows into the gap on one side only, so it stays on the pixels.
+  float over = print > 0.5 ? tileSize * max(shrink - 1.0, 0.0) / 2.0 : 0.0;
+  vec2 center = mix(vec2(startX, startY), vec2(targetX, targetY), eased) + tileSize / 2.0 + over;
   vec2 place = center + vec2(axis.x * local.x - axis.y * local.y, axis.y * local.x + axis.x * local.y);
   gl_Position = vec4(place / resolution * vec2(2.0, -2.0) + vec2(-1.0, 1.0), 0.0, 1.0);
   float alpha = fade * eased;
@@ -837,9 +1472,12 @@ void main() {
 }`;
 
 // Coverage from the distance to the tile's edge: soft while it is turned or between
-// pixels, and exactly all or nothing once it is square on a whole pixel.
+// pixels, and exactly all or nothing once it is square on a whole pixel. The light theme's dots
+// rarely are, so they're covered the way the 2D canvas does it, by how far a pixel's centre is
+// from the dot's edge, and land the same.
 const FLIGHT_FRAGMENT = `#version 300 es
 precision highp float;
+uniform float print;
 in vec4 color;
 in vec2 local;
 in float halfSize;
@@ -847,7 +1485,9 @@ out vec4 fragment;
 
 void main() {
   vec2 cover = clamp(halfSize + 0.5 - abs(local), 0.0, 1.0);
-  fragment = color * cover.x * cover.y;
+  vec2 past = abs(local) - halfSize;
+  float beyond = length(max(past, 0.0)) + min(max(past.x, past.y), 0.0);
+  fragment = color * (print > 0.5 ? clamp(0.5 - beyond, 0.0, 1.0) : cover.x * cover.y);
 }`;
 
 function createFlightRenderer(
@@ -910,11 +1550,13 @@ function createFlightRenderer(
   attribute("targetY", tiles.targetY, true);
   attribute("startRotation", tiles.startRotation, true);
   attribute("delay", tiles.delay, true);
-  attribute("fade", tiles.fade, true);
+  const fadeBuffer = attribute("fade", tiles.fade, true);
+  const shrinkBuffer = attribute("shrink", tiles.shrink, true);
   const colorIndexBuffer = attribute("colorIndex", tiles.colorIndex, true);
 
   const uniform = (name: string) => gl.getUniformLocation(program, name);
   const timeAt = uniform("time");
+  const printAt = uniform("print");
   gl.uniform2f(uniform("resolution"), canvas.width, canvas.height);
   gl.uniform1f(uniform("flight"), flightSeconds);
   gl.uniform1f(uniform("tileSize"), sizes.tileSize);
@@ -933,11 +1575,16 @@ function createFlightRenderer(
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, tiles.count);
     },
     // The same whole numbers the 2D cache is painted in, so nothing shifts at the handoff.
-    setColors(colors: Rgb[]) {
+    setColors(colors: Rgb[], print: boolean) {
       const values = colors.flatMap((color) => color.map((value) => Math.round(value) / 255));
       gl.uniform3fv(uniform("colors"), values);
+      gl.uniform1f(printAt, print ? 1 : 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, colorIndexBuffer);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, tiles.colorIndex);
+      gl.bindBuffer(gl.ARRAY_BUFFER, shrinkBuffer);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, tiles.shrink);
+      gl.bindBuffer(gl.ARRAY_BUFFER, fadeBuffer);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, tiles.fade);
     },
     destroy() {
       buffers.forEach((buffer) => gl.deleteBuffer(buffer));
@@ -969,9 +1616,18 @@ function createMosaic(
 
   let phase: "waiting" | "assembling" | "settled" = "waiting";
   let tiles: Tiles | null = null;
+  let tuning: MosaicTuning = { tone: MOSAIC.tone, accent: MOSAIC.accent };
   let palette = readPalette();
-  // By colour index. Plain colours, then the same again mixed towards the accent, then
-  // the accent.
+  // What each theme makes of this grid, worked out the first time it is shown, and the grid.
+  let figureGrid: {
+    grid: ReturnType<typeof fitGrid>;
+    classified: Regions;
+  } | null = null;
+  let looks: Partial<
+    Record<"dark" | "light", { tone: ReturnType<typeof toneMap>; accent: Uint8Array }>
+  > = {};
+  // By colour index. Plain colours, then the same again for each step of the mix towards
+  // the accent, then the accent.
   let colors: Rgb[] = [];
   let styles: string[] = [];
   let baseCount = 0;
@@ -1035,7 +1691,8 @@ function createMosaic(
     y: dustFloats(() => Math.random()),
     vx: dustFloats(() => (Math.random() * 2 - 1) * dustConfig.drift),
     vy: dustFloats(() => (Math.random() * 2 - 1) * dustConfig.drift),
-    opacity: dustFloats(() => between(dustConfig.opacity)),
+    // Where in the theme's range of opacities, 0-1.
+    shade: dustFloats(() => Math.random()),
     phase: dustFloats(() => Math.random() * Math.PI * 2),
     rate: dustFloats(() => between(dustConfig.twinkle)),
   };
@@ -1052,7 +1709,7 @@ function createMosaic(
     }
 
     const { count, tone, jitter, rgb, order, accent, colorIndex } = tiles;
-    const { levels } = MOSAIC.detail;
+    const { levels } = tuning.tone;
     let base: Rgb[];
 
     if (MOSAIC.colorMode === "photo") {
@@ -1064,36 +1721,28 @@ function createMosaic(
       colorIndex.set(quantized.assigned);
       base = quantized.colors;
     } else {
-      const { gamma } = palette;
-      const shade = gamma === 1 ? tone : tone.map((value) => value ** gamma);
-      const bounds = levelBounds(shade, levels);
       base = Array.from({ length: levels }, (_, level) =>
-        rampColor(palette.stops, ((bounds[level - 1] ?? 0) + (bounds[level] ?? 1)) / 2),
+        rampColor(palette.stops, (level + 0.5) / levels),
       );
       for (let tile = 0; tile < count; tile++) {
-        const jittered = shade[tile] * (1 + jitter[tile]);
-        let level = 0;
-        while (level < bounds.length && jittered >= bounds[level]) {
-          level++;
-        }
-        colorIndex[tile] = level;
+        const jittered = tone[tile] * (1 + jitter[tile]);
+        colorIndex[tile] = Math.min(Math.max(Math.floor(jittered * levels), 0), levels - 1);
       }
     }
 
     baseCount = base.length;
     for (let tile = 0; tile < count; tile++) {
-      if (accent[tile] === 1) {
-        colorIndex[tile] += baseCount;
-      } else if (accent[tile] === 2) {
-        colorIndex[tile] = baseCount * 2;
-      }
+      colorIndex[tile] =
+        accent[tile] === ACCENT_FULL
+          ? baseCount * ACCENT_FULL
+          : colorIndex[tile] + baseCount * accent[tile];
     }
 
-    colors = [
-      ...base,
-      ...base.map((color) => mixRgb(color, palette.accent, MOSAIC.accent.softMix)),
-      palette.accent,
-    ];
+    const { maxMix } = tuning.accent;
+    const mixed = Array.from({ length: ACCENT_STEPS }, (_, step) =>
+      base.map((color) => mixOklab(color, palette.accent, (maxMix * (step + 1)) / ACCENT_STEPS)),
+    );
+    colors = [...base, ...mixed.flat(), palette.accent];
     styles = colors.map(toCss);
 
     const sizes = new Array<number>(colors.length).fill(0);
@@ -1110,6 +1759,94 @@ function createMosaic(
     for (let tile = 0; tile < count; tile++) {
       order[cursors[colorIndex[tile]]++] = tile;
     }
+  };
+
+  const lookFor = (dark: boolean) => {
+    const theme = dark ? "dark" : "light";
+    let look = looks[theme];
+    if (!look && figureGrid) {
+      const { grid, classified } = figureGrid;
+      const tone = toneMap(grid, classified, dark ? tuning.tone : lightTone(tuning.tone));
+      const accent = placeAccent(tone.shirtLight, classified.regions, grid, tuning.accent);
+      look = looks[theme] = { tone, accent };
+    }
+    return look;
+  };
+
+  // Gives every tile what its theme makes of it: how its cell's tone comes out, its share of the
+  // accent, and how big it is. Dark, a tile is whole and changes colour. Light, a tile is ink
+  // and a dot, from nothing on a highlight to the whole cell in the shadows.
+  const dress = () => {
+    const look = lookFor(palette.dark);
+    if (!tiles || !figureGrid || !look) {
+      return;
+    }
+
+    const { grid, classified } = figureGrid;
+    const { columns, rows, brightness, red, green, blue } = grid;
+    const { tone, accent } = look;
+    const { rgb } = tiles;
+    const { jitter: grain, bottomFade, light } = tuning.tone;
+    const { photoSaturation } = MOSAIC.color;
+    const curve = filmicCurve(light.printContrast);
+    const fadeFrom = palette.print ? light.fadeFrom : MOSAIC.fadeFrom;
+    const accented: number[] = [];
+    const biggest = pitch * light.maxDot;
+
+    for (let tile = 0; tile < tiles.count; tile++) {
+      const cell = tiles.cell[tile];
+      const column = cell % columns;
+      const row = (cell - column) / columns;
+      tiles.tone[tile] = tone.tone[cell];
+      tiles.jitter[tile] =
+        (cellNoise(column, row) * 2 - 1) * grain * midtoneWeight(tone.tone[cell]);
+      tiles.accent[tile] = accent[cell];
+      if (accent[cell]) {
+        accented.push(tile);
+      }
+
+      const fading = clamp01((row / rows - fadeFrom) / (1 - fadeFrom));
+      if (palette.print) {
+        // An accent tile never prints smaller than a tile, or it would lose its colour.
+        const least = accent[cell] ? (tileSize / biggest) ** 2 : 0;
+        const coverage = Math.max(
+          printedCoverage(
+            tiles.tone[tile] * (1 + tiles.jitter[tile]),
+            tone.face[cell],
+            tone.edge[cell],
+            classified.regions[cell] === SHIRT,
+            palette.print,
+            tuning.tone,
+            curve,
+          ),
+          least,
+        );
+        // The way a halftone fades: the dots shrink, with nothing lost to alpha.
+        const size = biggest * Math.sqrt(coverage * (1 - smoothstep(0, 1, fading)));
+        // Under a pixel, a dot is a whole one with the share of the ink it would have covered,
+        // and the smallest print nothing.
+        tiles.shrink[tile] = size < MOSAIC.minDot * pitch ? 0 : Math.max(size, 1) / tileSize;
+        tiles.fade[tile] = Math.min(size * size, 1);
+      } else {
+        // The dots shrink first, and only then lose their ink.
+        tiles.shrink[tile] = 1 - (1 - bottomFade.minScale) * fading;
+        tiles.fade[tile] = 1 - smoothstep(0.35, 1, fading);
+      }
+
+      // The photo's colour at the enhanced brightness.
+      const lift = brightness[cell] > 0 ? tone.tone[cell] / brightness[cell] : 1;
+      const curved = [red[cell] * lift, green[cell] * lift, blue[cell] * lift];
+      const grey = luminance(curved[0], curved[1], curved[2]);
+      curved.forEach((channel, index) => {
+        rgb[tile * 3 + index] = grey + (channel - grey) * photoSaturation;
+      });
+    }
+
+    accentTiles = Uint16Array.from(accented);
+    twinkles.forEach((twinkle) => {
+      twinkle.start = -1;
+    });
+    assignColors();
   };
 
   // The canvas is stretched from the portrait's box out to the section's edges, since
@@ -1147,17 +1884,14 @@ function createMosaic(
     originY: number,
   ) => {
     const grid = fitGrid(source, boxWidth, boxHeight, dpr);
-    const { columns, rows, marginX, marginY, figure, red, green, blue, brightness, count } = grid;
-    const enhanced = enhanceDetail(grid);
-    const regions = classifyRegions(grid);
-    const accent = placeAccent(enhanced.detail, regions);
+    const { columns, rows, marginX, marginY, figure, count } = grid;
+    const classified = classifyRegions(grid);
+    const { regions } = classified;
     const next = createTiles(count);
-    const { jitter, photoSaturation } = MOSAIC.color;
     const offsetX = Math.round(originX * dpr) + marginX;
     const offsetY = Math.round(originY * dpr) + marginY;
     const focusColumn = MOSAIC.focus.x * columns;
     const focusRow = MOSAIC.focus.y * rows;
-    const accented: number[] = [];
     let farthest = 1;
     let tile = 0;
 
@@ -1181,15 +1915,10 @@ function createMosaic(
         }
 
         tileAt[cell] = tile;
+        next.cell[tile] = cell;
         next.targetX[tile] = offsetX + column * pitch;
         next.targetY[tile] = offsetY + row * pitch;
-        next.tone[tile] = enhanced.tone[cell];
-        next.jitter[tile] = (cellNoise(column, row) * 2 - 1) * jitter;
         next.seed[tile] = cellNoise(row, column);
-        next.accent[tile] = accent[cell];
-        if (accent[cell]) {
-          accented.push(tile);
-        }
 
         if (inRun) {
           silhouette[silhouette.length - 1] += pitch;
@@ -1198,21 +1927,9 @@ function createMosaic(
           inRun = true;
         }
 
-        const down = row / rows;
-        next.fade[tile] =
-          down > MOSAIC.fadeFrom ? 1 - (down - MOSAIC.fadeFrom) / (1 - MOSAIC.fadeFrom) : 1;
-
         const reach = Math.hypot(column - focusColumn, row - focusRow);
         next.reach[tile] = reach;
         farthest = Math.max(farthest, reach);
-
-        // The photo's colour at the enhanced brightness.
-        const lift = brightness[cell] > 0 ? enhanced.tone[cell] / brightness[cell] : 1;
-        const curved = [red[cell] * lift, green[cell] * lift, blue[cell] * lift];
-        const grey = luminance(curved[0], curved[1], curved[2]);
-        curved.forEach((channel, index) => {
-          next.rgb[tile * 3 + index] = grey + (channel - grey) * photoSaturation;
-        });
         tile++;
       }
     }
@@ -1221,19 +1938,19 @@ function createMosaic(
       next.reach[index] /= farthest;
     }
 
-    twinkles.forEach((twinkle) => {
-      twinkle.start = -1;
-    });
-    accentTiles = Uint16Array.from(accented);
     activeCount = 0;
     cacheReady = false;
     tiles = next;
     cache.width = columns * pitch;
     cache.height = rows * pitch;
-    assignColors();
+    figureGrid = { grid, classified };
+    looks = {};
+    dress();
 
     if (process.env.NODE_ENV !== "production" && debugMode) {
-      debugLayer = paintDebugLayer(debugMode, grid, enhanced, regions);
+      const accent = looks[palette.dark ? "dark" : "light"]?.accent ?? new Uint8Array();
+      const enhanced = looks[palette.dark ? "dark" : "light"]?.tone;
+      debugLayer = enhanced ? paintDebugLayer(debugMode, grid, enhanced, regions) : null;
       const names = ["none", "skin", "shirt", "hair", "outline"];
       const summary: Record<string, number> = {};
       regions.forEach((region, cell) => {
@@ -1241,7 +1958,7 @@ function createMosaic(
           const name = names[region];
           summary[name] = (summary[name] ?? 0) + 1;
           if (accent[cell]) {
-            const key = `${accent[cell] === 2 ? "full" : "soft"} on ${name}`;
+            const key = `${accent[cell] === ACCENT_FULL ? "full" : "soft"} on ${name}`;
             summary[key] = (summary[key] ?? 0) + 1;
           }
         }
@@ -1255,26 +1972,43 @@ function createMosaic(
         gap: pitch - tileSize,
         ...summary,
       });
+      // For measuring the tiles from a test, without reading the canvas back.
+      Object.assign(window, {
+        __mosaicDebug: {
+          grid,
+          regions,
+          hair: classified.hair,
+          tiles: next,
+          looks,
+          colors,
+          baseCount,
+        },
+      });
     }
   };
 
   const tileLeft = (tile: number) => (tiles ? tiles.targetX[tile] - gridX : 0);
   const tileTop = (tile: number) => (tiles ? tiles.targetY[tile] - gridY : 0);
 
+  // How far in from its tile's corner a dot starts. Centred, unless it is bigger than the tile,
+  // when it grows from the corner into the gap and stays on whole pixels.
+  const insetOf = (size: number) => Math.max((tileSize - size) / 2, 0);
+
   // Empties a cell on the cache for a tile that is about to leave it, or to change.
   const clearHome = (tile: number) => {
-    if (cacheContext) {
+    if (cacheContext && tiles) {
+      const extent = Math.max(tileSize, Math.ceil(tileSize * tiles.shrink[tile]));
       cacheContext.globalAlpha = 1;
       cacheContext.fillStyle = palette.ground;
-      cacheContext.fillRect(tileLeft(tile), tileTop(tile), tileSize, tileSize);
+      cacheContext.fillRect(tileLeft(tile), tileTop(tile), extent, extent);
     }
   };
 
   const stampHome = (tile: number) => {
     if (cacheContext && tiles) {
       const color = tiles.colorIndex[tile];
-      const size = color < baseCount ? tileSize : accentSize;
-      const inset = (tileSize - size) / 2;
+      const size = (color < baseCount ? tileSize : accentSize) * tiles.shrink[tile];
+      const inset = insetOf(size);
       cacheContext.globalAlpha = tiles.fade[tile];
       cacheContext.fillStyle = styles[color];
       cacheContext.fillRect(tileLeft(tile) + inset, tileTop(tile) + inset, size, size);
@@ -1326,7 +2060,7 @@ function createMosaic(
       return;
     }
 
-    const { order, fade, targetX, targetY, active, parted, activeList } = tiles;
+    const { order, fade, shrink, targetX, targetY, active, parted, activeList } = tiles;
     cacheContext.globalAlpha = 1;
     cacheContext.clearRect(0, 0, cache.width, cache.height);
     paintGround();
@@ -1335,8 +2069,7 @@ function createMosaic(
     let alpha = 1;
     let start = 0;
     colorEnds.forEach((end, color) => {
-      const size = color < baseCount ? tileSize : accentSize;
-      const inset = (tileSize - size) / 2;
+      const fullSize = color < baseCount ? tileSize : accentSize;
       cacheContext.fillStyle = styles[color];
       for (let cursor = start; cursor < end; cursor++) {
         const tile = order[cursor];
@@ -1346,6 +2079,8 @@ function createMosaic(
         if (fade[tile] !== alpha) {
           cacheContext.globalAlpha = alpha = fade[tile];
         }
+        const size = fullSize * shrink[tile];
+        const inset = insetOf(size);
         cacheContext.fillRect(
           targetX[tile] - gridX + inset,
           targetY[tile] - gridY + inset,
@@ -1537,8 +2272,9 @@ function createMosaic(
     }
 
     context.fillStyle = palette.dust;
-    const middle = (dustConfig.opacity.min + dustConfig.opacity.max) / 2;
-    const swing = (dustConfig.opacity.max - dustConfig.opacity.min) / 2;
+    const { min, max } = dustConfig.opacity[palette.dark ? "dark" : "light"];
+    const middle = (min + max) / 2;
+    const swing = (max - min) / 2;
     for (let speck = 0; speck < dustCount; speck++) {
       const x = Math.round(dust.x[speck] * canvas.width);
       const y = Math.round(dust.y[speck] * canvas.height);
@@ -1548,7 +2284,7 @@ function createMosaic(
 
       const opacity = lively
         ? middle + swing * Math.sin(dust.phase[speck] + dust.rate[speck] * now)
-        : dust.opacity[speck];
+        : min + dust.shade[speck] * (max - min);
       context.globalAlpha = opacity * surroundOpacity;
       context.fillRect(x, y, tileSize, tileSize);
     }
@@ -1575,7 +2311,7 @@ function createMosaic(
       return;
     }
 
-    const { x, y, fade, reveal, parted, targetX, targetY, colorIndex, activeList } = tiles;
+    const { x, y, fade, shrink, reveal, parted, targetX, targetY, colorIndex, activeList } = tiles;
     const { opacity, scale } = MOSAIC.textReveal;
 
     // What the cache's holes used to hold, going as the tile goes, so the name fades in.
@@ -1603,8 +2339,9 @@ function createMosaic(
         context.globalAlpha = alpha = nextAlpha;
       }
 
-      const size = (color < baseCount ? tileSize : accentSize) * (1 - (1 - scale) * parting);
-      const inset = (tileSize - size) / 2;
+      const fullSize = (color < baseCount ? tileSize : accentSize) * shrink[tile];
+      const size = fullSize * (1 - (1 - scale) * parting);
+      const inset = insetOf(size);
       context.fillRect(Math.round(x[tile]) + inset, Math.round(y[tile]) + inset, size, size);
     }
   };
@@ -1629,8 +2366,9 @@ function createMosaic(
       } else if (age > 0 && !active[twinkle.tile] && fade[twinkle.tile] === 1) {
         const { tile } = twinkle;
         const color = colorIndex[tile];
-        const size = color < baseCount ? tileSize : accentSize;
-        const inset = (tileSize - size) / 2;
+        const size =
+          (color < baseCount ? tileSize : accentSize) * (palette.print ? tiles.shrink[tile] : 1);
+        const inset = insetOf(size);
         const level = 1 + Math.sin(age * Math.PI * 2) * strength;
         const [red, green, blue] = colors[color];
         context.fillStyle = toCss([red * level, green * level, blue * level]);
@@ -1923,7 +2661,7 @@ function createMosaic(
       { tileSize, accentSize, baseCount, colorCount: colors.length },
       timing.flight,
     );
-    flightRenderer?.setColors(colors);
+    flightRenderer?.setColors(colors, !palette.dark);
     // Nothing is in the air yet. This is for the driver, which finishes compiling a shader
     // on its first draw, and would otherwise do that on the flight's first frame.
     flightRenderer?.draw(0);
@@ -2059,8 +2797,8 @@ function createMosaic(
     }
     dark = nextDark;
     palette = readPalette();
-    assignColors();
-    flightRenderer?.setColors(colors);
+    dress();
+    flightRenderer?.setColors(colors, !palette.dark);
     paintCache();
     draw();
   });
@@ -2101,6 +2839,14 @@ function createMosaic(
         .catch(() => {
           // A broken image has nothing to sample, and its alt text is still there.
         });
+    },
+
+    retune(next) {
+      tuning = next;
+      built = null;
+      if (phase === "settled" && ensureGrid()) {
+        settle();
+      }
     },
 
     destroy() {
@@ -2167,7 +2913,25 @@ export function MosaicPortrait({
       mosaic.enter();
     }
 
+    let unmountPanel: (() => void) | null = null;
+    let unmounted = false;
+    if (
+      process.env.NODE_ENV !== "production" &&
+      new URLSearchParams(window.location.search).get("mosaicTune") === "1"
+    ) {
+      void import("@/components/sections/MosaicTunePanel").then(({ mountTunePanel }) => {
+        if (!unmounted) {
+          unmountPanel = mountTunePanel(
+            { tone: MOSAIC.tone, accent: MOSAIC.accent },
+            mosaic.retune,
+          );
+        }
+      });
+    }
+
     return () => {
+      unmounted = true;
+      unmountPanel?.();
       mosaic.destroy();
       mosaicRef.current = null;
     };
