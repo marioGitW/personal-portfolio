@@ -39,7 +39,7 @@ const MOSAIC = {
     claheBlend: 0.15,
     claheRegions: [3, 4],
     claheClipLimit: 1.5,
-    keyLight: { falloff: 0.18, followPhotoLight: true },
+    keyLight: { falloff: 0.18 },
     // How much further the face's shadows go from its highlights, and how far the hair is
     // burnt down, darker than the shirt it is lighter than in the photo, to frame the face.
     faceDepth: 0.9,
@@ -96,7 +96,6 @@ const MOSAIC = {
     hemBand: 3,
     // Cells. A fold ridge is measured against the shirt this far around it.
     foldRadius: 3,
-    accentScale: 1,
   },
   color: {
     // "at" is the tone of a tile, from shadow (0) to highlight (1), and the ramp between stops
@@ -804,7 +803,7 @@ function distanceFrom(sources: Uint8Array, columns: number, rows: number) {
 
 // The key light: on the face's skin, nudged up towards the eyes and then towards whichever side
 // the photo is already lit from. Inside the inner radius, which takes in the face, it does nothing.
-function placeKeyLight({ brightness, figure, columns }: Cells, face: number[], follow: boolean) {
+function placeKeyLight({ brightness, figure, columns }: Cells, face: number[]) {
   let sumColumn = 0;
   let sumRow = 0;
   let top = Infinity;
@@ -830,18 +829,15 @@ function placeKeyLight({ brightness, figure, columns }: Cells, face: number[], f
   }
 
   // By 8% of its reach, all of it once one half of the face is 0.02 brighter than the other.
-  let shift = 0;
-  if (follow) {
-    const sums = [0, 0];
-    const counts = [0, 0];
-    for (const cell of face) {
-      const side = cell % columns < centerColumn ? 0 : 1;
-      sums[side] += brightness[cell];
-      counts[side]++;
-    }
-    const difference = sums[1] / (counts[1] || 1) - sums[0] / (counts[0] || 1);
-    shift = Math.min(Math.max(difference / 0.02, -1), 1) * 0.08 * outer;
+  const sums = [0, 0];
+  const counts = [0, 0];
+  for (const cell of face) {
+    const side = cell % columns < centerColumn ? 0 : 1;
+    sums[side] += brightness[cell];
+    counts[side]++;
   }
+  const difference = sums[1] / (counts[1] || 1) - sums[0] / (counts[0] || 1);
+  const shift = Math.min(Math.max(difference / 0.02, -1), 1) * 0.08 * outer;
 
   return {
     column: centerColumn + shift,
@@ -862,8 +858,8 @@ function lightFigure(
   tone: MosaicTuning["tone"],
 ) {
   const { figure, columns, rows } = cells;
-  const { falloff, followPhotoLight } = tone.keyLight;
-  const light = face.length ? placeKeyLight(cells, face, followPhotoLight) : null;
+  const { falloff } = tone.keyLight;
+  const light = face.length ? placeKeyLight(cells, face) : null;
   const edge = distanceFrom(
     figure.map((inside) => (inside ? 0 : 1)),
     columns,
@@ -1387,8 +1383,6 @@ uniform vec2 resolution;
 uniform float time;
 uniform float flight;
 uniform float tileSize;
-uniform float accentSize;
-uniform float baseCount;
 // 1 in the light theme, whose dots reach a tenth of a pixel and past a tile's own size.
 uniform float print;
 uniform vec3 colors[${colorCount}];
@@ -1405,7 +1399,7 @@ void main() {
 
   // expo.out, and exactly 1 at the end, which puts a landed tile on its pixels.
   float eased = progress >= 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * progress);
-  halfSize = (colorIndex >= baseCount ? accentSize : tileSize) * shrink * eased / 2.0;
+  halfSize = tileSize * shrink * eased / 2.0;
   local = corner * (halfSize + 1.0);
   float turn = startRotation * (1.0 - eased);
   vec2 axis = vec2(cos(turn), sin(turn));
@@ -1440,7 +1434,7 @@ void main() {
 function createFlightRenderer(
   canvas: HTMLCanvasElement,
   tiles: Tiles,
-  sizes: { tileSize: number; accentSize: number; baseCount: number; colorCount: number },
+  sizes: { tileSize: number; colorCount: number },
   flightSeconds: number,
 ) {
   const gl = canvas.getContext("webgl2", { antialias: false });
@@ -1507,8 +1501,6 @@ function createFlightRenderer(
   gl.uniform2f(uniform("resolution"), canvas.width, canvas.height);
   gl.uniform1f(uniform("flight"), flightSeconds);
   gl.uniform1f(uniform("tileSize"), sizes.tileSize);
-  gl.uniform1f(uniform("accentSize"), sizes.accentSize);
-  gl.uniform1f(uniform("baseCount"), sizes.baseCount);
 
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.enable(gl.BLEND);
@@ -1583,7 +1575,6 @@ function createMosaic(
   let dpr = 1;
   let tileSize = 1;
   // Whole device pixels, and the same parity as the tile, so it centres exactly.
-  let accentSize = 1;
   let lively = isLively();
   let timing: Timing = MOSAIC.assemble.quick;
   let flight: gsap.core.Tween | null = null;
@@ -1823,7 +1814,6 @@ function createMosaic(
 
     pitch = grid.pitch;
     tileSize = grid.tileSize;
-    accentSize = tileSize - 2 * Math.round((tileSize * (1 - MOSAIC.accent.accentScale)) / 2);
     gridX = offsetX;
     gridY = offsetY;
     gridColumns = columns;
@@ -1933,7 +1923,7 @@ function createMosaic(
   const stampHome = (tile: number) => {
     if (cacheContext && tiles) {
       const color = tiles.colorIndex[tile];
-      const size = (color < baseCount ? tileSize : accentSize) * tiles.shrink[tile];
+      const size = tileSize * tiles.shrink[tile];
       const inset = insetOf(size);
       cacheContext.globalAlpha = tiles.fade[tile];
       cacheContext.fillStyle = styles[color];
@@ -1995,7 +1985,6 @@ function createMosaic(
     let alpha = 1;
     let start = 0;
     colorEnds.forEach((end, color) => {
-      const fullSize = color < baseCount ? tileSize : accentSize;
       cacheContext.fillStyle = styles[color];
       for (let cursor = start; cursor < end; cursor++) {
         const tile = order[cursor];
@@ -2005,7 +1994,7 @@ function createMosaic(
         if (fade[tile] !== alpha) {
           cacheContext.globalAlpha = alpha = fade[tile];
         }
-        const size = fullSize * shrink[tile];
+        const size = tileSize * shrink[tile];
         const inset = insetOf(size);
         cacheContext.fillRect(
           targetX[tile] - gridX + inset,
@@ -2265,7 +2254,7 @@ function createMosaic(
         context.globalAlpha = alpha = nextAlpha;
       }
 
-      const fullSize = (color < baseCount ? tileSize : accentSize) * shrink[tile];
+      const fullSize = tileSize * shrink[tile];
       const size = fullSize * (1 - (1 - scale) * parting);
       const inset = insetOf(size);
       context.fillRect(Math.round(x[tile]) + inset, Math.round(y[tile]) + inset, size, size);
@@ -2292,8 +2281,7 @@ function createMosaic(
       } else if (age > 0 && !active[twinkle.tile] && fade[twinkle.tile] === 1) {
         const { tile } = twinkle;
         const color = colorIndex[tile];
-        const size =
-          (color < baseCount ? tileSize : accentSize) * (palette.print ? tiles.shrink[tile] : 1);
+        const size = tileSize * (palette.print ? tiles.shrink[tile] : 1);
         const inset = insetOf(size);
         const level = 1 + Math.sin(age * Math.PI * 2) * strength;
         const [red, green, blue] = colors[color];
@@ -2584,7 +2572,7 @@ function createMosaic(
     flightRenderer = createFlightRenderer(
       flightCanvas,
       tiles,
-      { tileSize, accentSize, baseCount, colorCount: colors.length },
+      { tileSize, colorCount: colors.length },
       timing.flight,
     );
     flightRenderer?.setColors(colors, !palette.dark);
