@@ -160,7 +160,7 @@ export const REVEAL = {
 } as const;
 
 type Rgb = [number, number, number];
-type Token = "background" | "surface" | "border" | "foreground" | "muted" | "accent";
+type Token = "surface" | "border" | "foreground" | "accent";
 
 // ink and accent are what the loop draws with, made once so that it doesn't have to.
 type Palette = {
@@ -232,7 +232,7 @@ type Ring = {
 };
 
 /** Not there yet, on his way up, and there for good. */
-export type HologramPhase = "waiting" | "building" | "standing";
+type HologramPhase = "waiting" | "building" | "standing";
 
 export type Hologram = {
   /** The pointer is over the panel. The stage's own is listened to here. */

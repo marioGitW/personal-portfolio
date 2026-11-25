@@ -1,7 +1,7 @@
 import type {StructureResolver} from 'sanity/structure'
 
 /** The one and only Portfolio document lives at this fixed id. */
-export const PORTFOLIO_DOCUMENT_ID = 'portfolio'
+const PORTFOLIO_DOCUMENT_ID = 'portfolio'
 
 /** Document types that must never have more than one instance. */
 export const SINGLETON_TYPES = new Set<string>(['portfolio'])

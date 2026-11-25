@@ -1,6 +1,6 @@
 // Shared by the inline <head> script in the root layout and by HeroIntro, so
 // the two cannot disagree about whether the intro is playing.
-export const INTRO_STORAGE_KEY = "introPlayed";
+const INTRO_STORAGE_KEY = "introPlayed";
 
 // How long the script waits for the page to hydrate before giving up on the
 // intro and showing the hero, so a failed bundle cannot strand a blank page.

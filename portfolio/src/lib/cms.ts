@@ -24,7 +24,7 @@ function list<T>(value: readonly T[] | null | undefined, fallback: T[]): T[] {
   return value && value.length > 0 ? [...value] : fallback;
 }
 
-export type PortfolioContent = {
+type PortfolioContent = {
   hero: Hero;
   about: About;
   experience: Experience;

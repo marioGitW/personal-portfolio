@@ -2,7 +2,7 @@
 // everything here is nullable and the frontend owns the fallbacks.
 
 // An image asset dereferenced by GROQ. url is null when no image is set.
-export type SanityImage = {
+type SanityImage = {
   url: string | null;
   lqip: string | null;
   aspectRatio: number | null;
@@ -23,7 +23,7 @@ export type Hero = {
   resumeFilename: string | null;
 };
 
-export type AboutTag = {
+type AboutTag = {
   _key: string;
   highlightedText: string | null;
   description: string | null;
@@ -73,7 +73,7 @@ export type Skills = {
 export type SocialPlatform = "github" | "linkedin" | "instagram" | "whatsapp" | "email" | "other";
 
 /** How `value` is turned into an href. See `socialHref` in `@/lib/format`. */
-export type SocialLinkType = "url" | "whatsapp" | "email" | "phone";
+type SocialLinkType = "url" | "whatsapp" | "email" | "phone";
 
 export type SocialLinkItem = {
   _key: string;
@@ -88,7 +88,7 @@ export type SocialLinkItem = {
   iconMimeType: string | null;
 };
 
-export type Social = {
+type Social = {
   socialLinks: SocialLinkItem[] | null;
 };
 

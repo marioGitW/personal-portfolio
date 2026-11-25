@@ -6,6 +6,3 @@ export const navItems = [
   { href: "#skills", label: "Skills", sectionId: "skills" },
   { href: "#contact", label: "Contact", sectionId: "contact" },
 ] as const;
-
-/** `sessionStorage` key: one like per browser session, surviving refreshes. */
-export const LIKED_STORAGE_KEY = "portfolio:liked";

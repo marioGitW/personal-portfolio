@@ -216,7 +216,7 @@ export function HudTag({
   children,
   ...props
 }: {
-  as?: "span" | "li" | "div";
+  as?: "span" | "li";
   className?: string;
   children: ReactNode;
 }) {

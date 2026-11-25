@@ -8,7 +8,6 @@ export type SiteSettings = {
   /** Meta description. Longer and more factual than `tagline`, which is UI copy. */
   description: string;
   tagline: string;
-  email: string;
 };
 
 export type SiteStats = {

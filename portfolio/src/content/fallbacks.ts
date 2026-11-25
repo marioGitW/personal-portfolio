@@ -10,7 +10,6 @@ export const siteSettings = {
   description:
     "Portfolio of Mario Spasovski — a final-year Computer Science and Engineering student at FINKI building web applications with React, Next.js, .NET and Spring Boot.",
   tagline: "Curious about technology. Passionate about building things that make sense.",
-  email: "mrspasovski@gmail.com",
 } as const;
 
 export const heroFallback: Hero = {

@@ -1,6 +1,6 @@
 import { KEY_PREFIX, getRedis } from "@/lib/redis";
 
-export type RateLimitResult = { ok: true } | { ok: false; retryAfter: number };
+type RateLimitResult = { ok: true } | { ok: false; retryAfter: number };
 
 // Vercel puts the real client IP first. Anything without one shares a single
 // bucket rather than bypassing the limit.
