@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { Footer } from "@/components/ui/Footer";
 import { Header } from "@/components/ui/Header";
 import { getSocialLinks } from "@/lib/cms";
@@ -33,18 +34,17 @@ export default async function NotFound() {
             The link may be out of date, or the project may have been renamed.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
-            >
+            <Button as={Link} href="/" className="font-semibold">
               Back to home
-            </Link>
-            <Link
+            </Button>
+            <Button
+              as={Link}
               href="/#projects"
-              className="surface-card inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold transition hover:border-foreground focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+              variant="secondary"
+              className="font-semibold [--hud-fill:var(--surface)]"
             >
               View projects
-            </Link>
+            </Button>
           </div>
         </div>
       </main>

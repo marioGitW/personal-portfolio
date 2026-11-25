@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/Button";
 
 // Error boundaries must be client components. Kept free of CMS data and GSAP
 // on purpose: this renders when something upstream has already failed.
@@ -29,19 +30,17 @@ export default function Error({
         </h1>
         <p className="mt-4 text-muted">Trying again usually resolves it.</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
-          >
+          <Button onClick={reset} className="font-semibold">
             Try again
-          </button>
-          <Link
+          </Button>
+          <Button
+            as={Link}
             href="/"
-            className="surface-card inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold transition hover:border-foreground focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+            variant="secondary"
+            className="font-semibold [--hud-fill:var(--surface)]"
           >
             Back to home
-          </Link>
+          </Button>
         </div>
       </div>
     </main>

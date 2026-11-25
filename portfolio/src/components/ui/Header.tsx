@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { navItems } from "@/lib/nav";
+import { IconButton } from "@/components/ui/IconButton";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SocialLinkList } from "@/components/ui/SocialLinkList";
@@ -172,7 +173,10 @@ export function Header({
   }, [open]);
 
   return (
-    <header data-intro-chrome className="sticky top-0 z-50 border-b border-border bg-surface">
+    <header
+      data-intro-chrome
+      className="sticky top-0 z-50 border-b border-border bg-surface [--hud-backdrop:var(--surface)]"
+    >
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
         <a href={isHome ? "#home" : "/"} aria-label={name} className="shrink-0">
           {/* No title: the link already carries aria-label={name}, and both
@@ -236,9 +240,8 @@ export function Header({
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <button
-            type="button"
-            className="icon-button md:hidden"
+          <IconButton
+            className="md:hidden"
             aria-expanded={open}
             aria-label="Open menu"
             onClick={() => {
@@ -247,7 +250,7 @@ export function Header({
             }}
           >
             <Menu className="size-4" />
-          </button>
+          </IconButton>
         </div>
       </div>
 
@@ -268,9 +271,9 @@ export function Header({
         className="fixed inset-y-0 right-0 z-50 flex w-[85%] max-w-sm flex-col border-l border-border bg-surface px-6 pt-6 pb-8 md:hidden"
       >
         <div className="flex items-center justify-end">
-          <button type="button" className="icon-button" aria-label="Close menu" onClick={closeMenu}>
+          <IconButton aria-label="Close menu" onClick={closeMenu}>
             <X className="size-4" />
-          </button>
+          </IconButton>
         </div>
 
         <nav className="mt-10" aria-label="Mobile">

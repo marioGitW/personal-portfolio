@@ -8,6 +8,7 @@ import {
 import { ProjectVideo } from "@/components/projects/ProjectVideo";
 import { ProjectVisual } from "@/components/projects/ProjectVisual";
 import { TechStack } from "@/components/projects/TechStack";
+import { HudFrame } from "@/components/ui/hud-frame";
 import { toParagraphs } from "@/lib/format";
 import { projectTitle } from "@/lib/seo";
 import type { Project } from "@/types/sanity";
@@ -75,13 +76,17 @@ export function ProjectDetail({ project }: { project: Project }) {
           <ProjectScreenshots screenshots={screenshots} projectTitle={title} className="mt-4" />
         </section>
       ) : (
-        <ProjectVisual
-          title={title}
-          imageUrl={project.thumbnail?.url ?? null}
-          lqip={project.thumbnail?.lqip}
-          sizes="(min-width: 896px) 896px, 100vw"
-          className="mt-10 aspect-video w-full rounded-xl"
-        />
+        <HudFrame size="md" className="hud-picture mt-10 aspect-video w-full">
+          <div className="hud-media">
+            <ProjectVisual
+              title={title}
+              imageUrl={project.thumbnail?.url ?? null}
+              lqip={project.thumbnail?.lqip}
+              sizes="(min-width: 896px) 896px, 100vw"
+              className="h-full w-full"
+            />
+          </div>
+        </HudFrame>
       )}
 
       {project.demoVideoUrl && (
@@ -136,7 +141,7 @@ export function ProjectDetail({ project }: { project: Project }) {
 
       <Link
         href="/#projects"
-        className="mt-12 inline-flex items-center gap-2 rounded-full text-sm font-semibold text-link underline-offset-4 transition hover:underline focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+        className="mt-12 inline-flex items-center gap-2 text-sm font-semibold text-link underline-offset-4 hover:underline focus-visible:outline-2"
       >
         <ArrowLeft className="size-4" />
         Back to all projects

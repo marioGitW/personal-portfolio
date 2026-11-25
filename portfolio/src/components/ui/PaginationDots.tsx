@@ -10,9 +10,6 @@ type PaginationDotsProps = {
   label?: string;
   itemLabel: (index: number) => string;
   className?: string;
-  buttonClassName?: string;
-  /** Skills adds a group-hover tint here; the carousel does not. */
-  inactiveClassName?: string;
 };
 
 export function PaginationDots({
@@ -23,8 +20,6 @@ export function PaginationDots({
   label,
   itemLabel,
   className = "",
-  buttonClassName = "",
-  inactiveClassName = "w-1.5 bg-muted",
 }: PaginationDotsProps) {
   const isTab = variant === "tab";
 
@@ -39,12 +34,9 @@ export function PaginationDots({
           {...(isTab
             ? { role: "tab", "aria-selected": i === active }
             : { "aria-current": i === active })}
-          className={`grid cursor-pointer place-items-center p-2.5 ${buttonClassName}`}
+          className="grid cursor-pointer place-items-center p-2.5 focus-visible:outline-2 focus-visible:outline-link"
         >
-          <span
-            aria-hidden="true"
-            className={`pagination-dot ${i === active ? "w-6 bg-foreground" : inactiveClassName}`}
-          />
+          <span aria-hidden="true" className="hud-dot" />
         </button>
       ))}
     </div>

@@ -30,7 +30,7 @@ export function ProjectVisual({
     return (
       // Surface, not a fixed tone: inside ProjectCard's dark token scope this is
       // navy like the fade over it, so the scaled image and its container
-      // disagreeing by a sub-pixel at the rounded edge cannot show a pale seam.
+      // disagreeing by a sub-pixel at the edge cannot show a pale seam.
       <div className={`relative overflow-hidden bg-surface ${className}`}>
         <Image
           src={imageUrl}

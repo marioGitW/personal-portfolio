@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ProjectVisual } from "@/components/projects/ProjectVisual";
+import { HudFrame, HudTag } from "@/components/ui/hud-frame";
 import { projectPath, projectSlug } from "@/lib/format";
 import type { Project } from "@/types/sanity";
 
@@ -12,84 +13,75 @@ type ProjectCardProps = {
 };
 
 // One class string, shared by both branches below so they cannot drift apart.
-// The focus ring replaces a bare focus-visible:outline-none, which left the
-// card keyboard-focusable with no visible indicator.
+// The fill is the outline's own colour: the picture covers it, and any other
+// colour would show as a fringe along the picture's antialiased diagonals.
 const cardClasses =
-  "group relative isolate flex h-full w-full flex-col justify-end overflow-hidden rounded-3xl text-left shadow-sm focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none";
+  "hud-picture flex h-full w-full flex-col justify-end text-left [--hud-fill:var(--border)]";
 
 export function ProjectCard({ project, onOpen }: ProjectCardProps) {
   // Card and modal read the same fields; no per-view duplicate copy.
   const title = project.thumbnailTitle ?? project.title;
   const slug = projectSlug(project);
 
-  // The card box itself never moves: only its contents react to hover. Lifting
-  // the whole card pushed it under the track's clip and gave the transformed
-  // box its own composited layer, which is where the edge fringe came from.
-  //
-  // No border either: `inset-0` resolves to the padding box, so a border ring
-  // sits outside the image and both overlays and nothing can darken it. Any
-  // light colour there reads as a hairline around the card.
-  //
   // The fade and the light text on it look the same in both themes: `dark`
   // re-scopes the tokens for this subtree, so --background is the dark navy and
-  // --foreground the light text either way. The focus ring stays outside it, on
-  // the page's own tokens, because it draws against the page rather than the card.
+  // --foreground the light text either way. The frame and the focus ring stay
+  // outside it, on the page's own tokens, because they draw against the page
+  // rather than the card.
   const body = (
     <div className="dark contents">
-      {/* Every clip in this stack carries the card's radius. Without it the
-          image is clipped square here and only rounded by the button, two
-          layers up — and because the hover zoom pushes the image past the card
-          bounds on its own composited layer, that distant rounded clip leaves a
-          bright fringe along the edge. */}
-      <div className="absolute inset-0 h-full w-full overflow-hidden rounded-3xl">
+      <div className="hud-media">
         <ProjectVisual
           title={title}
           imageUrl={project.thumbnail?.url ?? null}
           lqip={project.thumbnail?.lqip}
-          className="h-full w-full rounded-3xl transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          className="hud-zoom h-full w-full"
         />
+
+        {/* Near-opaque at the bottom so the text sits on solid ground, fading
+            out before the top so the image still reads. In sRGB, which looks
+            the same for one colour and has a far cheaper shader than oklab. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-linear-to-t/srgb from-background/95 via-background/80 via-45% to-background/10"
+        />
+
+        {/* Flat dark layer on hover, distinct from the default bright state. */}
+        <span
+          aria-hidden="true"
+          className="hud-shade pointer-events-none absolute inset-0 bg-background/60"
+        />
+
+        {/* In here rather than over the card, so it passes under the text. */}
+        <span aria-hidden="true" className="hud-scan" />
       </div>
 
-      {/* Near-opaque at the bottom so the text sits on solid ground, fading
-          out before the top so the image still reads. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-t from-background/95 via-background/80 via-45% to-background/10"
-      />
-
-      {/* Flat dark layer on hover, distinct from the default bright state. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 rounded-3xl bg-background/0 transition-colors duration-300 group-hover:bg-background/60"
-      />
-
-      <div className="relative flex flex-col gap-4 p-6 sm:p-8">
-        <div>
-          {project.thumbnailTag && (
-            <p className="text-xs font-medium tracking-[0.2em] text-foreground uppercase">
-              {project.thumbnailTag}
-            </p>
-          )}
-          {title && (
-            <h3 className="mt-1.5 text-2xl font-bold text-foreground sm:text-3xl">{title}</h3>
-          )}
-          {project.thumbnailDescription && (
-            <p className="mt-2 hidden text-sm text-muted sm:text-base lg:block">
-              {project.thumbnailDescription}
-            </p>
-          )}
-        </div>
-
-        {/* Hidden until hover. */}
-        <div className="grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 group-hover:grid-rows-[1fr] group-hover:opacity-100">
-          <div className="overflow-hidden">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground">
-              View Details
-              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </span>
-          </div>
-        </div>
+      <div data-hud-item className="relative p-6 sm:p-8 lg:max-xl:p-6">
+        {project.thumbnailTag && (
+          <p className="text-xs font-medium tracking-[0.2em] text-foreground uppercase">
+            {project.thumbnailTag}
+          </p>
+        )}
+        {title && (
+          <h3 className="mt-1.5 text-2xl font-bold text-foreground sm:text-3xl">{title}</h3>
+        )}
+        {project.thumbnailDescription && (
+          <p className="mt-2 hidden text-sm text-muted sm:text-base lg:block">
+            {project.thumbnailDescription}
+          </p>
+        )}
       </div>
+
+      {/* In the corner rather than under the text, so it can be there at rest:
+          a card at 1024px has no room for one more line. Last, so it is also
+          the last thing in the link's name. */}
+      <HudTag
+        data-hud-item
+        className="absolute top-3 right-3 text-[11px] font-semibold tracking-[0.06em] sm:top-4 sm:right-4"
+      >
+        View Details
+        <ArrowRight aria-hidden="true" className="hud-nudge size-3.5" />
+      </HudTag>
     </div>
   );
 
@@ -99,7 +91,11 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
   // never navigates, so prefetching every card would be pure waste.
   if (slug) {
     return (
-      <Link
+      <HudFrame
+        as={Link}
+        size="md"
+        interactive
+        reveal
         href={projectPath(slug)}
         prefetch={false}
         draggable={false}
@@ -110,14 +106,22 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
         className={cardClasses}
       >
         {body}
-      </Link>
+      </HudFrame>
     );
   }
 
   // No slug means no project page exists, so there is nothing to link to.
   return (
-    <button type="button" onClick={() => onOpen(project)} className={cardClasses}>
+    <HudFrame
+      as="button"
+      type="button"
+      size="md"
+      interactive
+      reveal
+      onClick={() => onOpen(project)}
+      className={cardClasses}
+    >
       {body}
-    </button>
+    </HudFrame>
   );
 }

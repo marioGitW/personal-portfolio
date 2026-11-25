@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { HudFrame } from "@/components/ui/hud-frame";
+import { IconButton } from "@/components/ui/IconButton";
 import { PaginationDots } from "@/components/ui/PaginationDots";
 import type { SanityScreenshot } from "@/types/sanity";
 
@@ -37,48 +39,53 @@ export function ProjectScreenshots({
 
   return (
     <div className={className}>
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface">
-        <div
-          className="flex h-full transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${index * 100}%)` }}
-        >
-          {screenshots.map((screenshot, i) => (
-            <div key={screenshot._key} className="relative h-full w-full shrink-0">
-              <Image
-                src={screenshot.url}
-                alt={altFor(i + 1)}
-                fill
-                sizes="(min-width: 640px) 60vw, 90vw"
-                className="object-cover"
-                {...(screenshot.lqip
-                  ? { placeholder: "blur" as const, blurDataURL: screenshot.lqip }
-                  : {})}
-              />
-            </div>
-          ))}
+      <HudFrame size="md" className="hud-picture aspect-video w-full">
+        <div className="hud-media">
+          <div
+            className="flex h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${index * 100}%)` }}
+          >
+            {screenshots.map((screenshot, i) => (
+              <div key={screenshot._key} className="relative h-full w-full shrink-0">
+                <Image
+                  src={screenshot.url}
+                  alt={altFor(i + 1)}
+                  fill
+                  sizes="(min-width: 640px) 60vw, 90vw"
+                  className="object-cover"
+                  {...(screenshot.lqip
+                    ? { placeholder: "blur" as const, blurDataURL: screenshot.lqip }
+                    : {})}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
+        {/* Placed by a wrapper: a button's translate is its hover's. */}
         {screenshots.length > 1 && (
           <>
-            <button
-              type="button"
-              onClick={() => goTo(index - 1)}
-              aria-label="Previous screenshot"
-              className="absolute top-1/2 left-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur-sm transition hover:border-foreground"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(index + 1)}
-              aria-label="Next screenshot"
-              className="absolute top-1/2 right-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur-sm transition hover:border-foreground"
-            >
-              <ChevronRight className="size-4" />
-            </button>
+            <span className="absolute inset-y-0 left-3 flex items-center">
+              <IconButton
+                onClick={() => goTo(index - 1)}
+                aria-label="Previous screenshot"
+                className="[--hud-fill:var(--background)]"
+              >
+                <ChevronLeft className="size-4" />
+              </IconButton>
+            </span>
+            <span className="absolute inset-y-0 right-3 flex items-center">
+              <IconButton
+                onClick={() => goTo(index + 1)}
+                aria-label="Next screenshot"
+                className="[--hud-fill:var(--background)]"
+              >
+                <ChevronRight className="size-4" />
+              </IconButton>
+            </span>
           </>
         )}
-      </div>
+      </HudFrame>
 
       {screenshots.length > 1 && (
         <PaginationDots

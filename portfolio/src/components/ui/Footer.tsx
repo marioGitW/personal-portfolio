@@ -9,7 +9,7 @@ import { getSiteSettings } from "@/lib/content";
 import type { SocialLinkItem } from "@/types/sanity";
 
 const iconLinkClass =
-  "group inline-flex size-10 items-center justify-center rounded-full border border-border text-muted transition-all duration-[250ms] ease-out hover:-translate-y-0.5 hover:border-link hover:text-link focus-visible:-translate-y-0.5 focus-visible:border-link focus-visible:text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "hud-hollow inline-flex size-11 items-center justify-center text-muted focus-visible:text-foreground md:size-10 pointer-fine:hover:text-foreground";
 
 type FooterProps = {
   links: SocialLinkItem[];
@@ -72,6 +72,7 @@ export function Footer({ links }: FooterProps) {
           {links.length > 0 && (
             <div data-footer-item>
               <SocialLinkList
+                framed
                 links={links}
                 className="flex items-center gap-3"
                 linkClassName={iconLinkClass}

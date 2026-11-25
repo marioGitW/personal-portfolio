@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
 import { SkillCard } from "@/components/sections/SkillCard";
 import { EngineeringRadar } from "@/components/ui/EngineeringRadar";
 import { PaginationDots } from "@/components/ui/PaginationDots";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { sectionCopy } from "@/content/fallbacks";
-import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
+import { useHudReveal } from "@/hooks/useHudReveal";
 import type { Skills as SkillsContent } from "@/types/sanity";
 
 const CARDS_PER_PAGE_DESKTOP = 12;
@@ -36,7 +35,7 @@ export function Skills({ skills }: SkillsProps) {
   // change that shrinks the page count never points past the new last page.
   const page = Math.min(rawPage, Math.max(pages.length - 1, 0));
 
-  const trackRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
@@ -47,46 +46,11 @@ export function Skills({ skills }: SkillsProps) {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) {
-      return;
-    }
-
-    registerGsapPlugins();
-
-    const items = track.querySelectorAll("li");
-    const reducedMotion = prefersReducedMotion();
-
-    if (reducedMotion) {
-      gsap.set(items, { opacity: 1, y: 0, scale: 1 });
-      return;
-    }
-
-    gsap.set(items, { opacity: 0, y: 32, scale: 0.94 });
-
-    const tween = gsap.to(items, {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      duration: 0.5,
-      ease: "power3.out",
-      stagger: 0.06,
-      scrollTrigger: {
-        trigger: track,
-        start: "top 85%",
-      },
-    });
-
-    return () => {
-      tween.scrollTrigger?.kill();
-      tween.kill();
-    };
-    // Re-runs if the CMS returns a different number of skills.
-  }, [items.length]);
+  // Again when the pages are cut differently, which puts other tiles on the first one.
+  useHudReveal(sectionRef, { dependencies: [items.length, cardsPerPage] });
 
   return (
-    <section id="skills" aria-labelledby="skills-title" className="section-shell">
+    <section id="skills" aria-labelledby="skills-title" ref={sectionRef} className="section-shell">
       <div className="mx-auto max-w-2xl text-center">
         <SectionHeading
           titleId="skills-title"
@@ -107,9 +71,9 @@ export function Skills({ skills }: SkillsProps) {
             {sectionCopy.skills.toolsLabel}
           </p>
 
-          <div className="mt-6 min-h-[380px] overflow-hidden sm:min-h-[440px]">
+          {/* Clipped sideways only, so the first row can lift. */}
+          <div className="mt-6 min-h-[380px] overflow-x-clip sm:min-h-[440px]">
             <div
-              ref={trackRef}
               className="flex transition-transform duration-500 ease-out"
               style={{ transform: `translateX(-${page * 100}%)` }}
             >
@@ -120,7 +84,7 @@ export function Skills({ skills }: SkillsProps) {
                   className="grid w-full shrink-0 auto-rows-min grid-cols-3 content-start gap-2 sm:gap-3"
                 >
                   {pageSkills.map((skill) => (
-                    <SkillCard key={skill._key} skill={skill} />
+                    <SkillCard key={skill._key} skill={skill} reveal={pageIndex === 0} />
                   ))}
                 </ul>
               ))}
@@ -136,8 +100,6 @@ export function Skills({ skills }: SkillsProps) {
               label="Tools and technologies pages"
               itemLabel={(i) => `Show tools page ${i + 1} of ${pages.length}`}
               className="mt-6 flex items-center justify-center gap-1 lg:justify-start"
-              buttonClassName="group"
-              inactiveClassName="w-1.5 bg-muted group-hover:bg-foreground"
             />
           )}
         </div>

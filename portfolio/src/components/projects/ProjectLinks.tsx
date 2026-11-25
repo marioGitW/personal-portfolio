@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { buttonClasses } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { GitHubIcon } from "@/components/ui/SocialIcons";
 import { isExternalHref } from "@/lib/format";
 import type { Project } from "@/types/sanity";
@@ -28,26 +28,23 @@ export function ProjectLinks({ project, className = "" }: ProjectLinksProps) {
   return (
     <div className={`flex flex-wrap gap-3 ${className}`}>
       {liveUrl && (
-        <a
-          href={liveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClasses("primary", "gap-2")}
-        >
+        <Button as="a" href={liveUrl} target="_blank" rel="noopener noreferrer" className="gap-2">
           <ExternalLink className="size-4" />
           Live Project
-        </a>
+        </Button>
       )}
       {sourceUrl && (
-        <a
+        <Button
+          as="a"
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={buttonClasses("secondary", "gap-2")}
+          variant="secondary"
+          className="gap-2"
         >
           <GitHubIcon className="size-4" />
           Source Code
-        </a>
+        </Button>
       )}
     </div>
   );

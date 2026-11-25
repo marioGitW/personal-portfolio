@@ -16,6 +16,8 @@ import {
 import { ProjectVideo } from "@/components/projects/ProjectVideo";
 import { TechStack } from "@/components/projects/TechStack";
 import { ProjectLinks } from "@/components/projects/ProjectLinks";
+import { HudFrame } from "@/components/ui/hud-frame";
+import { IconButton } from "@/components/ui/IconButton";
 import type { Project } from "@/types/sanity";
 
 type ProjectModalProps = {
@@ -138,25 +140,29 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
       className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 p-0 backdrop-blur-sm sm:p-6"
       onClick={onRequestClose}
     >
-      <div
+      {/* Full screen on a phone, where there are no corners to cut. */}
+      <HudFrame
         ref={dialogRef}
+        size="md"
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-modal-title"
         onClick={(event) => event.stopPropagation()}
-        className="relative flex h-full w-full max-w-4xl flex-col overflow-hidden surface-card sm:h-auto sm:max-h-[90vh] sm:rounded-2xl"
+        className="flex h-full w-full max-w-4xl flex-col max-sm:[--hud-cut:var(--hud-trim)] sm:h-auto sm:max-h-[90vh]"
       >
-        <button
+        <IconButton
           ref={closeButtonRef}
-          type="button"
           onClick={onRequestClose}
           aria-label="Close project details"
-          className="absolute top-4 right-4 z-10 icon-button bg-background/80 backdrop-blur-sm transition hover:border-foreground"
+          className="absolute top-4 right-4 z-10 [--hud-fill:var(--background)]"
         >
           <X className="size-4" />
-        </button>
+        </IconButton>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
+        <div
+          className="hud-clip min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          data-lenis-prevent
+        >
           <div ref={contentRef} className="p-6 sm:p-10">
             <div data-modal-item>
               {project.thumbnailTag && <p className="section-eyebrow">{project.thumbnailTag}</p>}
@@ -184,12 +190,16 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
                   />
                 </div>
               ) : (
-                <ProjectVisual
-                  title={title}
-                  imageUrl={project.thumbnail?.url ?? null}
-                  lqip={project.thumbnail?.lqip}
-                  className="mt-8 aspect-video w-full rounded-xl"
-                />
+                <HudFrame size="md" className="hud-picture mt-8 aspect-video w-full">
+                  <div className="hud-media">
+                    <ProjectVisual
+                      title={title}
+                      imageUrl={project.thumbnail?.url ?? null}
+                      lqip={project.thumbnail?.lqip}
+                      className="h-full w-full"
+                    />
+                  </div>
+                </HudFrame>
               )}
             </div>
 
@@ -248,7 +258,7 @@ export function ProjectModal({ project, closing, onRequestClose, onExited }: Pro
             </div>
           </div>
         </div>
-      </div>
+      </HudFrame>
     </div>,
     document.body,
   );

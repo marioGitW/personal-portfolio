@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import gsap from "gsap";
 import { Heart } from "lucide-react";
-import { prefersReducedMotion, registerGsapPlugins } from "@/lib/animations";
+import { Button } from "@/components/ui/Button";
+import { HudFrame } from "@/components/ui/hud-frame";
+import { useHudReveal } from "@/hooks/useHudReveal";
 import { LIKED_STORAGE_KEY, recordVisit } from "@/lib/visit";
 import type { SiteStats } from "@/lib/types";
 
@@ -33,9 +34,7 @@ export function ActivityCounter() {
   const likeInFlight = useRef(false);
 
   const sectionRef = useRef<HTMLElement>(null);
-  const eyebrowRef = useRef<HTMLParagraphElement>(null);
-  const headingRef = useRef<HTMLDivElement>(null);
-  const actionRef = useRef<HTMLDivElement>(null);
+  useHudReveal(sectionRef);
 
   // The one place a visit is recorded; recordVisit counts once per page load.
   useEffect(() => {
@@ -62,48 +61,6 @@ export function ActivityCounter() {
     }
     prevLikes.current = stats.likes;
   }, [stats]);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    const eyebrow = eyebrowRef.current;
-    const heading = headingRef.current;
-    const action = actionRef.current;
-
-    if (!section || !eyebrow || !heading || !action) {
-      return;
-    }
-
-    const reducedMotion = prefersReducedMotion();
-    const revealTargets = [eyebrow, heading, action];
-
-    if (reducedMotion) {
-      gsap.set(revealTargets, { opacity: 1, y: 0, filter: "blur(0px)" });
-      return;
-    }
-
-    registerGsapPlugins();
-
-    gsap.set(revealTargets, { opacity: 0, y: 22, filter: "blur(8px)" });
-
-    const timeline = gsap.timeline({
-      defaults: { ease: "power3.out" },
-      scrollTrigger: {
-        trigger: section,
-        start: "top 80%",
-        toggleActions: "play none none none",
-      },
-    });
-
-    timeline
-      .to(eyebrow, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6 })
-      .to(heading, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7 }, "-=0.35")
-      .to(action, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6 }, "-=0.35");
-
-    return () => {
-      timeline.scrollTrigger?.kill();
-      timeline.kill();
-    };
-  }, []);
 
   const onLike = async () => {
     // The ref is claimed synchronously, which is what makes rapid clicking
@@ -140,13 +97,13 @@ export function ActivityCounter() {
       ref={sectionRef}
       className="mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-6 max-[431px]:py-10"
     >
-      <div className="relative overflow-hidden rounded-3xl surface-card px-6 py-12 sm:px-12 sm:py-14">
+      <HudFrame size="lg" reveal className="px-6 py-12 sm:px-12 sm:py-14">
         <div className="relative flex flex-col items-center gap-10 text-center lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:text-left">
           <div className="max-w-md">
-            <p ref={eyebrowRef} className="section-eyebrow">
+            <p data-hud-item className="section-eyebrow">
               One last thing
             </p>
-            <div ref={headingRef}>
+            <div data-hud-item>
               <h2 id="activity-title" className="mt-3 text-3xl sm:text-4xl">
                 Enjoyed the journey?
               </h2>
@@ -156,29 +113,25 @@ export function ActivityCounter() {
             </div>
           </div>
 
-          <div ref={actionRef} className="flex flex-col items-center gap-5 lg:items-end">
-            <button
-              type="button"
+          <div data-hud-item className="flex flex-col items-center gap-5 lg:items-end">
+            <Button
+              variant="secondary"
               onClick={() => void onLike()}
               disabled={isLiked || pending}
               aria-pressed={isLiked}
-              className="group inline-flex items-center gap-2.5 rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-foreground active:scale-95 disabled:cursor-default disabled:hover:translate-y-0"
+              className="gap-2.5 [--hud-fill:var(--background)] disabled:cursor-default"
             >
               <Heart
-                className={`size-4 transition-all duration-300 ${
-                  isLiked
-                    ? "scale-110 fill-foreground text-foreground"
-                    : "text-muted group-hover:text-foreground"
-                }`}
+                className={`size-4 ${isLiked ? "fill-foreground text-foreground" : "text-muted"}`}
               />
               <span>{isLiked ? "Liked" : "Leave a like"}</span>
-            </button>
+            </Button>
 
             <p className="font-body flex items-center gap-2 text-xs text-muted">
               {stats ? (
                 <>
                   <span className="flex items-center gap-1.5">
-                    <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
+                    <span className="size-2 bg-emerald-400" />
                     {formatCount(stats.visits)} visits
                   </span>
                   <span aria-hidden="true">·</span>
@@ -190,12 +143,12 @@ export function ActivityCounter() {
                   </span>
                 </>
               ) : (
-                <span className="inline-flex h-4 w-32 animate-pulse rounded-full bg-border" />
+                <span className="inline-flex h-4 w-32 bg-border" />
               )}
             </p>
           </div>
         </div>
-      </div>
+      </HudFrame>
     </section>
   );
 }

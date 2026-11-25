@@ -138,7 +138,9 @@ export function Hero({ hero }: HeroProps) {
             data-intro-hide="cta"
             className="hero-enter-cta mt-7 flex flex-wrap justify-center gap-3 lg:justify-start"
           >
-            <Button href="#contact">Let&apos;s Connect</Button>
+            <Button as="a" href="#contact">
+              Let&apos;s Connect
+            </Button>
             {resumeUrl && (
               <Button ref={resumeButtonRef} variant="secondary" onClick={() => setResumeOpen(true)}>
                 View Resume

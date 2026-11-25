@@ -1,15 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AlertCircle, CheckCircle2, Loader2, Mail, MessageSquare, Send, User } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { HudFrame, HudLabel } from "@/components/ui/hud-frame";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { useHudReveal } from "@/hooks/useHudReveal";
 import { contactFormResolver, type ContactFormValues } from "@/lib/contact";
 
 type SubmitStatus = "idle" | "success" | "error";
 type FieldName = keyof ContactFormValues;
 
 export function Contact() {
+  const sectionRef = useRef<HTMLElement>(null);
+  useHudReveal(sectionRef);
+
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [focusedField, setFocusedField] = useState<FieldName | null>(null);
   const {
@@ -40,12 +46,17 @@ export function Contact() {
   };
 
   const fieldIconClass = (field: FieldName) =>
-    `pointer-events-none absolute right-0 top-8 size-4 transition-colors ${
+    `pointer-events-none absolute top-3.5 right-3 size-4 ${
       focusedField === field ? "field-icon-active" : "text-muted"
     }`;
 
   return (
-    <section id="contact" aria-labelledby="contact-title" className="section-shell">
+    <section
+      id="contact"
+      aria-labelledby="contact-title"
+      ref={sectionRef}
+      className="section-shell"
+    >
       <div className="mx-auto max-w-2xl text-center">
         <SectionHeading
           titleId="contact-title"
@@ -56,26 +67,42 @@ export function Contact() {
         />
       </div>
 
-      <form
+      <HudFrame
+        as="form"
+        size="lg"
+        reveal
         noValidate
         onSubmit={handleSubmit(onSubmit)}
-        className="mx-auto mt-10 max-w-2xl rounded-2xl surface-card p-6 shadow-sm sm:p-8"
+        className="mx-auto mt-10 max-w-2xl px-6 py-8 sm:px-10 sm:py-10"
       >
-        <div className="flex flex-col gap-6">
-          <label className="relative block">
+        {/* The section's own eyebrow says it already. */}
+        <div
+          data-hud-item
+          aria-hidden="true"
+          className="relative flex items-center justify-between"
+        >
+          <HudLabel>Contact</HudLabel>
+        </div>
+
+        <div className="relative mt-8 flex flex-col gap-6">
+          <label data-hud-item className="block">
             <span className="text-sm text-muted">Name</span>
-            <input
-              type="text"
-              autoComplete="name"
-              aria-invalid={Boolean(errors.name)}
-              aria-describedby={errors.name ? "name-error" : undefined}
-              className="mt-1 w-full border-b border-border bg-surface py-2 pr-8 text-foreground outline-none transition focus:border-link"
-              {...register("name", {
-                onBlur: () => setFocusedField((current) => (current === "name" ? null : current)),
-              })}
-              onFocus={() => setFocusedField("name")}
-            />
-            <User className={fieldIconClass("name")} />
+            <span className="hud-field mt-1 block">
+              <input
+                type="text"
+                autoComplete="name"
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? "name-error" : undefined}
+                className="block w-full py-2 pr-9 pl-3 text-foreground"
+                {...register("name", {
+                  onBlur: () => setFocusedField((current) => (current === "name" ? null : current)),
+                })}
+                onFocus={() => setFocusedField("name")}
+              />
+              <span aria-hidden="true" className="hud-field-corner hud-field-corner-tr" />
+              <span aria-hidden="true" className="hud-field-corner hud-field-corner-bl" />
+              <User className={fieldIconClass("name")} />
+            </span>
             {errors.name && (
               <span
                 id="name-error"
@@ -87,20 +114,25 @@ export function Contact() {
             )}
           </label>
 
-          <label className="relative block">
+          <label data-hud-item className="block">
             <span className="text-sm text-muted">Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              aria-invalid={Boolean(errors.email)}
-              aria-describedby={errors.email ? "email-error" : undefined}
-              className="mt-1 w-full border-b border-border bg-surface py-2 pr-8 text-foreground outline-none transition focus:border-link"
-              {...register("email", {
-                onBlur: () => setFocusedField((current) => (current === "email" ? null : current)),
-              })}
-              onFocus={() => setFocusedField("email")}
-            />
-            <Mail className={fieldIconClass("email")} />
+            <span className="hud-field mt-1 block">
+              <input
+                type="email"
+                autoComplete="email"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                className="block w-full py-2 pr-9 pl-3 text-foreground"
+                {...register("email", {
+                  onBlur: () =>
+                    setFocusedField((current) => (current === "email" ? null : current)),
+                })}
+                onFocus={() => setFocusedField("email")}
+              />
+              <span aria-hidden="true" className="hud-field-corner hud-field-corner-tr" />
+              <span aria-hidden="true" className="hud-field-corner hud-field-corner-bl" />
+              <Mail className={fieldIconClass("email")} />
+            </span>
             {errors.email && (
               <span
                 id="email-error"
@@ -112,20 +144,24 @@ export function Contact() {
             )}
           </label>
 
-          <label className="relative block">
+          <label data-hud-item className="block">
             <span className="text-sm text-muted">Message</span>
-            <textarea
-              rows={4}
-              aria-invalid={Boolean(errors.message)}
-              aria-describedby={errors.message ? "message-error" : undefined}
-              className="mt-1 w-full resize-none border-b border-border bg-surface py-2 pr-8 text-foreground outline-none transition focus:border-link"
-              {...register("message", {
-                onBlur: () =>
-                  setFocusedField((current) => (current === "message" ? null : current)),
-              })}
-              onFocus={() => setFocusedField("message")}
-            />
-            <MessageSquare className={fieldIconClass("message")} />
+            <span className="hud-field mt-1 block">
+              <textarea
+                rows={4}
+                aria-invalid={Boolean(errors.message)}
+                aria-describedby={errors.message ? "message-error" : undefined}
+                className="block w-full resize-none py-2 pr-9 pl-3 text-foreground"
+                {...register("message", {
+                  onBlur: () =>
+                    setFocusedField((current) => (current === "message" ? null : current)),
+                })}
+                onFocus={() => setFocusedField("message")}
+              />
+              <span aria-hidden="true" className="hud-field-corner hud-field-corner-tr" />
+              <span aria-hidden="true" className="hud-field-corner hud-field-corner-bl" />
+              <MessageSquare className={fieldIconClass("message")} />
+            </span>
             {errors.message && (
               <span
                 id="message-error"
@@ -138,12 +174,12 @@ export function Contact() {
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full border border-transparent bg-accent px-5 py-3 text-sm font-semibold tracking-wide text-accent-foreground uppercase transition duration-200 enabled:hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <span className="inline-flex items-center gap-2">
+        <div data-hud-item className="mt-8">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full gap-2 py-3.25 font-semibold tracking-wide uppercase disabled:cursor-not-allowed disabled:opacity-60"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
@@ -155,8 +191,8 @@ export function Contact() {
                 <Send className="size-4" />
               </>
             )}
-          </span>
-        </button>
+          </Button>
+        </div>
 
         {/* Wrapper rather than aria-live on each <p>: a live region has to be
             in the DOM before its content changes to be announced. */}
@@ -175,7 +211,7 @@ export function Contact() {
             </p>
           )}
         </div>
-      </form>
+      </HudFrame>
     </section>
   );
 }

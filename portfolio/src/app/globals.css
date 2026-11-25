@@ -58,7 +58,7 @@
 }
 
 /* Repeated composites. Each is exactly the substring that was duplicated across
-   call sites; radius, padding and shadows stay inline because they vary. */
+   call sites. */
 
 /* max-[431px], not 430: Tailwind compiles `max-[Npx]` to
    `not all and (min-width: Npx)`, which is strictly below N. 431 is what
@@ -71,22 +71,6 @@
   /* font-family set directly: .font-heading is a plain class, not a utility. */
   font-family: var(--font-heading);
   @apply text-xs tracking-[0.2em] text-muted uppercase;
-}
-
-@utility surface-card {
-  @apply border border-border bg-surface;
-}
-
-@utility pill-tech {
-  @apply rounded-full border border-border px-2.5 py-0.5 text-[0.7rem] font-medium tracking-wide text-muted uppercase;
-}
-
-@utility icon-button {
-  @apply inline-flex size-9 items-center justify-center rounded-full border border-border;
-}
-
-@utility pagination-dot {
-  @apply block h-1.5 rounded-full transition-all duration-300;
 }
 
 html {
@@ -370,6 +354,553 @@ html[data-intro="pending"] .hero-intro {
     opacity: 0;
     transform: translateY(18px);
   }
+}
+
+/* The HUD frame (components/ui/hud-frame.tsx), in a layer so a call site's utilities win. */
+@layer components {
+  .hud {
+    --hud-line: var(--border);
+    /* What the About panel's fill comes to on the page. Opaque, as the outline is a whole
+       shape behind it rather than a line around it. */
+    --hud-fill: color-mix(in srgb, var(--surface) 62%, var(--background));
+    /* How much smaller the fill's chamfer is, for a diagonal that looks as thin as the sides. */
+    --hud-trim: 0.4px;
+    /* 1 while it is hovered or focused, and everything that answers to that is worked out
+       from it. Declared here so a frame inside another doesn't inherit it. */
+    --hud-on: 0;
+    --hud-move: 1;
+    --hud-time: 0.2s;
+    /* The square sides run a pixel past the box on purpose. A clip isn't snapped to the pixel
+       grid and a box is, so the box is left to draw them and the clip only cuts the corners. */
+    --hud-outer: polygon(
+      calc(var(--hud-cut) + 1px) -1px,
+      calc(100% + 1px) -1px,
+      calc(100% + 1px) calc(100% - var(--hud-cut) - 1px),
+      calc(100% - var(--hud-cut) - 1px) calc(100% + 1px),
+      -1px calc(100% + 1px),
+      -1px calc(var(--hud-cut) + 1px)
+    );
+    --hud-inner: polygon(
+      calc(var(--hud-cut) - var(--hud-trim) + 1px) -1px,
+      calc(100% + 1px) -1px,
+      calc(100% + 1px) calc(100% - var(--hud-cut) + var(--hud-trim) - 1px),
+      calc(100% - var(--hud-cut) + var(--hud-trim) - 1px) calc(100% + 1px),
+      -1px calc(100% + 1px),
+      -1px calc(var(--hud-cut) - var(--hud-trim) + 1px)
+    );
+    position: relative;
+    isolation: isolate;
+  }
+
+  .hud-lg {
+    --hud-cut: 16px;
+  }
+
+  .hud-md {
+    --hud-cut: 12px;
+  }
+
+  .hud-sm {
+    --hud-cut: 6px;
+  }
+
+  @media (width >= 48rem) {
+    .hud-lg {
+      --hud-cut: 24px;
+    }
+
+    .hud-md {
+      --hud-cut: 16px;
+    }
+
+    .hud-sm {
+      --hud-cut: 8px;
+    }
+  }
+
+  /* The outline, then the hover's outline, then the fill, all behind the content. */
+  .hud-md::before,
+  .hud-sm::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background-color: var(--hud-line);
+    clip-path: var(--hud-outer);
+    pointer-events: none;
+  }
+
+  .hud-md::after,
+  .hud-sm::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    background-color: var(--hud-fill);
+    clip-path: var(--hud-inner);
+    pointer-events: none;
+  }
+
+  /* Off the picture, which may be as dark or as light as they are. */
+  .hud-picture {
+    --hud-gap: 3px;
+  }
+
+  /* For what a frame shows to its own edge: a picture, or a dialog's scroller. */
+  .hud-media {
+    position: absolute;
+    inset: 1px;
+    overflow: hidden;
+    clip-path: var(--hud-inner);
+  }
+
+  .hud-clip {
+    margin: 1px;
+    clip-path: var(--hud-inner);
+  }
+
+  /* The same for one that starts part way down, and only meets the last corner. */
+  .hud-clip-end {
+    margin: 0 1px 1px;
+    clip-path: polygon(
+      -1px -1px,
+      calc(100% + 1px) -1px,
+      calc(100% + 1px) calc(100% - var(--hud-cut) + var(--hud-trim) - 1px),
+      calc(100% - var(--hud-cut) + var(--hud-trim) - 1px) calc(100% + 1px),
+      -1px calc(100% + 1px)
+    );
+  }
+
+  /* A panel tells the hollow ones inside it what they are hollow to. */
+  .hud-md,
+  .hud-lg {
+    --hud-backdrop: color-mix(in srgb, var(--surface) 62%, var(--background));
+  }
+
+  .hud-hollow {
+    --hud-fill: var(--hud-backdrop, var(--background));
+  }
+
+  .hud-solid {
+    --hud-line: var(--accent);
+    --hud-fill: var(--accent);
+  }
+
+  .hud-tag {
+    --hud-cut: 7px;
+    --hud-trim: 0.6px;
+    --hud-fill: var(--background);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 29px;
+    padding: 0 14px 0 12px;
+    color: var(--foreground);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* Deeper than the outline by as much as it has lifted, so the pointer can't fall out of the
+     bottom of it and start it going up and down. */
+  .hud-hot {
+    --hud-raised: calc(var(--hud-on) * var(--hud-move) * 2px);
+    position: absolute;
+    inset: 0 0 calc(var(--hud-raised) * -1);
+    z-index: -2;
+    opacity: var(--hud-on);
+    transition: opacity var(--hud-time) ease-out;
+  }
+
+  .hud-hot::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 var(--hud-raised);
+    background-color: color-mix(in srgb, var(--foreground) 50%, transparent);
+    clip-path: var(--hud-outer);
+  }
+
+  .hud-corner,
+  .hud-accent {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    transition: scale var(--hud-time) ease-out;
+  }
+
+  /* 2px over a 1px outline, half of it outside, as the About panel's are. */
+  .hud-corner {
+    --hud-out: calc(-1px - var(--hud-gap, 0px));
+    width: 20px;
+    height: 20px;
+    border: 0 solid var(--foreground);
+    scale: calc(1 + 0.3 * var(--hud-on) * var(--hud-move));
+  }
+
+  .hud-corner::after {
+    content: "";
+    position: absolute;
+    border: inherit;
+    border-color: var(--accent);
+    opacity: var(--hud-on);
+    transition: opacity var(--hud-time) ease-out;
+  }
+
+  .hud-corner-tr {
+    top: var(--hud-out);
+    right: var(--hud-out);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    transform-origin: 100% 0;
+  }
+
+  .hud-corner-tr::after {
+    inset: -2px -2px 0 0;
+  }
+
+  .hud-corner-bl {
+    bottom: var(--hud-out);
+    left: var(--hud-out);
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    transform-origin: 0 100%;
+  }
+
+  .hud-corner-bl::after {
+    inset: 0 0 -2px -2px;
+  }
+
+  .hud-accent {
+    top: -1px;
+    left: calc(var(--hud-cut) + 14px);
+    width: 40px;
+    height: 2px;
+    background-color: var(--accent);
+    transform-origin: 0 50%;
+    scale: var(--hud-on) 1;
+  }
+
+  /* Parts of a frame's content that answer to its hover. */
+  .hud-lift,
+  .hud-nudge {
+    transition: translate var(--hud-time) ease-out;
+  }
+
+  .hud-lift {
+    translate: 0 calc(var(--hud-on) * var(--hud-move) * -2px);
+  }
+
+  .hud-nudge {
+    translate: calc(var(--hud-on) * var(--hud-move) * 2px) 0;
+  }
+
+  .hud-zoom {
+    scale: calc(1 + 0.03 * var(--hud-on) * var(--hud-move));
+    transition: scale 0.25s ease-out;
+  }
+
+  .hud-shade {
+    opacity: var(--hud-on);
+    transition: opacity var(--hud-time) ease-out;
+  }
+
+  /* As tall as the picture, and its bottom edge is the line. */
+  .hud-scan {
+    position: absolute;
+    inset: 0;
+    border-bottom: 1px solid var(--accent);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* 44px for a thumb, without the 36px square in the header being any bigger. */
+  .hud-reach {
+    position: absolute;
+    inset: -4px;
+  }
+
+  @media (width >= 48rem) {
+    .hud-reach {
+      display: none;
+    }
+  }
+
+  .hud-live {
+    transition: translate var(--hud-time) ease-out;
+    /* Clear of the header and of the viewport's edges, focus ring and all, when it is tabbed to. */
+    scroll-margin: 5.5rem 1rem 1rem;
+  }
+
+  .hud-live:focus-visible {
+    --hud-on: 1;
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
+  }
+
+  .hud-solid:focus-visible {
+    --hud-fill: var(--accent-hover);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .hud-live:hover:not(:disabled) {
+      --hud-on: 1;
+    }
+
+    .hud-solid:hover:not(:disabled) {
+      --hud-fill: var(--accent-hover);
+    }
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .hud-live:active:not(:disabled) {
+      --hud-line: color-mix(in srgb, var(--foreground) 50%, var(--border));
+    }
+
+    .hud-solid:active:not(:disabled) {
+      --hud-fill: var(--accent-hover);
+    }
+  }
+
+  /* translate rather than transform, which is GSAP's while a frame comes in. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hud-live:focus-visible {
+      translate: 0 -2px;
+    }
+
+    .hud-live:focus-visible .hud-scan {
+      animation: hud-scan 0.6s linear;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .hud-live:hover:not(:disabled) {
+        translate: 0 -2px;
+      }
+
+      .hud-live:hover .hud-scan {
+        animation: hud-scan 0.6s linear;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hud {
+      --hud-move: 0;
+      --hud-time: 0s;
+    }
+  }
+
+  /* A form field's brackets, and its ordinary focus ring. */
+  .hud-field {
+    position: relative;
+  }
+
+  .hud-field > :is(input, textarea) {
+    border-bottom: 1px solid var(--border);
+    background-color: transparent;
+  }
+
+  .hud-field > :is(input, textarea):focus-visible {
+    border-color: var(--link);
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
+  }
+
+  .hud-field-corner {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 0 solid var(--link);
+    opacity: 0;
+    scale: 0.4;
+    pointer-events: none;
+    transition:
+      scale 0.2s ease-out,
+      opacity 0.2s ease-out;
+  }
+
+  .hud-field > :is(input, textarea):focus ~ .hud-field-corner {
+    opacity: 1;
+    scale: 1;
+  }
+
+  .hud-field-corner-tr {
+    top: 0;
+    right: 0;
+    border-top-width: 2px;
+    border-right-width: 2px;
+    transform-origin: 100% 0;
+  }
+
+  .hud-field-corner-bl {
+    bottom: 0;
+    left: 0;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    transform-origin: 0 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hud-field-corner {
+      scale: 1;
+      transition: none;
+    }
+  }
+
+  /* A page of a carousel. */
+  .hud-dot {
+    position: relative;
+    display: block;
+    width: 10px;
+    height: 10px;
+  }
+
+  .hud-dot::before,
+  .hud-dot::after {
+    content: "";
+    position: absolute;
+  }
+
+  .hud-dot::before {
+    inset: 2px;
+    background-color: var(--muted);
+  }
+
+  .hud-dot::after {
+    inset: 0;
+    border: 2px solid var(--foreground);
+    background-color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+  }
+
+  [aria-selected="true"] > .hud-dot::after,
+  [aria-current="true"] > .hud-dot::after {
+    opacity: 1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    button:hover > .hud-dot::before {
+      background-color: var(--foreground);
+    }
+  }
+}
+
+@keyframes hud-scan {
+  from {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* The rest of an lg frame: its fill, its drawn outline and what is inside it. */
+.hud-shape {
+  clip-path: polygon(
+    var(--hud-cut) 0,
+    100% 0,
+    100% calc(100% - var(--hud-cut)),
+    calc(100% - var(--hud-cut)) 100%,
+    0 100%,
+    0 var(--hud-cut)
+  );
+  background-color: color-mix(in srgb, var(--surface) 62%, transparent);
+}
+
+/* The hologram's halftone again, in the one corner. */
+.hud-dots {
+  background-image: radial-gradient(circle, var(--border) 1.2px, transparent 1.7px);
+  background-size: 11px 11px;
+  background-position: top right;
+  mask-image: radial-gradient(ellipse 62% 66% at 100% 0, var(--border), transparent);
+}
+
+.hud-frame {
+  fill: none;
+}
+
+.hud-outline {
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.hud-edge {
+  stroke-width: 2.5;
+}
+
+.hud-edge-ink {
+  stroke: var(--foreground);
+}
+
+.hud-edge-accent {
+  stroke: var(--accent);
+}
+
+.hud-bracket {
+  stroke: var(--foreground);
+}
+
+/* The only panel with a hover of its own. */
+.about-panel .hud-bracket {
+  transition: stroke 0.5s ease;
+}
+
+/* 60px, growing to 150px. */
+.hud-segment {
+  stroke: var(--accent);
+  stroke-width: 3;
+  transform-origin: 0 0;
+  transition: transform 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.hud-ticks {
+  stroke: var(--muted);
+}
+
+.hud-divider {
+  position: relative;
+  height: 1px;
+  background-color: var(--border);
+}
+
+.hud-divider::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  background-color: var(--foreground);
+}
+
+.hud-divider::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--border);
+  background-color: var(--background);
+}
+
+.hud-stat {
+  position: relative;
+  min-height: 50px;
+  padding-left: 15px;
+  border-left: 1px solid var(--border);
+}
+
+.hud-stat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 1px;
+  height: 12px;
+  background-color: var(--foreground);
 }
 
 /* Jumps and takes the foreground colour while its input is focused. */

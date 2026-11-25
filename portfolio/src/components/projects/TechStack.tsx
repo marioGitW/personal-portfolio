@@ -1,6 +1,8 @@
+import { HudTag } from "@/components/ui/hud-frame";
+
 type TechStackProps = {
   technologies: string[];
-  /** Truncate the list and show a "+N" pill for the rest. */
+  /** Truncate the list and show a "+N" tag for the rest. */
   limit?: number;
   className?: string;
 };
@@ -10,18 +12,14 @@ export function TechStack({ technologies, limit, className = "" }: TechStackProp
   const remaining = technologies.length - visible.length;
 
   return (
-    <div className={`flex flex-wrap gap-1.5 ${className}`}>
+    <div className={`flex flex-wrap gap-2 ${className}`}>
       {visible.map((tech, index) => (
         // Index-keyed: the CMS array is free text and may contain duplicates.
-        <span key={index} className="pill-tech">
+        <HudTag key={index} className="text-[11px] font-medium tracking-wide uppercase">
           {tech}
-        </span>
+        </HudTag>
       ))}
-      {remaining > 0 && (
-        <span className="rounded-full border border-border px-2.5 py-0.5 text-[0.7rem] font-medium text-muted">
-          +{remaining}
-        </span>
-      )}
+      {remaining > 0 && <HudTag className="text-[11px] font-medium">+{remaining}</HudTag>}
     </div>
   );
 }

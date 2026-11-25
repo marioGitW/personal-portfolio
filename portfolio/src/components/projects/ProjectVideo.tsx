@@ -1,4 +1,5 @@
 import { Play } from "lucide-react";
+import { HudFrame } from "@/components/ui/hud-frame";
 
 type ProjectVideoProps = {
   demoVideoUrl: string;
@@ -59,21 +60,21 @@ function isHttpUrl(url: string): boolean {
 }
 
 export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: ProjectVideoProps) {
-  const frameClasses =
-    "relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface p-3";
+  // The padding keeps the player's square corners inside the chamfers.
+  const frameClasses = "aspect-video w-full p-3";
   const title = projectTitle ? `${projectTitle} demo video` : "Demo video";
 
   if (isVideoFile(demoVideoUrl)) {
     return (
-      <div className={`${frameClasses} ${className}`}>
+      <HudFrame size="md" className={`${frameClasses} ${className}`}>
         <video
           controls
           aria-label={title}
           preload="metadata"
-          className="h-full w-full rounded-lg"
+          className="h-full w-full"
           src={demoVideoUrl}
         />
-      </div>
+      </HudFrame>
     );
   }
 
@@ -81,33 +82,41 @@ export function ProjectVideo({ demoVideoUrl, projectTitle, className = "" }: Pro
 
   if (embedUrl) {
     return (
-      <div className={`${frameClasses} ${className}`}>
+      <HudFrame size="md" className={`${frameClasses} ${className}`}>
         <iframe
           src={embedUrl}
           title={title}
-          className="h-full w-full rounded-lg"
+          className="h-full w-full"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
           allowFullScreen
         />
-      </div>
+      </HudFrame>
     );
   }
 
   // Not a usable source, so show a placeholder rather than a broken player.
   return (
-    <div
-      className={`project-visual-grid relative isolate flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-surface ${className}`}
+    <HudFrame
+      size="md"
+      className={`flex aspect-video w-full items-center justify-center ${className}`}
     >
+      <span aria-hidden="true" className="hud-media">
+        <span className="project-visual-grid absolute inset-0" />
+      </span>
       <div className="relative flex flex-col items-center gap-3">
-        <span className="grid size-14 place-items-center rounded-full border border-border bg-background">
+        <HudFrame
+          as="span"
+          size="sm"
+          className="grid size-14 place-items-center [--hud-fill:var(--background)]"
+        >
           <Play className="size-5 translate-x-0.5 fill-muted text-muted" />
-        </span>
+        </HudFrame>
         <p className="text-xs font-medium tracking-[0.15em] text-muted uppercase">
           Demo video coming soon
         </p>
       </div>
-    </div>
+    </HudFrame>
   );
 }

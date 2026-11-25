@@ -1,41 +1,40 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import type { ComponentPropsWithRef, ElementType } from "react";
+import { HudFrame } from "@/components/ui/hud-frame";
 
-export type ButtonVariant = "primary" | "secondary";
+type ButtonVariant = "primary" | "secondary";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type OwnProps<T extends ElementType> = {
+  /** "a" or Link, for what navigates. */
+  as?: T;
   variant?: ButtonVariant;
-  href?: string;
-  children: ReactNode;
+  className?: string;
 };
+
+type ButtonProps<T extends ElementType> = OwnProps<T> &
+  Omit<ComponentPropsWithRef<T>, keyof OwnProps<T> | "size">;
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-accent text-accent-foreground hover:bg-accent-hover",
-  secondary: "border border-border bg-transparent text-foreground hover:border-foreground",
+  primary: "hud-solid px-5 text-accent-foreground",
+  // A pixel more at each side, for the outline the other one hasn't got.
+  secondary: "hud-hollow px-5.25 text-foreground",
 };
 
-// Shared so ProjectLinks can style its own anchors, which need target/rel that
-// this component's href branch does not carry.
-export function buttonClasses(variant: ButtonVariant = "primary", className = ""): string {
-  return `inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition duration-200 ${variants[variant]} ${className}`;
-}
-
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = "primary", href, className = "", children, ...props },
-  ref,
-) {
-  const classes = buttonClasses(variant, className);
-
-  if (href) {
-    return (
-      <a href={href} className={classes}>
-        {children}
-      </a>
-    );
-  }
+export function Button<T extends ElementType = "button">({
+  as,
+  variant = "primary",
+  className = "",
+  ...props
+}: ButtonProps<T>) {
+  const Tag: ElementType = as ?? "button";
 
   return (
-    <button ref={ref} type="button" className={classes} {...props}>
-      {children}
-    </button>
+    <HudFrame
+      as={Tag}
+      size="sm"
+      interactive
+      className={`inline-flex items-center justify-center py-2.75 text-sm font-medium ${variants[variant]} ${className}`.trim()}
+      {...(Tag === "button" ? { type: "button" } : {})}
+      {...props}
+    />
   );
-});
+}
