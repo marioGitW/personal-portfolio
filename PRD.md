@@ -105,8 +105,11 @@ SPASOVSKI, then a handoff into the real hero). It is the same timeline at every 
 below 768px, and under reduced motion a 0.55s fade with nothing moving. A click, a key, the wheel
 or a tap skips it; a finger that only touches or scrolls doesn't. Everything slow, the mosaic
 above all, is built before its clock starts, and the clock is GSAP's wall clock, so it ends on
-time at 30fps too. If it hasn't started 3s after the first paint, or stalls or throws while it
-plays, the hero is simply shown. Later loads get a short entrance instead. The native cursor stays
+time at 30fps too. The hero is simply shown if the page's script isn't running 6s after the HTML
+is parsed, if the intro hasn't started 3s after that, or if it stalls or throws while it plays. A
+phone on a first visit needs 1.5-3s of the first of those, and the dot is on screen meanwhile.
+`/?introDebug` plays it on every load and writes on the page what it did and when, and why the
+hero was shown. Later loads get a short entrance instead. The native cursor stays
 everywhere, and nothing follows it; the portrait's tiles alone get a crosshair.
 
 The portrait is never shown as a photo. It is always a fine mosaic of square tiles,

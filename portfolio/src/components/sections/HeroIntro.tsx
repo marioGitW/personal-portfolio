@@ -5,7 +5,13 @@ import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import type { MosaicPortraitHandle } from "@/components/sections/MosaicPortrait";
-import { HERO_NAME_CLASSES, INTRO_DEADLINE_MS, markIntroPlayed } from "@/lib/intro";
+import {
+  HERO_NAME_CLASSES,
+  INTRO_START_MS,
+  markIntroPlayed,
+  noteIntro,
+  showIntroLog,
+} from "@/lib/intro";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { listenForTaps } from "@/lib/tap";
 
@@ -18,8 +24,10 @@ if (typeof window !== "undefined") {
 const INTRO = {
   word: "PORTFOLIO",
   // Phase A: the wait for assets, before the timeline below starts. The word is measured in the
-  // real font, so without it by the deadline the intro is dropped rather than built on the
-  // fallback's metrics. The image can arrive later, as the mosaic waits for it.
+  // real font, so without it in time the intro is dropped rather than built on the fallback's
+  // metrics. The image can arrive later, as the mosaic waits for it. The dot is on screen for
+  // minMs at least, counted from when the page was parsed: a phone has shown it for longer than
+  // that by the time its script runs, and doesn't wait again.
   wait: { minMs: 400, imageMaxMs: 1500, marginMs: 200 },
   // A phone plays the same timeline in this share of the time.
   compact: 0.85,
@@ -210,11 +218,20 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
     (context) => {
       const headTimer = window.__introFailsafe;
       if (!headTimer) {
+        // ?introDebug, where the head script gave up waiting for this.
+        if (window.__introLog && document.documentElement.dataset.intro === "done") {
+          noteIntro("script running, after the hero was shown");
+          showIntroLog();
+        }
         return;
       }
-      // Taken over from the head script, whose timer knows nothing of what is set up below.
+      // Taken over from the head script, whose timer knows nothing of what is set up below. From
+      // here the intro has INTRO_START_MS to start: the time it took to get here is the network's
+      // and the phone's, and isn't counted against it.
       window.clearTimeout(headTimer);
-      const deadline = window.__introDeadline ?? performance.now() + INTRO_DEADLINE_MS;
+      noteIntro("script running");
+      const startBy = performance.now() + INTRO_START_MS;
+      const parsedAt = window.__introStart ?? performance.now();
 
       const html = document.documentElement;
       // React's dev-only Strict Mode remount strips the attribute off <html>. A
@@ -265,11 +282,13 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         window.removeEventListener("error", handleError);
       };
 
-      const finish = () => {
+      const finish = (reason = "played to the end") => {
         if (finished) {
           return;
         }
         finished = true;
+        noteIntro(`hero shown: ${reason}`);
+        window.setTimeout(showIntroLog, 400);
         window.__introFailsafe = 0;
         stopWatching();
         markIntroPlayed();
@@ -308,16 +327,16 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
       const fail = (error: unknown) => {
         if (!finished) {
           console.error("[HeroIntro] Dropped for the finished hero.", error);
-          finish();
+          finish(`failed, ${error instanceof Error ? error.message : String(error)}`);
           tidy();
         }
       };
 
-      const skip = () => {
+      const skip = (reason: string) => {
         try {
           timeline?.progress(1);
         } finally {
-          finish();
+          finish(reason);
         }
       };
 
@@ -327,7 +346,7 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
       };
       const handleSkip = (event: Event) => {
         if (event.type !== "click" || !fingers) {
-          skip();
+          skip(`skipped by ${event.type}`);
         }
       };
 
@@ -335,7 +354,7 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
       // are, any width will do.
       const handleResize = () => {
         if (startWidth > 0 && root && root.clientWidth !== startWidth) {
-          skip();
+          skip(`width changed from ${startWidth} to ${root.clientWidth}`);
         }
       };
 
@@ -362,18 +381,21 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         !cta ||
         !portrait
       ) {
-        finish();
+        finish("a part of the hero is missing");
         return;
       }
 
-      failsafe = window.setTimeout(finish, Math.max(deadline - performance.now(), 0));
+      failsafe = window.setTimeout(
+        () => finish(`not started within ${INTRO_START_MS}ms of the script running`),
+        INTRO_START_MS,
+      );
       SKIP_EVENTS.forEach((type) =>
         window.addEventListener(type, handleSkip, { capture: true, passive: true }),
       );
       window.addEventListener("pointerdown", notePointer, { capture: true, passive: true });
       stopTaps = listenForTaps(window, () => {
         dropNextClick();
-        skip();
+        skip("skipped by a tap");
       });
       window.addEventListener("resize", handleResize);
       window.addEventListener("error", handleError);
@@ -846,21 +868,25 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
         }, checkMs);
       };
 
-      const ready = (minMs: number) => {
-        const left = Math.max(deadline - performance.now() - INTRO.wait.marginMs, 0);
+      // The fonts and the portrait, or as long as there is left to wait for them.
+      const assets = () => {
+        const left = Math.max(startBy - performance.now() - INTRO.wait.marginMs, 0);
         const fonts = Promise.allSettled([
           document.fonts.load(fontOf(lineTwo), lineTwo.textContent ?? ""),
           document.fonts.ready,
-        ]);
+        ]).then(() => noteIntro("fonts loaded"));
+        const image = Promise.allSettled([portrait.decode()]).then(() =>
+          noteIntro("portrait decoded"),
+        );
         return Promise.all([
-          wait(Math.min(minMs, left)),
           Promise.race([fonts, wait(left)]),
-          Promise.race([
-            Promise.allSettled([portrait.decode()]),
-            wait(Math.min(INTRO.wait.imageMaxMs, left)),
-          ]),
+          Promise.race([image, wait(Math.min(INTRO.wait.imageMaxMs, left))]),
         ]);
       };
+
+      // What is left of the dot's least time on screen.
+      const dotTime = (minMs: number) =>
+        wait(Math.min(minMs - (performance.now() - parsedAt), startBy - performance.now()));
 
       // Nothing else catches what a promise or a frame throws.
       const attempt = (step: () => void) => {
@@ -873,7 +899,7 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
 
       gsap.matchMedia().add(VERSIONS, (version) => {
         if (finished || started) {
-          finish();
+          finish("the layout changed");
           return;
         }
 
@@ -896,7 +922,20 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
           });
           markIntroPlayed();
           timeline.play();
+          noteIntro("intro started");
           watch(timeline);
+        };
+
+        // Everything slow, the tiles above all, before the clock starts: it counts every
+        // millisecond the page is busy, so whatever is done after that is so much of the intro
+        // that nobody sees. While the dot is still on screen, if it has to be anyway.
+        const prepare = () => {
+          if (cancelled || finished || unmounted || still) {
+            return;
+          }
+          const from = performance.now();
+          mosaicRef.current?.prepare();
+          noteIntro(`mosaic built in ${Math.round(performance.now() - from)}ms`);
         };
 
         const build = () => {
@@ -905,32 +944,34 @@ export function HeroIntro({ mosaicRef }: HeroIntroProps) {
           }
 
           // A session that has somehow already scrolled has no hero in view to land on.
-          if (window.scrollY > 0 || !document.fonts.check(fontOf(lineTwo))) {
-            finish();
+          if (window.scrollY > 0) {
+            finish("the page was already scrolled");
+            return;
+          }
+          if (!document.fonts.check(fontOf(lineTwo))) {
+            finish("the font had not loaded in time");
             return;
           }
 
-          // Everything slow, the tiles above all, and then a frame to paint it in, before the
-          // clock starts. It counts every millisecond the page is busy, so whatever is done after
-          // that is so much of the intro that nobody sees.
-          if (!still) {
-            mosaicRef.current?.prepare();
-          }
           startWidth = root.clientWidth;
           version.add(() => {
             timeline = still ? buildFade() : buildTimeline();
           });
           if (!timeline) {
-            finish();
+            finish("the title has no second line to land on");
             return;
           }
           if (compact && !still) {
             timeline.timeScale(1 / INTRO.compact);
           }
+          // A frame to paint what was just built in, before the clock starts.
           cancelPaint = afterPaint(() => attempt(play));
         };
 
-        void ready(still ? 0 : INTRO.wait.minMs).then(() => attempt(build), fail);
+        void assets()
+          .then(() => attempt(prepare))
+          .then(() => dotTime(still ? 0 : INTRO.wait.minMs))
+          .then(() => attempt(build), fail);
 
         return () => {
           cancelled = true;
